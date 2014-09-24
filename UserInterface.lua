@@ -25,8 +25,7 @@ function UI.ListUpdateCB(list, complete, itemLink)
   d("Items looted:")
   for i1,v1 in pairs(list) do
     for i2,v2 in ipairs(v1) do
-      local icon, stack, creator, link = v2
-      d("  " .. GetItemLinkName(link) .. " " .. stack .. " " .. icon )
+      d("  " .. GetItemLinkName(v2.link) .. " " .. v2.stack .. " " .. v2.icon )
     end
   end
 

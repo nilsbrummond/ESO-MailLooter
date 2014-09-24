@@ -22,6 +22,7 @@ local function CommandHandler(text)
     d( "Commands:" )
     d( "ava         - loot AvA mails" )
     d( "hireling  - loot hireling mails" )
+    d( "all          - loot all mails but don't delete" )
     d( "show      - show the window" )
     d( "reset      - reset if it got stuck" )
     return
@@ -29,6 +30,8 @@ local function CommandHandler(text)
     ADDON.Core.ProccessMailAvA()
   elseif text == "hireling" then
     ADDON.Core.ProccessMailHireling()
+  elseif text == "all" then
+    ADDON.Core.ProccessMailAll()
   elseif text == "show" then
     ADDON.UI.ShowDisplay()
   elseif text == "reset" then

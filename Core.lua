@@ -20,6 +20,7 @@ local TitlesStores = {
   ["Item Expired"] = true
 }
 
+local _
 
 CORE.debug = true
 CORE.state = nil
@@ -152,22 +153,23 @@ local function LootMails()
             { icon=icon, stack=stack, creator=creator, link=link })
         end
 
-        DEBUG("items")
+        DEBUG("items id=" .. Id64ToString(v.id))
         CORE.state = STATE_ITEMS
         TakeMailAttachedItems(v.id)
+        return
       elseif CORE.lootMoney and (v.money ~= nil) and (v.money > 0) then
-        DEBUG("money")
+        DEBUG("money id=" .. Id64ToString(v.id))
         CORE.state = STATE_MONEY
         TakeMailAttachedMoney(v.id)
+        return
       elseif CORE.deleteAfter then
-        DEBUG("delete")
+        DEBUG("delete id=" .. Id64ToString(v.id))
         CORE.state = STATE_DELETE
         DeleteMail(v.id, true)
+        return
       else
         -- NOOP
       end
-
-      return
     end
   end
 
@@ -246,7 +248,7 @@ function ADDON.OpenMailboxEvt( eventCode )
 end
 
 function ADDON.CloseMailboxEvt( eventCode )
-  DEBUG( "CloseMailbox" )
+  DEBUG( "CloseMailbox state=" .. CORE.state)
   mailboxOpen = false
 
   if CORE.state == STATE_CLOSE then
