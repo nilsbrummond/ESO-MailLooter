@@ -20,7 +20,7 @@ function UI.ListUpdateCB(list, complete, itemLink)
 
   if not complete then return end
 
-  d("Gold looted: " .. ADDON.Core.gold)
+  d("Gold looted: " .. ADDON.Core.money)
 
   d("Items looted:")
   for i1,v1 in pairs(list) do
@@ -35,8 +35,17 @@ function UI.StatusUpdateCB(inProgess, success, msg)
   DEBUG("StatusUpdateCB")
 end
 
-function UI.ScanUpdateCB(avaNum, hirelingNum, mailNum, moreMail)
+function UI.ScanUpdateCB(summary)
   DEBUG("ScanUpdateCB")
+
+  d( "Mail type counts" )
+  d( "AvA Mails:      " .. summary.countAvA )
+  d( "Hireling Mails: " .. summary.countHireling )
+  d( "Store Mails:    " .. summary.countStore )
+  d( "COD Mails:      " .. summary.countCOD )
+  d( "Other Mails:    " .. summary.countOther )
+  d( "More Mail:      " .. tostring(summary.more) )
+
 end
 
 function UI.InitUserInterface()
