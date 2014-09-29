@@ -5,7 +5,8 @@ local CORE = ADDON.Core
 CORE.deconSpace = false
 
 local TitlesAvA = { 
-  ["Rewards for the Worthy!"] = true 
+  ["Rewards for the Worthy!"] = true,
+  ["For the Covenant!"] = true
   -- TODO: Add titles in other languages
 }
 
@@ -77,6 +78,9 @@ function CORE.InitCore(listUpdateCB, statusUpdateCB, scanUpdateCB)
   --if CORE.StatusUpdateCB == nil then CORE.StatusUpdateCB = function(...) end end
   --if CORE.ScanUpdateCB == nil then CORE.ScanUpdateCB = function(...) end end
 
+  --CALLBACK_MANAGER:RegisterCallback(
+  --  "MailLooterInteralMailDeleteCmd", DoDeleteCmd)
+
   EVENT_MANAGER:RegisterForEvent(
     ADDON.NAME, EVENT_MAIL_OPEN_MAILBOX, ADDON.OpenMailboxEvt )
   EVENT_MANAGER:RegisterForEvent(
@@ -122,6 +126,14 @@ local function GetFreeLootSpace()
   end
 
   return space
+end
+
+local function DoDeleteCmd()
+  DEBUG( "DoDeleteCmd" )
+
+  if CORE.state ~= STATE_DELETE then return end
+
+  DeleteMail(CORE.currentMail.id, true)
 end
 
 local function LootMails()
@@ -325,7 +337,9 @@ end
 function ADDON.MailRemovedEvt( eventCode, mailId )
   DEBUG( "MailRemoved state=" .. CORE.state )
 
-  if (CORE.state == STATE_DELETE) and (CORE.currentMail.id == mailId) then
+  if CORE.state ~= STATE_DELETE then return end
+
+  if (CORE.currentMail.id == mailId) then
     CORE.currentMail = nil
     LootMails()
   end
@@ -335,7 +349,9 @@ end
 function ADDON.TakeItemsEvt( eventCode, mailId )
   DEBUG( "TakeItems state=" .. CORE.state )
 
-  if (CORE.state == STATE_ITEMS) and (CORE.currentMail.id == mailId) then
+  if CORE.state ~= STATE_ITEMS then return end
+
+  if CORE.currentMail.id == mailId then
     AddItemsToHistory()
 
     if CORE.lootMoney and (CORE.currentMail.money ~= nil) and (CORE.currentMail.money > 0) then
@@ -355,15 +371,23 @@ end
 function ADDON.TakeMoneyEvt( eventCode, mailId )
   DEBUG( "TakeMoney state=" .. CORE.state )
 
-  if CORE.deleteAfter and (CORE.state == STATE_MONEY) and (CORE.currentMail.id == mailId) then
+  if CORE.state ~= STATE_MONEY then return end
+
+  if (CORE.currentMail.id == mailId) then
     CORE.money = CORE.money + CORE.currentMail.money
-    CORE.state = STATE_DELETE
-    DeleteMail(CORE.currentMail.id, true)
-  else
-      CORE.currentMail = nil
-      LootMails()
+
+    if CORE.deleteAfter then
+      CORE.state = STATE_DELETE
+      zo_callLater(DoDeleteCmd(), 1)
+      --CALLBACK_MANAGER:FireCallbacks("MailLooterInteralMailDeleteCmd", mailId)
+      --DeleteMail(CORE.currentMail.id, true)
+    else
+        CORE.currentMail = nil
+        LootMails()
+    end
   end
 
+  DEBUG( "TakeMoney end" )
 end
 
 
@@ -430,7 +454,7 @@ function CORE.ProccessMailAll()
   CORE.titles = nil
   CORE.lootItems = true
   CORE.lootMoney = true
-  CORE.deleteAfter = false
+  CORE.deleteAfter = true
   Start()
 
 end

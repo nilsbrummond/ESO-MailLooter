@@ -49,6 +49,10 @@ function UI.ScanUpdateCB(summary)
 end
 
 function UI.InitUserInterface()
+
+  -- MailLooter_MainMenuSceneGroupBarButton3 = 
+  -- ZO_MainMenuSceneGroupBar.m_object.AddButton()
+
 end
 
 function UI.ToggleDisplay()
