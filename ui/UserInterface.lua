@@ -1,6 +1,7 @@
 
+eso_addon_MailLooter = eso_addon_MailLooter or {}
 local ADDON = eso_addon_MailLooter
-ADDON.UI = {}
+ADDON.UI = ADDON.UI or {}
 local UI = ADDON.UI
 
 UI.debug = true
@@ -15,7 +16,7 @@ local function DEBUG(str)
   end
 end
 
-function UI.ListUpdateCB(list, complete, itemLink)
+function UI.CoreListUpdateCB(list, complete, itemLink)
   DEBUG("ListUpdateCB")
 
   if not complete then return end
@@ -31,11 +32,11 @@ function UI.ListUpdateCB(list, complete, itemLink)
 
 end
 
-function UI.StatusUpdateCB(inProgess, success, msg)
+function UI.CoreStatusUpdateCB(inProgess, success, msg)
   DEBUG("StatusUpdateCB")
 end
 
-function UI.ScanUpdateCB(summary)
+function UI.CoreScanUpdateCB(summary)
   DEBUG("ScanUpdateCB")
 
   d( "Mail type counts" )
@@ -46,19 +47,34 @@ function UI.ScanUpdateCB(summary)
   d( "Other Mails:    " .. summary.countOther )
   d( "More Mail:      " .. tostring(summary.more) )
 
+  -- UI.SummaryFragment.
+
 end
+
+function UI.SceneStateChange(_, newState)
+  DEBUG("SceneStateChange " .. newState)
+
+  if newState == SCENE_SHOWING then
+    KEYBIND_STRIP:AddKeybindButtonGroup(UI.mailLooterButtonGroup)
+    ADDON.Core.OpenMailLooter()
+  elseif newState == SCENE_HIDDEN then
+    KEYBIND_STRIP:RemoveKeybindButtonGroup(UI.mailLooterButtonGroup)
+    ADDON.Core.CloseMailLooter()
+  end
+end
+
 
 function UI.InitUserInterface()
 
-  -- MailLooter_MainMenuSceneGroupBarButton3 = 
-  -- ZO_MainMenuSceneGroupBar.m_object.AddButton()
+  UI.InitSettings()
+  UI.SummaryFragment = UI.CreateSummaryFragment()
+  UI.LootFragment = UI.CreateLootFragment()
+  UI.CreateScene()
+
+  ADDON.Core.NewCallbacks(
+    UI.CoreListUpdateCB,
+    UI.CoreStatusUpdateCB,
+    UI.CoreScanUpdateCB)
 
 end
 
-function UI.ToggleDisplay()
-  DEBUG("ToggleDisplay")
-end
-
-function UI.ShowDisplay()
-  DEBUG("ShowDisplay")
-end

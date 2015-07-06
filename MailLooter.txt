@@ -1,20 +1,49 @@
-## Title: MailLooter
+## Title: |cFFFFB0MailLooter|r - |c0000AAMailman|r meets |cCAA000Dog|r
 ## Description: MailLooter loots mail and deletes it for AvA and Hirelings
 ## Version: 0.1
 ## Author: Lodur
-## APIVersion: 100009
-## SavedVariables: MAILLOOTER_DB
+## APIVersion: 100011
+## SavedVariables: MailLooter_Settings
+## OptionalDependsOn: LibAddonMenu-2.0
 
-; This Add-on is not created by, affiliated with or sponsored by ZeniMax Media Inc. or its affiliates. 
-; The Elder Scrolls® and related logos are registered trademarks or trademarks of ZeniMax Media Inc. in the United States and/or other countries. 
-; All rights reserved
-;
-; You can read the full terms at https://account.elderscrollsonline.com/add-on-terms
+; This Add-on is not created by, affiliated with or sponsored by ZeniMax
+; Media Inc. or its affiliates.  The Elder Scrolls® and related logos are
+; registered trademarks or trademarks of ZeniMax Media Inc. in the United
+; States and/or other countries.  All rights reserved
+
+; You can read the full terms at:
+; https://account.elderscrollsonline.com/add-on-terms
 
 
+lib/LibStub.lua
+lib/LAM/LibAddonMenu-2.0.lua
+lib/LAM/controls/panel.lua
+lib/LAM/controls/submenu.lua
+lib/LAM/controls/button.lua
+lib/LAM/controls/checkbox.lua
+lib/LAM/controls/colorpicker.lua
+lib/LAM/controls/custom.lua
+lib/LAM/controls/description.lua
+lib/LAM/controls/dropdown.lua
+lib/LAM/controls/editbox.lua
+lib/LAM/controls/header.lua
+lib/LAM/controls/slider.lua
+lib/LAM/controls/texture.lua
 
 MailLooterPre.lua
-Core.lua
-UserInterface.lua
-MailLooter.lua
-bindings.xml
+
+lang/en.lua
+lang/$(language).lua
+
+core/MailLooter.lua
+
+ui/UserInterface.lua
+ui/Settings.lua
+ui/KeybindStrip.lua
+ui/MailLooterScene.lua
+ui/SummaryFragment.lua
+ui/LootFragment.lua
+
+Main.lua
+cli.lua
+

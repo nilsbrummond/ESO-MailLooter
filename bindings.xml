@@ -1,9 +1,0 @@
-<Bindings>
-  <Layer name="General">
-    <Category name="MailLooter">
-      <Action name="TOGGLE_MAILLOOTER">
-        <Down>eso_addon_MailLooter.UI.ToggleDisplay()</Down>
-      </Action>
-    </Category>
-  </Layer>
-</Bindings>
