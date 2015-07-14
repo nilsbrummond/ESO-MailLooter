@@ -45,5 +45,4 @@ ui/SummaryFragment.lua
 ui/LootFragment.lua
 
 Main.lua
-cli.lua
 

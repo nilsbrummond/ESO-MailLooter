@@ -355,8 +355,8 @@ local function Start()
 
   if CORE.lootItems and (GetFreeLootSpace() == 0) then
     d( "No free space in inventory" )
-    CORE.ListUpdateCB(CORE.items, true, nil)
-    CORE.StatusUpdateCB(false, false, "No free space in inventory")
+    CORE.callbacks.ListUpdateCB(CORE.items, true, nil)
+    CORE.callbacks.StatusUpdateCB(false, false, "No free space in inventory")
     CORE.state = STATE_IDLE
     return
   end
@@ -566,5 +566,17 @@ end
 
 function CORE.IsIdle()
   return CORE.state == STATE_IDLE
+end
+
+function CORE.IsActionReady()
+
+  if (CORE.state == STATE_IDLE) and 
+     (GetFreeLootSpace() > 0)
+  then
+
+    return true
+  end
+
+  return false
 end
 

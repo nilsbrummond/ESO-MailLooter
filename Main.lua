@@ -1,17 +1,19 @@
 
+eso_addon_MailLooter = eso_addon_MailLooter or {}
 local ADDON = eso_addon_MailLooter
 ADDON.initialized = false
+
+ADDON.settingsDefaults = {
+  ["saveDeconSpace"] = true,
+}
 
 
 local function Initialize( eventCode, addOnName )
 
   if addOnName ~= ADDON.NAME then return end
 
-  local settingsDefaults = {
-    saveDeconSpace = true,
-  }
-
-  ADDON.settings = ZO_SavedVars:New("MailLooter_Settings", 1, nil, settingDefaults)
+  ADDON.settings = ZO_SavedVars:NewAccountWide(
+    "MailLooter_Settings", (ADDON.VERSION * 100), "general", ADDON.settingsDefaults)
 
   ADDON.Core.Initialize(ADDON.settings.saveDeconSpace)
   ADDON.UI.InitUserInterface()
@@ -20,13 +22,13 @@ local function Initialize( eventCode, addOnName )
 
 end
 
-function ADDON.GetSettting_saveDeconSpace()
-  return ADDON.settings.saveDeconSpace
+function ADDON.GetSetting_saveDeconSpace()
+  return (ADDON.settings.saveDeconSpace == true)
 end
 
 function ADDON.SetSetting_saveDeconSpace(val)
   ADDON.settings.saveDeconSpace = val
-  ADDON.Core.SetSAveDeconSpace(val)
+  ADDON.Core.SetSaveDeconSpace(val)
 end
 
 -- Init Hook --
