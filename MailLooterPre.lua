@@ -4,4 +4,5 @@ local ADDON = eso_addon_MailLooter
 
 ADDON.NAME = "MailLooter"
 ADDON.VERSION = 0.21
+ADDON.debug = false
 

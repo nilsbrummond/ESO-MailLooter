@@ -6,21 +6,13 @@ local function CommandHandler(text)
   if text == "" then
     d( ADDON.NAME .. " version " .. ADDON.VERSION )
     d( "Commands:" )
-    d( "ava         - loot AvA mails" )
-    d( "hireling  - loot hireling mails" )
-    d( "store      - loot guild store mails" )
-    d( "all          - loot all mails but don't delete" )
-    d( "show      - show the window" )
-    d( "reset      - reset if it got stuck" )
+    d( "debug on|off  - turns debug messages on and off" )
+    d( "reset         - reset if it got stuck" )
     return
-  elseif text == "ava" then
-    ADDON.Core.ProcessMailAvA()
-  elseif text == "hireling" then
-    ADDON.Core.ProcessMailHireling()
-  elseif text == "store" then
-    ADDON.Core.ProcessMailStore()
-  elseif text == "all" then
-    ADDON.Core.ProcessMailAll()
+  elseif text == "debug off" then
+    ADDON.SetSetting_debug(false)
+  elseif text == "debug on" then
+    ADDON.SetSetting_debug(true)
   elseif text == "reset" then
     ADDON.Core.Reset()
   end

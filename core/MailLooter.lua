@@ -125,8 +125,8 @@ end
 function CORE.CloseMailLooter()
   if mailLooterOpen then
     mailLooterOpen = false
+    CORE.state = STATE_CLOSE
     CloseMailbox()
-    CORE.state = STATE_IDLE
   end
 end
 
@@ -337,8 +337,7 @@ local function ScanMail()
     d( "MailLooter sees no mails to loot" )
     CORE.callbacks.ListUpdateCB(CORE.items, true, nil)
     CORE.callbacks.StatusUpdateCB(false, true, nil)
-    CORE.state = STATE_CLOSE
-    CloseMailbox()
+    CORE.state = STATE_IDLE
   else
     LootMails()
   end
