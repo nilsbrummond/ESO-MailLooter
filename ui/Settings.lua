@@ -15,8 +15,8 @@ local optionsData = {
     type = "checkbox",
     name = "Reserve (4) inventory spaces",
     tooltip = "Reserves inventory spaces need to do crafting deconstructions.",
-    getFunc = function() return ADDON.GetSetting_saveDeconSpace() end,
-    setFunc = function(value) ADDON.SetSetting_saveDeconSpace(value) end,
+    getFunc = ADDON.GetSetting_saveDeconSpace,
+    setFunc = ADDON.SetSetting_saveDeconSpace,
   }
 }
 

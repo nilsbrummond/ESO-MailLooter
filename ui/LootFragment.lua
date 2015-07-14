@@ -17,10 +17,12 @@ function UI.CreateLootFragment()
     "MAIL_LOOTER_LOOT_TITLE", fragment.win, "ZO_PanelTitle")
   MAIL_LOOTER_LOOT_TITLE:SetAnchor(TOP, fragment.win, TOP, 0, 0)
   MAIL_LOOTER_LOOT_TITLELabel:SetText("LOOTED")
-  MAIL_LOOTER_LOOT_TITLELabel:SetFont("ZoFontBookSkin")
+  MAIL_LOOTER_LOOT_TITLELabel:SetFont("ZoFontWinH2")
   MAIL_LOOTER_LOOT_TITLELabel:SetAnchor(
     CENTER, MAIL_LOOTER_LOOT_TITLEDivider, CENTER, 0, -15)
   MAIL_LOOTER_LOOT_TITLEDivider:SetDimensions(800,2)
+
+   
 
   fragment.FRAGMENT = ZO_FadeSceneFragment:New(fragment.win)
 

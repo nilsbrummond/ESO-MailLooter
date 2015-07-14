@@ -125,10 +125,8 @@ end
 function CORE.CloseMailLooter()
   if mailLooterOpen then
     mailLooterOpen = false
-
-    if mailboxOpen then
-      CloseMailbox()
-    end
+    CloseMailbox()
+    CORE.state = STATE_IDLE
   end
 end
 
@@ -159,7 +157,7 @@ local function AddItemsToHistory()
 
     table.insert(CORE.items[name], item )
     DEBUG( "MailLooter: " .. tostring(item.link))
-    CORE.ListUpdateCB(CORE.items, false, item.link)
+    CORE.callbacks.ListUpdateCB(CORE.items, false, item.link)
   end
 
   CORE.currentItems = {}
@@ -182,6 +180,46 @@ local function DoDeleteCmd()
   if CORE.state ~= STATE_DELETE then return end
   DeleteMail(CORE.currentMail.id, true)
 end
+
+local function SummaryScanMail()
+
+  DEBUG( "SummaryScanMail" )
+
+  local countAvA = 0
+  local countHireling = 0
+  local countCOD = 0
+  local countStore = 0
+  local countOther = 0
+
+  local id = GetNextMailId(nil)
+  while id ~= nil do
+    local sdn, scn, subject, icon, unread, fromSystem, fromCustomerService, returned, numAttachments, attachedMoney, codAmount, expiresInDays, secsSinceReceived = GetMailItemInfo(id)
+
+    -- DEBUG(" -- Mail:" .. Id64ToString(id) .. " " .. subject .. " from:"..sdn.."/"..scn .. " sys:" .. tostring(fromSystem) .. " cs:"..tostring(fromCustomerService))
+
+    if codAmount > 0 then
+      countCOD = countCOD + 1
+    elseif TitlesAvA[subject] then
+      countAvA = countAvA + 1
+    elseif TitlesHirelings[subject] then
+      countHireling = countHireling + 1
+    elseif TitlesStores[subject] then
+      countStore = countStore + 1
+    else
+      countOther = countOther + 1
+    end
+
+    id = GetNextMailId(id)
+  end
+
+  local result = { countAvA = countAvA, countHireling=countHireling, 
+                   countCOD = countCOD, countStore = countStore,
+                   countOther = countOther, more = IsLocalMailboxFull() }
+
+  CORE.callbacks.ScanUpdateCB(result)
+
+end
+
 
 local function LootMails()
   DEBUG( "LootMails" )
@@ -248,16 +286,16 @@ local function LootMails()
 
   if count > 0 then
     d ( "No room left in inventory" )
-    CORE.ListUpdateCB(CORE.items, true, nil)
-    CORE.StatusUpdateCB(false, true, nil)
-    CORE.state = STATE_CLOSE
-    CloseMailbox()
+    CORE.callbacks.ListUpdateCB(CORE.items, true, nil)
+    CORE.callbacks.StatusUpdateCB(false, true, nil)
+    CORE.state = STATE_IDLE
+    SummaryScanMail()
   else
     d ( "Done" )
-    CORE.ListUpdateCB(CORE.items, true, nil)
-    CORE.StatusUpdateCB(false, true, nil)
-    CORE.state = STATE_CLOSE
-    CloseMailbox()
+    CORE.callbacks.ListUpdateCB(CORE.items, true, nil)
+    CORE.callbacks.StatusUpdateCB(false, true, nil)
+    CORE.state = STATE_IDLE
+    SummaryScanMail()
   end
 end
 
@@ -297,52 +335,13 @@ local function ScanMail()
 
   if count == 0 then
     d( "MailLooter sees no mails to loot" )
-    CORE.ListUpdateCB(CORE.items, true, nil)
-    CORE.StatusUpdateCB(false, true, nil)
+    CORE.callbacks.ListUpdateCB(CORE.items, true, nil)
+    CORE.callbacks.StatusUpdateCB(false, true, nil)
     CORE.state = STATE_CLOSE
     CloseMailbox()
   else
     LootMails()
   end
-
-end
-
-local function SummaryScanMail()
-
-  DEBUG( "SummaryScanMail" )
-
-  local countAvA = 0
-  local countHireling = 0
-  local countCOD = 0
-  local countStore = 0
-  local countOther = 0
-
-  local id = GetNextMailId(nil)
-  while id ~= nil do
-    local sdn, scn, subject, icon, unread, fromSystem, fromCustomerService, returned, numAttachments, attachedMoney, codAmount, expiresInDays, secsSinceReceived = GetMailItemInfo(id)
-
-    -- DEBUG(" -- Mail:" .. Id64ToString(id) .. " " .. subject .. " from:"..sdn.."/"..scn .. " sys:" .. tostring(fromSystem) .. " cs:"..tostring(fromCustomerService))
-
-    if codAmount > 0 then
-      countCOD = countCOD + 1
-    elseif TitlesAvA[subject] then
-      countAvA = countAvA + 1
-    elseif TitlesHirelings[subject] then
-      countHireling = countHireling + 1
-    elseif TitlesStores[subject] then
-      countStore = countStore + 1
-    else
-      countOther = countOther + 1
-    end
-
-    id = GetNextMailId(id)
-  end
-
-  local result = { countAvA = countAvA, countHireling=countHireling, 
-                   countCOD = countCOD, countStore = countStore,
-                   countOther = countOther, more = IsLocalMailboxFull() }
-
-  CORE.callbacks.ScanUpdateCB(result)
 
 end
 
@@ -362,7 +361,7 @@ local function Start()
     return
   end
 
-  CORE.StatusUpdateCB(true, true, nil)
+  CORE.callbacks.StatusUpdateCB(true, true, nil)
 
   if not mailboxOpen then
     RequestOpenMailbox()
@@ -374,7 +373,7 @@ end
 function CORE.OpenMailboxEvt( eventCode )
 
   DEBUG( "OpenMailbox" )
-  mailboxOpen = tru
+  mailboxOpen = true
   
   if mailLooterOpen then
     if CORE.state == STATE_OPEN then
