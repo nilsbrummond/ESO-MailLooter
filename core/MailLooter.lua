@@ -18,7 +18,8 @@ local TitlesHirelings = {
   ["Raw Woodworker Materials"] = true, 
   ["Raw Clothier Materials"] = true, 
   ["Raw Enchanter Materials"] = true, 
-  ["Getting Groceries"] = true 
+  ["Raw Provisioner Materials"] = true,
+  ["Getting Groceries"] = true   -- TODO: is this one obsolete?
 
   -- TODO: Add titles in other languages
 }
@@ -287,14 +288,14 @@ local function LootMails()
   if count > 0 then
     DEBUG ( "No room left in inventory" )
     CORE.callbacks.ListUpdateCB(CORE.items, true, nil)
-    CORE.callbacks.StatusUpdateCB(false, true, nil)
     CORE.state = STATE_IDLE
+    CORE.callbacks.StatusUpdateCB(false, true, nil)
     SummaryScanMail()
   else
     DEBUG ( "Done" )
     CORE.callbacks.ListUpdateCB(CORE.items, true, nil)
-    CORE.callbacks.StatusUpdateCB(false, true, nil)
     CORE.state = STATE_IDLE
+    CORE.callbacks.StatusUpdateCB(false, true, nil)
     SummaryScanMail()
   end
 end
@@ -336,8 +337,8 @@ local function ScanMail()
   if count == 0 then
     DEBUG( "MailLooter sees no mails to loot" )
     CORE.callbacks.ListUpdateCB(CORE.items, true, nil)
-    CORE.callbacks.StatusUpdateCB(false, true, nil)
     CORE.state = STATE_IDLE
+    CORE.callbacks.StatusUpdateCB(false, true, nil)
   else
     LootMails()
   end
@@ -355,8 +356,8 @@ local function Start()
   if CORE.lootItems and (GetFreeLootSpace() == 0) then
     d( "No free space in inventory" )
     CORE.callbacks.ListUpdateCB(CORE.items, true, nil)
-    CORE.callbacks.StatusUpdateCB(false, false, "No free space in inventory")
     CORE.state = STATE_IDLE
+    CORE.callbacks.StatusUpdateCB(false, false, "No free space in inventory")
     return
   end
 
@@ -383,17 +384,19 @@ function CORE.OpenMailboxEvt( eventCode )
 end
 
 function CORE.CloseMailboxEvt( eventCode )
+
   DEBUG( "CloseMailbox state=" .. CORE.state)
   mailboxOpen = false
 
-  if mailLooterOpen then
-    if CORE.state == STATE_CLOSE then
-      CORE.state = STATE_IDLE
-      d( "MailLooter closed" )
-    elseif CORE.state ~= STATE_IDLE then
+  if CORE.state == STATE_CLOSE then
+    CORE.state = STATE_IDLE
+    DEBUG( "MailLooter closed" )
+  elseif mailLooterOpen then
+    if CORE.state ~= STATE_IDLE then
       -- FIXME - Error!!
       CORE.state = STATE_IDLE
-      d("MailLooter error!  Mailbox closed.")
+      DEBUG("MailLooter error!  Mailbox closed.")
+      CORE.callbacks.StatusUpdateCB(false, false, "Mailbox Closed")
     end
   end
 
@@ -403,7 +406,9 @@ function CORE.InboxUpdateEvt( eventCode )
   DEBUG( "InboxUpdate state=" .. CORE.state )
 
   if mailLooterOpen then
-    SummaryScanMail()
+    if CORE.state == STATE_IDLE then
+      SummaryScanMail()
+    end
 
     if CORE.state == STATE_UPDATE then
       ScanMail()
@@ -495,7 +500,7 @@ function CORE.ProcessMailAll()
   d( "MailLooter starting all loot" )
 
   CORE.titles = nil
-  CORE.fromSystemOnly = false
+  CORE.fromSystemOnly = true
   CORE.lootItems = true
   CORE.lootMoney = true
   CORE.deleteAfter = true
@@ -515,6 +520,7 @@ end
 function CORE.IsActionReady()
 
   if (CORE.state == STATE_IDLE) and 
+     (GetNumMailItems() > 0) and
      (GetFreeLootSpace() > 0)
   then
 
