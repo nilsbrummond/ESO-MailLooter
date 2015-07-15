@@ -6,8 +6,9 @@ local function CommandHandler(text)
   if text == "" then
     d( ADDON.NAME .. " version " .. ADDON.VERSION )
     d( "Commands:" )
-    d( "debug on|off  - turns debug messages on and off" )
-    d( "reset         - reset if it got stuck" )
+    d( "debug [on/off]  -  Turns debug messages on and off" )
+    d( "reset  -  Reset the maillooter in case it is stuck." )
+
     return
   elseif text == "debug off" then
     ADDON.SetSetting_debug(false)
