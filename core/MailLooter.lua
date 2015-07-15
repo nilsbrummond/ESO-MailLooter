@@ -285,13 +285,13 @@ local function LootMails()
   end
 
   if count > 0 then
-    d ( "No room left in inventory" )
+    DEBUG ( "No room left in inventory" )
     CORE.callbacks.ListUpdateCB(CORE.items, true, nil)
     CORE.callbacks.StatusUpdateCB(false, true, nil)
     CORE.state = STATE_IDLE
     SummaryScanMail()
   else
-    d ( "Done" )
+    DEBUG ( "Done" )
     CORE.callbacks.ListUpdateCB(CORE.items, true, nil)
     CORE.callbacks.StatusUpdateCB(false, true, nil)
     CORE.state = STATE_IDLE
@@ -334,7 +334,7 @@ local function ScanMail()
   end
 
   if count == 0 then
-    d( "MailLooter sees no mails to loot" )
+    DEBUG( "MailLooter sees no mails to loot" )
     CORE.callbacks.ListUpdateCB(CORE.items, true, nil)
     CORE.callbacks.StatusUpdateCB(false, true, nil)
     CORE.state = STATE_IDLE
@@ -483,61 +483,6 @@ function CORE.TakeMoneyEvt( eventCode, mailId )
   end
 
   DEBUG( "TakeMoney end" )
-end
-
-
-function CORE.ProcessMailAvA()
-
-  if CORE.state ~= STATE_IDLE then 
-    d( "MailLooter is currently running" )
-    return
-  end
-
-  d( "MailLooter starting AvA loot" )
-
-  CORE.titles = TitlesAvA
-  CORE.fromSystemOnly = true
-  CORE.lootItems = true
-  CORE.lootMoney = true
-  CORE.deleteAfter = true
-  Start()
-  
-end
-
-function CORE.ProcessMailHireling()
-
-  if CORE.state ~= STATE_IDLE then 
-    d( "MailLooter is currently running" )
-    return
-  end
-  
-  d( "MailLooter starting Hireling loot" )
-
-  CORE.titles = TitlesHirelings
-  CORE.fromSystemOnly = true
-  CORE.lootItems = true
-  CORE.lootMoney = true
-  CORE.deleteAfter = true
-  Start()
-
-end
-
-function CORE.ProcessMailStore()
-
-  if CORE.state ~= STATE_IDLE then 
-    d( "MailLooter is currently running" )
-    return
-  end
-
-  d( "MailLooter starting store loot" )
-
-  CORE.titles = TitlesStores
-  CORE.fromSystemOnly = true
-  CORE.lootItems = true
-  CORE.lootMoney = true
-  CORE.deleteAfter = true
-  Start()
-
 end
 
 function CORE.ProcessMailAll()

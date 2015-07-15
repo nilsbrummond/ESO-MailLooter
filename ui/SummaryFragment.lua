@@ -4,35 +4,35 @@ local ADDON = eso_addon_MailLooter
 ADDON.UI = ADDON.UI or {}
 local UI = ADDON.UI
 
-local function AddNameLabel(name, text, parent, after)
-  local win = WINDOW_MANAGER:CreateControl(
-                "MAIL_LOOTER_SUMMARY_NLABEL_" .. name,
-                parent,
-                CT_LABEL)
-
-  win:SetFont("ZoGameFont")
-  if after ~= nil then
-    win:SetText("   " .. text)
-    win:SetAnchor(LEFT, after, RIGHT, 0, 0)
-  else
-    win:SetText(text)
-  end
-
-  return win
-end
-
-local function AddValueLabel(name, parent, after)
-  local win = WINDOW_MANAGER:CreateControl(
-                "MAIL_LOOTER_SUMMARY_VLABEL_" .. name,
-                parent,
-                CT_LABEL)
-
-  win:SetText("00+")
-  win:SetFont("ZoGameFont")
-  win:SetAnchor(LEFT, after, RIGHT, 0, 0)
-
-  return win
-end
+-- local function AddNameLabel(name, text, parent, after)
+--   local win = WINDOW_MANAGER:CreateControl(
+--                 "MAIL_LOOTER_SUMMARY_NLABEL_" .. name,
+--                 parent,
+--                 CT_LABEL)
+-- 
+--   win:SetFont("ZoGameFont")
+--   if after ~= nil then
+--     win:SetText("   " .. text)
+--     win:SetAnchor(LEFT, after, RIGHT, 0, 0)
+--   else
+--     win:SetText(text)
+--   end
+-- 
+--   return win
+-- end
+-- 
+-- local function AddValueLabel(name, parent, after)
+--   local win = WINDOW_MANAGER:CreateControl(
+--                 "MAIL_LOOTER_SUMMARY_VLABEL_" .. name,
+--                 parent,
+--                 CT_LABEL)
+-- 
+--   win:SetText("00+")
+--   win:SetFont("ZoGameFont")
+--   win:SetAnchor(LEFT, after, RIGHT, 0, 0)
+-- 
+--   return win
+-- end
 
 function UI.CreateSummaryFragment()
   local fragment = {}

@@ -39,7 +39,7 @@ end
 
 function ADDON.SetSetting_debug(val)
   ADDON.settings.debug = val
-  ADDON.Core.SetDebug(val)
+  ADDON.SetDebug(val)
 end 
 
 function ADDON.SetDebug(on)

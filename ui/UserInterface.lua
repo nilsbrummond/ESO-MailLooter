@@ -37,18 +37,24 @@ function UI.CoreStatusUpdateCB(inProgess, success, msg)
 
   KEYBIND_STRIP:UpdateKeybindButtonGroup(UI.mailLooterButtonGroup)
 
+  if (inProgress) then
+    UI.summaryLabel:SetText("Looting...")
+  end
+
 end
 
 function UI.CoreScanUpdateCB(summary)
   DEBUG("ScanUpdateCB")
 
-  d( "Mail type counts" )
-  d( "AvA Mails:      " .. summary.countAvA )
-  d( "Hireling Mails: " .. summary.countHireling )
-  d( "Store Mails:    " .. summary.countStore )
-  d( "COD Mails:      " .. summary.countCOD )
-  d( "Other Mails:    " .. summary.countOther )
-  d( "More Mail:      " .. tostring(summary.more) )
+  if UI.debug then
+    d( "Mail type counts" )
+    d( "AvA Mails:      " .. summary.countAvA )
+    d( "Hireling Mails: " .. summary.countHireling )
+    d( "Store Mails:    " .. summary.countStore )
+    d( "COD Mails:      " .. summary.countCOD )
+    d( "Other Mails:    " .. summary.countOther )
+    d( "More Mail:      " .. tostring(summary.more) )
+  end
 
   UI.UpdateSummary(summary)
 

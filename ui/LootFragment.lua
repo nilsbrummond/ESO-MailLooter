@@ -22,7 +22,14 @@ function UI.CreateLootFragment()
     CENTER, MAIL_LOOTER_LOOT_TITLEDivider, CENTER, 0, -15)
   MAIL_LOOTER_LOOT_TITLEDivider:SetDimensions(800,2)
 
-   
+  local label = WINDOW_MANAGER:CreateControl(
+    "MAIL_LOOTER_LOOTED_TEXT", fragment.win, CT_LABEL)
+
+  label:SetFont("ZoFontGame")
+  label:SetText("Looted items list feature is coming soon.")
+  label:SetWidth(800)
+  label:SetHorizontalAlignment(TEXT_ALIGN_CENTER)
+  label:SetAnchor(TOP, MAIL_LOOTER_LOOT_TITLEDivider, BOTTOM, 0, 10)
 
   fragment.FRAGMENT = ZO_FadeSceneFragment:New(fragment.win)
 
