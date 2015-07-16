@@ -32,12 +32,12 @@ function UI.CoreListUpdateCB(list, complete, itemLink)
 
 end
 
-function UI.CoreStatusUpdateCB(inProgess, success, msg)
+function UI.CoreStatusUpdateCB(inProgress, success, msg)
   DEBUG("StatusUpdateCB")
 
   KEYBIND_STRIP:UpdateKeybindButtonGroup(UI.mailLooterButtonGroup)
 
-  if (inProgress) then
+  if inProgress then
     UI.summaryLabel:SetText("Looting...")
   end
 
