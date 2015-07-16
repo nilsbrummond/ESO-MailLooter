@@ -74,76 +74,13 @@ local STATE_CLOSE  = 8
 CORE.state = STATE_IDLE
 
 --
--- Functions
+-- Local Functions
 --
 
 local function DEBUG(str)
   if CORE.debug then
     d("MailLooter: " .. str)
   end
-end
-
--- This function must be called from the client ADDON's 
--- EVENT_ADD_ON_LOADED handler.
-function CORE.Initialize(saveDeconSpace)
-
-  if CORE.initialized then return end -- exit if already init'd.
-  
-  CORE.initialized = true
-
-  CORE.deconSpace = saveDeconSpace
-
-  EVENT_MANAGER:RegisterForEvent(
-    LIB_NAME, EVENT_MAIL_OPEN_MAILBOX, CORE.OpenMailboxEvt )
-  EVENT_MANAGER:RegisterForEvent(
-    LIB_NAME, EVENT_MAIL_CLOSE_MAILBOX, CORE.CloseMailboxEvt )
-  EVENT_MANAGER:RegisterForEvent(
-    LIB_NAME, EVENT_MAIL_INBOX_UPDATE, CORE.InboxUpdateEvt )
-  EVENT_MANAGER:RegisterForEvent(
-    LIB_NAME, EVENT_MAIL_READABLE, CORE.MailReadableEvt )
-
-  EVENT_MANAGER:RegisterForEvent(
-    LIB_NAME, EVENT_MAIL_REMOVED, CORE.MailRemovedEvt )
-
-  EVENT_MANAGER:RegisterForEvent(
-    LIB_NAME, EVENT_MAIL_TAKE_ATTACHED_ITEM_SUCCESS, CORE.TakeItemsEvt )
-  EVENT_MANAGER:RegisterForEvent(
-    LIB_NAME, EVENT_MAIL_TAKE_ATTACHED_MONEY_SUCCESS, CORE.TakeMoneyEvt )
-
-end
-
-function CORE.OpenMailLooter()
-
-  mailLooterOpen = true
-
-  if not mailboxOpen then
-    RequestOpenMailbox()
-  else
-    ScanMail()
-  end
-end
-
-function CORE.CloseMailLooter()
-  if mailLooterOpen then
-    mailLooterOpen = false
-    CORE.state = STATE_CLOSE
-    CloseMailbox()
-  end
-end
-
-function CORE.SetSaveDeconSpace(val)
-  CORE.deconSpace = val
-end
-
-function CORE.NewCallbacks(listUpdateCB, statusUpdateCB, scanUpdateCB)
-
-  local s = {}
-  s.ListUpdateCB = listUpdateCB
-  s.StatusUpdateCB = statusUpdateCB
-  s.ScanUpdateCB = scanUpdateCB
-
-  CORE.callbacks = s
-
 end
 
 local function AddItemsToHistory()
@@ -370,6 +307,10 @@ local function Start()
   end
 end
 
+--
+-- Event Handler Functions
+--
+
 function CORE.OpenMailboxEvt( eventCode )
 
   DEBUG( "OpenMailbox" )
@@ -490,6 +431,92 @@ function CORE.TakeMoneyEvt( eventCode, mailId )
   DEBUG( "TakeMoney end" )
 end
 
+--
+-- Public Functions
+--
+
+-- This function must be called from the client ADDON's 
+-- EVENT_ADD_ON_LOADED handler.
+function CORE.Initialize(saveDeconSpace)
+
+  if CORE.initialized then return end -- exit if already init'd.
+
+  CORE.initialized = true
+
+  CORE.deconSpace = saveDeconSpace
+
+  EVENT_MANAGER:RegisterForEvent(
+    LIB_NAME, EVENT_MAIL_OPEN_MAILBOX, CORE.OpenMailboxEvt )
+  EVENT_MANAGER:RegisterForEvent(
+    LIB_NAME, EVENT_MAIL_CLOSE_MAILBOX, CORE.CloseMailboxEvt )
+  EVENT_MANAGER:RegisterForEvent(
+    LIB_NAME, EVENT_MAIL_INBOX_UPDATE, CORE.InboxUpdateEvt )
+  EVENT_MANAGER:RegisterForEvent(
+    LIB_NAME, EVENT_MAIL_READABLE, CORE.MailReadableEvt )
+
+  EVENT_MANAGER:RegisterForEvent(
+    LIB_NAME, EVENT_MAIL_REMOVED, CORE.MailRemovedEvt )
+
+  EVENT_MANAGER:RegisterForEvent(
+    LIB_NAME, EVENT_MAIL_TAKE_ATTACHED_ITEM_SUCCESS, CORE.TakeItemsEvt )
+  EVENT_MANAGER:RegisterForEvent(
+    LIB_NAME, EVENT_MAIL_TAKE_ATTACHED_MONEY_SUCCESS, CORE.TakeMoneyEvt )
+
+end
+
+-- Call to start a MailLooter session.
+function CORE.OpenMailLooter()
+
+  mailLooterOpen = true
+
+  if not mailboxOpen then
+    RequestOpenMailbox()
+  else
+    ScanMail()
+  end
+end
+
+-- Call to end a MailLooter session.
+function CORE.CloseMailLooter()
+  if mailLooterOpen then
+    mailLooterOpen = false
+    CORE.state = STATE_CLOSE
+    CloseMailbox()
+  end
+end
+
+-- Set to true to reserve 4 inventory spaces that are needed to do deconstucts.
+function CORE.SetSaveDeconSpace(val)
+  CORE.deconSpace = val
+end
+
+-- Register callbacks with the Core.
+--
+-- listUpdateCB
+--   This callback informs the upper layer of the items looted from 
+--   the mailbox.  It is call for each item looted from mail, and then
+--   once when the looting is complete.  The last time will have 
+--   isDone=true and itemLink=nil.
+--
+--   function listUpdateCB(itemTable, isDone, itemLink)
+--
+-- statusUpdateCB
+--
+-- scanUpdateCB
+--
+function CORE.NewCallbacks(listUpdateCB, statusUpdateCB, scanUpdateCB)
+
+  local s = {}
+  s.ListUpdateCB = listUpdateCB
+  s.StatusUpdateCB = statusUpdateCB
+  s.ScanUpdateCB = scanUpdateCB
+
+  CORE.callbacks = s
+
+end
+
+
+-- Start looting the mailbox.
 function CORE.ProcessMailAll()
 
   if CORE.state ~= STATE_IDLE then 
@@ -508,15 +535,18 @@ function CORE.ProcessMailAll()
 
 end
 
+-- Attempt to recover from a failure, or cancel an ongoing looting.
 function CORE.Reset()
   d( "MailLooter reset" )
   CORE.state = STATE_IDLE
 end
 
+-- Returns true if the core is ready for a command.
 function CORE.IsIdle()
   return CORE.state == STATE_IDLE
 end
 
+-- Returns true if the core is ready to perform a mailbox looting.
 function CORE.IsActionReady()
 
   if (CORE.state == STATE_IDLE) and 
