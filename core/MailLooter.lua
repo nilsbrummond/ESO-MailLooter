@@ -41,19 +41,11 @@ CORE.deconSpace = false
 CORE.initialized = false
 CORE.debug = true
 CORE.state = nil
-CORE.titles = {}
-CORE.fromSystemOnly = false
-CORE.items = {}
-CORE.money = 0
+CORE.loot = {items={}, money=0, mails=0}
 CORE.currentMail = {}
 CORE.currentItems = {}
 
 CORE.callbacks = nil
-
--- Control modes
-CORE.lootItems = true
-CORE.lootMoney = true
-CORE.deleteAfter = true
 
 
 local mailboxOpen = false
@@ -73,6 +65,20 @@ local STATE_CLOSE  = 8
 
 CORE.state = STATE_IDLE
 
+-- MAIL_TYPE
+local MAILTYPE_UNKNOWN  = 0
+local MAILTYPE_AVA      = 1
+local MAILTYPE_HIRELING = 2
+local MAILTYPE_STORE    = 3
+local MAILTYPE_COD      = 4
+
+CORE.filters = {}
+CORE.filters[MAILTYPE_UNKNOWN] = false
+CORE.filters[MAILTYPE_AVA] = true
+CORE.filters[MAILTYPE_HIRELING] = true
+CORE.filters[MAILTYPE_STORE] = true
+CORE.filters[MAILTYPE_COD] = true
+
 --
 -- Local Functions
 --
@@ -83,22 +89,30 @@ local function DEBUG(str)
   end
 end
 
-local function AddItemsToHistory()
+-- Detect the type of a mail message.
+local function GetMailType(subject, fromSystem, codAmount)
 
-  for ind,item in ipairs(CORE.currentItems) do
-
-    local name = GetItemLinkName(item.link)
-
-    if CORE.items[name] == nil then
-      CORE.items[name] = {}
+  if fromSystem then
+    if TitlesAvA[subject] then
+      return MAILTYPE_AVA
+    elseif TitlesHirelings[subject] then
+      return MAILTYPE_HIRELING
+    elseif TitlesStores[subject] then
+      return MAILTYPE_STORE
     end
-
-    table.insert(CORE.items[name], item )
-    DEBUG( "MailLooter: " .. tostring(item.link))
-    CORE.callbacks.ListUpdateCB(CORE.items, false, item.link)
+  else
+    if codAmount > 0 then
+      return MAILTYPE_COD
+    end
   end
 
-  CORE.currentItems = {}
+  return MAILTYPE_UNKNOWN
+end
+
+-- Return based on mailType and type filter.
+local function LootThisMail(mailType)
+ 
+  return CORE.filters[mailType]
 
 end
 
@@ -110,6 +124,52 @@ local function GetFreeLootSpace()
   end
 
   return space
+end
+
+local function IsRoomToLoot(mailId, numAtt)
+
+  local space = GetFreeLootSpace()
+
+  -- Easy case: there is room
+  if (numAtt <= space) then return true end
+
+  -- harder case: see if items will stack
+  local roomNeeded = 0
+
+  for i=1,numAtt do
+    local _, stack = GetAttachedItemInfo(mailId, i)
+    local link = GetAttachedItemLink(mailId, i, LINK_STYLE_BRACKETS)
+    local stackCountBackpack = GetItemLinkStacks(link)
+
+    if (stackCountBackpack == 0) or ((stack + stackCountBackpack) > 200) then
+      roomNeeded = roomNeeded + 1
+    else
+      DEBUG("Will stack: " .. link .. " s: " .. stack .. " i: " .. stackCountBackpack)
+    end
+  end
+
+  return (roomNeeded <= space)
+
+end
+
+local function AddItemsToHistory()
+
+  for ind,item in ipairs(CORE.currentItems) do
+
+    local name = GetItemLinkName(item.link)
+
+    if CORE.loot.items[item.link] == nil then
+      CORE.loot.items[item.link] = item
+    else
+      CORE.loot.items[item.link].stack = CORE.loot.items[item.link].stack + item.stack
+    end
+
+    DEBUG( "MailLooter: " .. tostring(item.link))
+    CORE.callbacks.ListUpdateCB(CORE.loot, false, item.link)
+  end
+
+  CORE.currentItems = {}
+
 end
 
 local function DoDeleteCmd()
@@ -158,34 +218,42 @@ local function SummaryScanMail()
 
 end
 
-
+-- This function will loot zero to one mails.  Zero if there is no room or no mail.
+-- If there is a valid mail to loot then it will be the loot process.
 local function LootMails()
   DEBUG( "LootMails" )
 
   CORE.state = STATE_LOOT
 
-  local count = 0
-  local space = GetFreeLootSpace()
+  local failedNoSpace = false
   local id = GetNextMailId(nil)
 
   while id ~= nil do
 
     local _, _, subject, icon, unread, fromSystem, fromCustomerService, returned, numAttachments, attachedMoney, codAmount, expiresInDays, secsSinceReceived = GetMailItemInfo(id)
 
-    if (codAmount == 0) and 
-       ( (not CORE.fromSystemOnly) or fromSystem ) and 
-       ((CORE.titles == nil) or (CORE.titles[subject] ~= nil))
-    then
+    local mailType = GetMailType(subject, fromSystem, codAmount)
+
+    if LootThisMail(mailType) then
+
       -- Loot this Mail
       DEBUG( "found mail: " .. Id64ToString(id) .. " '" .. 
              subject .. "' " .. numAttachments .. " " .. (secsSinceReceived/60))
 
-      count = count + 1
-
       CORE.currentMail = { id=id, att=numAttachments, money=attachedMoney }
       local v = CORE.currentMail
 
-      if CORE.lootItems and (v.att > 0) and (v.att <= space) then
+      local doItemLoot = false
+      if (v.att > 0) then
+        if IsRoomToLoot(id, v.att) then
+          doItemLoot = true
+        else
+          failedNoSpace = true
+        end
+      end
+
+      if doItemLoot then
+        CORE.loot.mails = CORE.loot.mails + 1
 
         CORE.currentItems = {}
 
@@ -200,15 +268,20 @@ local function LootMails()
 
         DEBUG("items id=" .. Id64ToString(id))
         CORE.state = STATE_READ
+        -- NOTE: Seems reading the mail help with getting items more reliably.
         RequestReadMail(id)
         return
-      elseif CORE.lootMoney and (v.money ~= nil) and (v.money > 0) then
+      elseif (v.money ~= nil) and (v.money > 0) then
         DEBUG("money id=" .. Id64ToString(id))
+        CORE.loot.mails = CORE.loot.mails + 1
         CORE.state = STATE_MONEY
         TakeMailAttachedMoney(id)
         return
-      elseif CORE.deleteAfter then
+      elseif v.att == 0 then 
+        -- DELETE
+        -- player may have manually looted and not deleted it.
         DEBUG("delete id=" .. Id64ToString(id))
+        CORE.loot.mails = CORE.loot.mails + 1
         CORE.state = STATE_DELETE
         DeleteMail(id, true)
         return
@@ -222,15 +295,15 @@ local function LootMails()
 
   end
 
-  if count > 0 then
+  if failedNoSpace then
     DEBUG ( "No room left in inventory" )
-    CORE.callbacks.ListUpdateCB(CORE.items, true, nil)
+    CORE.callbacks.ListUpdateCB(CORE.loot, true, nil)
     CORE.state = STATE_IDLE
-    CORE.callbacks.StatusUpdateCB(false, true, nil)
+    CORE.callbacks.StatusUpdateCB(false, false, "Inventory Full")
     SummaryScanMail()
   else
     DEBUG ( "Done" )
-    CORE.callbacks.ListUpdateCB(CORE.items, true, nil)
+    CORE.callbacks.ListUpdateCB(CORE.loot, true, nil)
     CORE.state = STATE_IDLE
     CORE.callbacks.StatusUpdateCB(false, true, nil)
     SummaryScanMail()
@@ -247,64 +320,23 @@ local function LootMailsCont()
 
 end
 
-local function ScanMail()
-
-  DEBUG( "ScanMail" )
-
-  CORE.state = STATE_SCAN
-
-  local count = 0
-  local id = GetNextMailId(nil)
-
-  while id ~= nil do
-
-    local _, _, subject, icon, unread, fromSystem, fromCustomerService, returned, numAttachments, attachedMoney, codAmount, expiresInDays, secsSinceReceived = GetMailItemInfo(id)
-
-    if (codAmount == 0) and ((CORE.titles == nil) or (CORE.titles[subject] ~= nil)) then
-      -- Loot this Mail
-      DEBUG( "found mail: " .. Id64ToString(id) .. " '" .. 
-             subject .. "' " .. numAttachments .. " " .. (secsSinceReceived/60))
-
-      count = count + 1
-    end
-
-    id = GetNextMailId(id)
-  end
-
-  if count == 0 then
-    DEBUG( "MailLooter sees no mails to loot" )
-    CORE.callbacks.ListUpdateCB(CORE.items, true, nil)
-    CORE.state = STATE_IDLE
-    CORE.callbacks.StatusUpdateCB(false, true, nil)
-  else
-    LootMails()
-  end
-
-end
-
-local function Start()
+local function Start(filter)
   DEBUG( "Start" )
 
-  CORE.items = {}
-  CORE.money = 0
-  CORE.currentMail = {}
-  CORE.state = STATE_OPEN
-
-  if CORE.lootItems and (GetFreeLootSpace() == 0) then
-    d( "No free space in inventory" )
-    CORE.callbacks.ListUpdateCB(CORE.items, true, nil)
-    CORE.state = STATE_IDLE
-    CORE.callbacks.StatusUpdateCB(false, false, "No free space in inventory")
+  if CORE.state ~= STATE_IDLE then
+    CORE.callbacks.StatusUpdateCB(false, false, "Core Not Ready")
     return
   end
 
+  CORE.filters = filter
+
+  CORE.loot = { items = {}, money = 0, mails = 0 }
+  CORE.currentMail = {}
+
   CORE.callbacks.StatusUpdateCB(true, true, nil)
 
-  if not mailboxOpen then
-    RequestOpenMailbox()
-  else
-    ScanMail()
-  end
+  LootMails()
+
 end
 
 --
@@ -347,12 +379,11 @@ function CORE.InboxUpdateEvt( eventCode )
   DEBUG( "InboxUpdate state=" .. CORE.state )
 
   if mailLooterOpen then
-    if CORE.state == STATE_IDLE then
+    if (CORE.state == STATE_IDLE) or
+       (CORE.state == STATE_UPDATE) then
+      
+      CORE.state = STATE_IDLE
       SummaryScanMail()
-    end
-
-    if CORE.state == STATE_UPDATE then
-      ScanMail()
     end
   end
 end
@@ -392,15 +423,12 @@ function CORE.TakeItemsEvt( eventCode, mailId )
     if CORE.currentMail.id == mailId then
       AddItemsToHistory()
 
-      if CORE.lootMoney and (CORE.currentMail.money ~= nil) and (CORE.currentMail.money > 0) then
+      if (CORE.currentMail.money ~= nil) and (CORE.currentMail.money > 0) then
         CORE.state = STATE_MONEY
         TakeMailAttachedMoney(CORE.currentMail.id)
-      elseif CORE.deleteAfter then
+      else
         CORE.state = STATE_DELETE
         DeleteMail(CORE.currentMail.id, true)
-      else
-        CORE.currentMail = nil
-        LootMails()
       end
     end
   end
@@ -415,16 +443,11 @@ function CORE.TakeMoneyEvt( eventCode, mailId )
     if CORE.state ~= STATE_MONEY then return end
 
     if (CORE.currentMail.id == mailId) then
-      CORE.money = CORE.money + CORE.currentMail.money
+      CORE.loot.money = CORE.loot.money + CORE.currentMail.money
 
-      if CORE.deleteAfter then
-        CORE.state = STATE_DELETE
-        zo_callLater(DoDeleteCmd, 1)
-        --DeleteMail(CORE.currentMail.id, true)
-      else
-          CORE.currentMail = nil
-          LootMails()
-      end
+      CORE.state = STATE_DELETE
+      zo_callLater(DoDeleteCmd, 1)
+      --DeleteMail(CORE.currentMail.id, true)
     end
   end
 
@@ -470,9 +493,11 @@ function CORE.OpenMailLooter()
   mailLooterOpen = true
 
   if not mailboxOpen then
+    CORE.state = STATE_OPEN
     RequestOpenMailbox()
   else
-    ScanMail()
+    CORE.state = STATE_IDLE
+    SummaryScanMail()
   end
 end
 
@@ -482,6 +507,8 @@ function CORE.CloseMailLooter()
     mailLooterOpen = false
     CORE.state = STATE_CLOSE
     CloseMailbox()
+  else
+    CORE.state = STATE_CLOSE
   end
 end
 
@@ -498,11 +525,15 @@ end
 --   once when the looting is complete.  The last time will have 
 --   isDone=true and itemLink=nil.
 --
---   function listUpdateCB(itemTable, isDone, itemLink)
+--   function listUpdateCB(itemTable = {items ={[link] -> {icon, stack, creator, link}}, money, mails}, isDone, itemLink)
 --
 -- statusUpdateCB
 --
+--   function statusUpdateCB(inProgress, success, msg)
+--
 -- scanUpdateCB
+--
+--   function scanUpdateCB(summary = {countAVA, countHireling, countStore, countCOD, countOther, more})
 --
 function CORE.NewCallbacks(listUpdateCB, statusUpdateCB, scanUpdateCB)
 
@@ -520,24 +551,31 @@ end
 function CORE.ProcessMailAll()
 
   if CORE.state ~= STATE_IDLE then 
-    d( "MailLooter is currently running" )
+    DEBUG( "MailLooter is currently running" )
     return
   end
-  
-  d( "MailLooter starting all loot" )
+ 
+  local filter = {}
+  filter[MAILTYPE_UNKNOWN] = false
+  filter[MAILTYPE_AVA] = true
+  filter[MAILTYPE_HIRELING] = true
+  filter[MAILTYPE_STORE] = true
+  filter[MAILTYPE_COD] = true
 
-  CORE.titles = nil
-  CORE.fromSystemOnly = true
-  CORE.lootItems = true
-  CORE.lootMoney = true
-  CORE.deleteAfter = true
-  Start()
+  DEBUG( "MailLooter starting all loot" )
+  Start(filter)
 
+end
+
+-- New Version
+-- Start looting the mailbox.
+-- Allows filtering on mail type.
+function CORE.ProcessMail(filter)
 end
 
 -- Attempt to recover from a failure, or cancel an ongoing looting.
 function CORE.Reset()
-  d( "MailLooter reset" )
+  DEBUG( "MailLooter reset" )
   CORE.state = STATE_IDLE
 end
 
