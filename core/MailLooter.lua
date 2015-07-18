@@ -126,28 +126,64 @@ local function GetFreeLootSpace()
   return space
 end
 
+
 local function IsRoomToLoot(mailId, numAtt)
+
+  -- NOTE: Testing seems to show that you can not loot items that will
+  --       stack unless at least one inventory space is open.
+  if GetNumBagFreeSlots(BAG_BACKPACK) == 0 then return false end
+
 
   local space = GetFreeLootSpace()
 
   -- Easy case: there is room
+  DEBUG("   numAtt: " .. numAtt .. " space: " .. space)
   if (numAtt <= space) then return true end
 
   -- harder case: see if items will stack
   local roomNeeded = 0
 
   for i=1,numAtt do
-    local _, stack = GetAttachedItemInfo(mailId, i)
     local link = GetAttachedItemLink(mailId, i, LINK_STYLE_BRACKETS)
-    local stackCountBackpack = GetItemLinkStacks(link)
 
-    if (stackCountBackpack == 0) or ((stack + stackCountBackpack) > 200) then
-      roomNeeded = roomNeeded + 1
+    if IsItemLinkStackable(link) then
+      -- Stackable Item
+      local _, stack = GetAttachedItemInfo(mailId, i)
+      local stackCountBackpack = GetItemLinkStacks(link)
+
+      if (stackCountBackpack == 0) then
+        -- No item in backpack to stack with.
+        DEBUG("No stacks for: " .. link)
+        roomNeeded = roomNeeded + 1
+      else
+        -- We now might be able to stack.  To do this right we need to search 
+        -- the backpack for the matching link?  And use:
+        -- stack, maxStack = GetSlotStackSize(BAG_BACKPACK, slotIndex)
+        -- to get the max stack size.
+        --
+        -- HACK: for now assume a max stack size of 200.
+        --
+        stackCountBackpack = stackCountBackpack % 200
+        if (stackCountBackpack == 0) or 
+           ((stack + stackCountBackpack) > 200) then
+
+          DEBUG("Can not stack with: " .. link)
+          roomNeeded = roomNeeded + 1
+
+        else
+          DEBUG("Will stack: " .. link .. 
+                " s: " .. stack .. 
+                " i: " .. stackCountBackpack)
+        end
+      end
     else
-      DEBUG("Will stack: " .. link .. " s: " .. stack .. " i: " .. stackCountBackpack)
+      -- NOT Stackable Item
+      DEBUG("Not stackable: " .. link)
+      roomNeeded = roomNeeded + 1
     end
   end
 
+  DEBUG("   roomNeeded: " .. roomNeeded .. " space: " .. space)
   return (roomNeeded <= space)
 
 end
@@ -218,8 +254,9 @@ local function SummaryScanMail()
 
 end
 
--- This function will loot zero to one mails.  Zero if there is no room or no mail.
--- If there is a valid mail to loot then it will be the loot process.
+-- This function will loot zero to one mails.  Zero if there is no
+-- room or no mail.  If there is a valid mail to loot then it will
+-- be the loot process.
 local function LootMails()
   DEBUG( "LootMails" )
 
@@ -454,6 +491,27 @@ function CORE.TakeMoneyEvt( eventCode, mailId )
   DEBUG( "TakeMoney end" )
 end
 
+function CORE.InventoryFullEvt( eventCode, numSlotsReq, numSlotFree )
+  DEBUG( "InventoryFull state=" .. CORE.state )
+
+  if mailLooterOpen then
+    if CORE.state ~= STATE_ITEMS then return end
+
+    -- Must match the number of items we are looting.
+    if numSlotReq ~= CORE.currentMail.att then return end
+
+    -- This is now PROBABLY in response to our take item request.
+
+    -- Need to fail.  Trying again will lead to an infinite loop.
+    DEBUG( "Inventory full ERROR!" )
+    CORE.state = STATE_IDLE
+    CORE.callbacks.StatusUpdateCB(false, false, "Inventory Full")
+    SummaryScanMail()
+  end
+
+  DEBUG( "InventoryFull end" )
+end
+
 --
 -- Public Functions
 --
@@ -469,21 +527,24 @@ function CORE.Initialize(saveDeconSpace)
   CORE.deconSpace = saveDeconSpace
 
   EVENT_MANAGER:RegisterForEvent(
-    LIB_NAME, EVENT_MAIL_OPEN_MAILBOX, CORE.OpenMailboxEvt )
+    ADDON.NAME, EVENT_MAIL_OPEN_MAILBOX, CORE.OpenMailboxEvt )
   EVENT_MANAGER:RegisterForEvent(
-    LIB_NAME, EVENT_MAIL_CLOSE_MAILBOX, CORE.CloseMailboxEvt )
+    ADDON.NAME, EVENT_MAIL_CLOSE_MAILBOX, CORE.CloseMailboxEvt )
   EVENT_MANAGER:RegisterForEvent(
-    LIB_NAME, EVENT_MAIL_INBOX_UPDATE, CORE.InboxUpdateEvt )
+    ADDON.NAME, EVENT_MAIL_INBOX_UPDATE, CORE.InboxUpdateEvt )
   EVENT_MANAGER:RegisterForEvent(
-    LIB_NAME, EVENT_MAIL_READABLE, CORE.MailReadableEvt )
+    ADDON.NAME, EVENT_MAIL_READABLE, CORE.MailReadableEvt )
 
   EVENT_MANAGER:RegisterForEvent(
-    LIB_NAME, EVENT_MAIL_REMOVED, CORE.MailRemovedEvt )
+    ADDON.NAME, EVENT_MAIL_REMOVED, CORE.MailRemovedEvt )
 
   EVENT_MANAGER:RegisterForEvent(
-    LIB_NAME, EVENT_MAIL_TAKE_ATTACHED_ITEM_SUCCESS, CORE.TakeItemsEvt )
+    ADDON.NAME, EVENT_MAIL_TAKE_ATTACHED_ITEM_SUCCESS, CORE.TakeItemsEvt )
   EVENT_MANAGER:RegisterForEvent(
-    LIB_NAME, EVENT_MAIL_TAKE_ATTACHED_MONEY_SUCCESS, CORE.TakeMoneyEvt )
+    ADDON.NAME, EVENT_MAIL_TAKE_ATTACHED_MONEY_SUCCESS, CORE.TakeMoneyEvt )
+
+  EVENT_MANAGER:RegisterForEvent(
+    ADDON.NAME, EVENT_INVENTORY_IS_FULL, CORE.InventoryFullEvt )
 
 end
 
@@ -576,7 +637,12 @@ end
 -- Attempt to recover from a failure, or cancel an ongoing looting.
 function CORE.Reset()
   DEBUG( "MailLooter reset" )
-  CORE.state = STATE_IDLE
+
+  if mailLooterOpen then
+    CORE.state = STATE_IDLE
+    CORE.callbacks.StatusUpdateCB(false, false, "Cancel")
+    SummaryScanMail()
+  end
 end
 
 -- Returns true if the core is ready for a command.
@@ -588,10 +654,8 @@ end
 function CORE.IsActionReady()
 
   if (CORE.state == STATE_IDLE) and 
-     (GetNumMailItems() > 0) and
-     (GetFreeLootSpace() > 0)
+     (GetNumMailItems() > 0)
   then
-
     return true
   end
 
