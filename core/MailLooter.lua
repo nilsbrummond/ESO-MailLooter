@@ -224,6 +224,8 @@ local function SummaryScanMail()
   local countCOD = 0
   local countStore = 0
   local countOther = 0
+  local countItems = 0
+  local countMoney = 0
 
   local id = GetNextMailId(nil)
   while id ~= nil do
@@ -231,8 +233,12 @@ local function SummaryScanMail()
 
     -- DEBUG(" -- Mail:" .. Id64ToString(id) .. " " .. subject .. " from:"..sdn.."/"..scn .. " sys:" .. tostring(fromSystem) .. " cs:"..tostring(fromCustomerService))
 
+    countItems = countItems + numAttachments
+    countMoney = countMoney + attachedMoney
+
     if codAmount > 0 then
       countCOD = countCOD + 1
+      countMoney = countMoney + codAmount
     elseif TitlesAvA[subject] then
       countAvA = countAvA + 1
     elseif TitlesHirelings[subject] then
