@@ -1,6 +1,6 @@
 ## Title: |cFFFFB0MailLooter|r
 ## Description: MailLooter loots mail and deletes it for AvA and Hirelings
-## Version: 0.23
+## Version: 0.24
 ## Author: Lodur
 ## APIVersion: 100011
 ## SavedVariables: MailLooter_Settings
