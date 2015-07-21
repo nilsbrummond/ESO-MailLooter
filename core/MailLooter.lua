@@ -549,7 +549,7 @@ function CORE.InventoryFullEvt( eventCode, numSlotsReq, numSlotFree )
     if CORE.state ~= STATE_ITEMS then return end
 
     -- Must match the number of items we are looting.
-    if numSlotReq ~= CORE.currentMail.att then return end
+    if numSlotsReq ~= CORE.currentMail.att then return end
 
     -- This is now PROBABLY in response to our take item request.
 
