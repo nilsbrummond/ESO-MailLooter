@@ -16,17 +16,35 @@ local function DEBUG(str)
   end
 end
 
-function UI.CoreListUpdateCB(loot, complete, itemLink)
+function UI.CoreListUpdateCB(loot, complete, itemLink, isNewItemType)
   DEBUG("ListUpdateCB")
 
-  if not complete then return end
+  if UI.debug and complete then
 
-  d("Mails looted: " .. loot.mails)
-  d("Gold looted: " .. loot.money)
+    d("Mails looted: " .. loot.mails)
+    d("Gold looted: " .. loot.money)
 
-  d("Items looted:")
-  for i1,v1 in pairs(loot.items) do
-    d("  " .. GetItemLinkName(v1.link) .. " " .. v1.stack .. " " .. v1.icon )
+    d("Items looted:")
+    for i1,v1 in pairs(loot.items) do
+      d("  " .. GetItemLinkName(v1.link) .. " (" .. v1.stack .. ")" )
+    end
+  end 
+
+  UI.LootFragUpdateMoney(loot.money)
+
+  if complete then
+    
+    -- Done...
+    UI.summaryLabel:SetText("Done.")
+    ADDON.SetSetting_SaveHistory(loot)
+
+  elseif itemLink ~= nil then
+    UI.LootFragAddLooted(loot.items[itemLink], isNewItemType)
+
+    UI.LootFragUpdateInv(
+      GetNumBagUsedSlots(BAG_BACKPACK),
+      GetBagSize(BAG_BACKPACK),
+      ADDON.Core.GetSaveDeconSpace())
   end
 
 end
@@ -53,9 +71,16 @@ function UI.CoreScanUpdateCB(summary)
     d( "COD Mails:      " .. summary.countCOD )
     d( "Other Mails:    " .. summary.countOther )
     d( "More Mail:      " .. tostring(summary.more) )
+    d( "Total Items:    " .. summary.countItems )
+    d( "Total Money:    " .. summary.countMoney )
   end
 
   UI.UpdateSummary(summary)
+
+  UI.LootFragUpdateInv(
+    GetNumBagUsedSlots(BAG_BACKPACK),
+    GetBagSize(BAG_BACKPACK),
+    ADDON.Core.GetSaveDeconSpace())
 
 end
 
@@ -64,6 +89,7 @@ function UI.SceneStateChange(_, newState)
 
   if newState == SCENE_SHOWING then
     KEYBIND_STRIP:AddKeybindButtonGroup(UI.mailLooterButtonGroup)
+    UI.LootFragClear()
     ADDON.Core.OpenMailLooter()
 
     -- NOTE: HACK
@@ -95,62 +121,4 @@ function UI.InitUserInterface()
 
 end
 
-local function mailfull(str)
-  if IsLocalMailboxFull() then return str .. "+" else return str end
-end
 
-local function summaryStr(num)
-  return string.format("%2d", num)
-end
-
-local function colortxt(txt)
-  return "|cC0C0A0" .. txt
-end
-
-local function colorval(txt)
-  return "|cFFFFFF" .. txt
-end
-
-function UI.UpdateSummary(summary)
-
-  local full = IsLocalMailboxFull()
-  local mailCount = GetNumMailItems()
-  local unreadCount = GetNumUnreadMail()
-
-  local lootableCount = 
-    summary.countAvA + summary.countHireling +
-    summary.countStore + summary.countCOD
-
-  local strAllMail = mailfull(summaryStr(mailCount))
-  local strUnread = mailfull(summaryStr(unreadCount))
-  local strLootable = mailfull(summaryStr(lootableCount))
-  local strAVA = mailfull(summaryStr(summary.countAvA))
-  local strHireling = mailfull(summaryStr(summary.countHireling))
-  local strStore = mailfull(summaryStr(summary.countStore))
-  local strCoD = mailfull(summaryStr(summary.countCOD))
-  local strOther = mailfull(summaryStr(summary.countOther))
-
---  UI.summaryLabelAll:SetText(strAllMail)
---  UI.summaryLabelUnread:SetText(strUnread)
---  UI.summaryLabelLootable:SetText(strLootable)
---  UI.summaryLabelAVA:SetText(strAVA)
---  UI.summaryLabelHireling:SetText(strHireling)
---  UI.summaryLabelStore:SetText(strStore)
---  UI.summaryLabelCOD:SetText(strCoD)
---  UI.summaryLabelOther:SetText(strOther)
-
-  GetInterfaceColor(INTERFACE_COLOR_TYPE_STAT_VALUE, 1)
-  GetInterfaceColor(INTERFACE_COLOR_TYPE_STAT_VALUE, 1)
-
-  UI.summaryLabel:SetText(
-    colortxt(   "All Mail: ") .. colorval(strAllMail) ..
-    colortxt("   Unread: ") .. colorval(strUnread) ..
-    colortxt("   Lootable: ") .. colorval(strLootable) ..
-    colortxt("   AvA: ") .. colorval(strAVA) ..
-    colortxt("   Hireling: ") .. colorval(strHireling) ..
-    colortxt("   Store: ") .. colorval(strStore) ..
-    colortxt("   CoD: ") .. colorval(strCoD) ..
-    colortxt("   Other: ") .. colorval(strOther)
-  )
-
-end

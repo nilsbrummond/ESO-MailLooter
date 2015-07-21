@@ -1,0 +1,69 @@
+<GuiXml>
+  <Controls>
+    <Control name="MailLooterLootListRow" virtual="true">
+      <Dimensions x="750" y="52" />
+
+      <Controls>
+        <Texture name="$(parent)_BG" textureFile="/esoui/art/miscellaneous/listItem_backdrop.dds" layer="BACKGROUND" alpha="1">
+          <Dimensions x="750" y="52" />
+          <AnchorFill />
+        </Texture>
+
+        <Texture name="$(parent)_Type" alpha="0.7">
+          <Dimensions x="40" y="40" />
+          <Anchor point="TOPLEFT" relativeTo="$(parent)" offsetX="10" offsetY="5" />
+        </Texture>
+
+        <Texture name="$(parent)_Icon">
+          <Dimensions x="50" y="50" />
+          <Anchor point="LEFT" relativePoint="RIGHT" relativeTo="$(parent)_Type" offsetX="30" offsetY="0" />
+        </Texture>
+
+        <Label name="$(parent)_Name" font="ZoFontGameBold" text="" wrapMode="ELLIPSIS">
+          <Anchor point="LEFT" relativePoint="RIGHT" relativeTo="$(parent)_Icon" offsetX="15" offsetY="0" />
+        </Label>
+
+        <Label name="$(parent)_Value" font="ZoFontGameBold" text="">
+          <Anchor point="RIGHT" relativePoint="RIGHT" relativeTo="$(parent)" offsetX="-10" offsetY="0" />
+        </Label>
+      </Controls>
+
+    </Control>
+
+
+    <Control name="MailLooterLootListRowExtra" virtual="true">
+      <Dimensions x="750" y="52" />
+
+      <Controls>
+        <Texture name="$(parent)_BG" textureFile="/esoui/art/miscellaneous/listItem_backdrop.dds" layer="BACKGROUND" alpha="1">
+          <Dimensions x="750" y="52" />
+          <AnchorFill />
+        </Texture>
+
+        <Texture name="$(parent)_Type" alpha="0.7">
+          <Dimensions x="40" y="40" />
+          <Anchor point="TOPLEFT" relativeTo="$(parent)" offsetX="10" offsetY="5" />
+        </Texture>
+
+        <Texture name="$(parent)_Icon">
+          <Dimensions x="50" y="50" />
+          <Anchor point="LEFT" relativePoint="RIGHT" relativeTo="$(parent)_Type" offsetX="30" offsetY="0" />
+        </Texture>
+
+        <Label name="$(parent)_Name" font="ZoFontGameBold" text="" wrapMode="ELLIPSIS">
+          <Anchor point="TOPLEFT" relativePoint="TOPRIGHT" relativeTo="$(parent)_Icon" offsetX="5" offsetY="0" />
+        </Label>
+
+        <Label name="$(parent)_Extra" font="ZoFontGame" text="">
+          <Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" relativeTo="$(parent)_Icon" offsetX="5" offsetY="0" />
+        </Label>
+
+        <Label name="$(parent)_Value" font="ZoFontGameBold" text="">
+          <Anchor point="RIGHT" relativePoint="RIGHT" relativeTo="$(parent)" offsetX="20" offsetY="0" />
+        </Label>
+      </Controls>
+
+    </Control>
+
+  </Controls>
+</GuiXml>

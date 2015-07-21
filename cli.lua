@@ -8,6 +8,7 @@ local function CommandHandler(text)
     d( "Commands:" )
     d( "debug [on/off]  -  Turns debug messages on and off" )
     d( "reset  -  Reset the maillooter in case it is stuck." )
+    d( "test  -  Test looting..." )
 
     return
   elseif text == "debug off" then
@@ -16,6 +17,8 @@ local function CommandHandler(text)
     ADDON.SetSetting_debug(true)
   elseif text == "reset" then
     ADDON.Core.Reset()
+  elseif text == "test" then
+    ADDON.Core.TestLoot()
   end
 end
 

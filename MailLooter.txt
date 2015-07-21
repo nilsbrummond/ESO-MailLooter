@@ -43,6 +43,7 @@ ui/KeybindStrip.lua
 ui/MailLooterScene.lua
 ui/SummaryFragment.lua
 ui/LootFragment.lua
+ui/LootFragment.xml
 
 Main.lua
 cli.lua

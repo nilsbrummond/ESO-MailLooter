@@ -6,6 +6,7 @@ ADDON.initialized = false
 ADDON.settingsDefaults = {
   ["saveDeconSpace"] = true,
   ["debug"]          = false,
+  ["history"]        = {},
 }
 
 
@@ -20,6 +21,9 @@ local function Initialize( eventCode, addOnName )
     ADDON.settingsDefaults)
 
   ADDON.SetDebug(ADDON.settings.debug)
+
+  -- Clear the history table.
+  ADDON.settings.history = {}
 
   ADDON.Core.Initialize(ADDON.settings.saveDeconSpace)
   ADDON.UI.InitUserInterface()
@@ -41,6 +45,13 @@ function ADDON.SetSetting_debug(val)
   ADDON.settings.debug = val
   ADDON.SetDebug(val)
 end 
+
+function ADDON.SetSetting_SaveHistory(loot)
+  -- Only store the history for debugging...
+  if ADDON.debug then
+    table.insert( ADDON.settings.history, loot)
+  end
+end
 
 function ADDON.SetDebug(on)
   ADDON.debug = on

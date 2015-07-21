@@ -4,6 +4,25 @@ local ADDON = eso_addon_MailLooter
 ADDON.UI = ADDON.UI or {}
 local UI = ADDON.UI
 
+
+local function mailfull(str)
+  if IsLocalMailboxFull() then return str .. "+" else return str end
+end
+
+local function summaryStr(num)
+  return string.format("%2d", num)
+end
+
+local function colortxt(txt)
+  return "|cC0C0A0" .. txt
+end
+
+local function colorval(txt)
+  return "|cFFFFFF" .. txt
+end
+
+
+
 -- local function AddNameLabel(name, text, parent, after)
 --   local win = WINDOW_MANAGER:CreateControl(
 --                 "MAIL_LOOTER_SUMMARY_NLABEL_" .. name,
@@ -51,7 +70,7 @@ function UI.CreateSummaryFragment()
   MAIL_LOOTER_SUMMARY_TITLELabel:SetFont("ZoFontWinH2")
   MAIL_LOOTER_SUMMARY_TITLELabel:SetAnchor(
     CENTER, MAIL_LOOTER_SUMMARY_TITLEDivider, CENTER, 0, -15)
-  MAIL_LOOTER_SUMMARY_TITLEDivider:SetDimensions(800,2)
+  MAIL_LOOTER_SUMMARY_TITLEDivider:SetDimensions(900,2)
 
 --  fragment.background = WINDOW_MANAGER:CreateControl(
 --    "MailLooterSummaryBackground", fragment.win, CT_BACKDROP)
@@ -122,6 +141,50 @@ function UI.CreateSummaryFragment()
   fragment.FRAGMENT = ZO_FadeSceneFragment:New(fragment.win)
 
   return fragment
+end
+
+
+function UI.UpdateSummary(summary)
+
+  local full = IsLocalMailboxFull()
+  local mailCount = GetNumMailItems()
+  local unreadCount = GetNumUnreadMail()
+
+  local lootableCount = 
+    summary.countAvA + summary.countHireling +
+    summary.countStore + summary.countCOD
+
+  local strAllMail = mailfull(summaryStr(mailCount))
+  local strUnread = mailfull(summaryStr(unreadCount))
+  local strLootable = mailfull(summaryStr(lootableCount))
+  local strAVA = mailfull(summaryStr(summary.countAvA))
+  local strHireling = mailfull(summaryStr(summary.countHireling))
+  local strStore = mailfull(summaryStr(summary.countStore))
+  local strCoD = mailfull(summaryStr(summary.countCOD))
+  local strOther = mailfull(summaryStr(summary.countOther))
+
+--  UI.summaryLabelAll:SetText(strAllMail)
+--  UI.summaryLabelUnread:SetText(strUnread)
+--  UI.summaryLabelLootable:SetText(strLootable)
+--  UI.summaryLabelAVA:SetText(strAVA)
+--  UI.summaryLabelHireling:SetText(strHireling)
+--  UI.summaryLabelStore:SetText(strStore)
+--  UI.summaryLabelCOD:SetText(strCoD)
+--  UI.summaryLabelOther:SetText(strOther)
+
+  GetInterfaceColor(INTERFACE_COLOR_TYPE_STAT_VALUE, 1)
+  GetInterfaceColor(INTERFACE_COLOR_TYPE_STAT_VALUE, 1)
+
+  UI.summaryLabel:SetText(
+    colortxt(   "All Mail: ") .. colorval(strAllMail) ..
+    colortxt("   Unread: ") .. colorval(strUnread) ..
+    colortxt("   Lootable: ") .. colorval(strLootable) ..
+    colortxt("   AvA: ") .. colorval(strAVA) ..
+    colortxt("   Hireling: ") .. colorval(strHireling) ..
+    colortxt("   Store: ") .. colorval(strStore) ..
+    colortxt("   CoD: ") .. colorval(strCoD) ..
+    colortxt("   Other: ") .. colorval(strOther)
+  )
 
 end
 
