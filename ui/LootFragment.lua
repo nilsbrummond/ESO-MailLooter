@@ -32,8 +32,11 @@ local function SetupRowData(rowControl, data, scrollList)
 
   rowControl:GetNamedChild("_Type"):SetTexture(typeIcons[data.mailType])
   rowControl:GetNamedChild("_Icon"):SetTexture(data.icon)
+
+  local text = zo_strformat("<<t:1>>", data.link)
+ 
   rowControl:GetNamedChild("_Name"):SetText(
-    GetItemLinkName(data.link) .. "   (" .. data.stack .. ")")
+    text .. "|r   (" .. data.stack .. ")")
  
   ZO_CurrencyControl_SetSimpleCurrency(
     rowControl:GetNamedChild("_Value"),
@@ -135,7 +138,6 @@ function UI.CreateLootFragment()
   fragment.FRAGMENT = ZO_FadeSceneFragment:New(fragment.win)
 
   return fragment
-
 end
 
 function UI.LootFragUpdateInv(current, max, reserved)

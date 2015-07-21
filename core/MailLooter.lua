@@ -154,7 +154,7 @@ local function IsRoomToLoot(mailId, numAtt)
   local roomNeeded = 0
 
   for i=1,numAtt do
-    local link = GetAttachedItemLink(mailId, i, LINK_STYLE_BRACKETS)
+    local link = GetAttachedItemLink(mailId, i, LINK_STYLE_DEFAULT)
 
     if IsItemLinkStackable(link) then
       -- Stackable Item
@@ -293,12 +293,15 @@ local function LootMails()
       DEBUG( "found mail: " .. Id64ToString(id) .. " '" .. 
              subject .. "' " .. numAttachments .. " " .. (secsSinceReceived/60))
 
-      CORE.currentMail = { id=id, att=numAttachments, money=attachedMoney }
+      CORE.currentMail = { 
+        id=id, att=numAttachments, money=attachedMoney, mailType=mailType
+      }
+
       local v = CORE.currentMail
 
       local doItemLoot = false
       if (v.att > 0) then
-        if IsRoomToLoot(id, v.att) then
+        if IsRoomToLoot(id, numAttachments) then
           doItemLoot = true
         else
           failedNoSpace = true
@@ -308,17 +311,7 @@ local function LootMails()
       if doItemLoot then
         CORE.loot.mails = CORE.loot.mails + 1
 
-        CORE.currentItems = {}
-
-        for i=1,CORE.currentMail.att do
-          local icon, stack, creator = GetAttachedItemInfo(id, i)
-          local link = GetAttachedItemLink(id, i, LINK_STYLE_BRACKETS)
-
-          table.insert(
-            CORE.currentItems,
-            { icon=icon, stack=stack, 
-              creator=creator, link=link, mailType=mailType })
-        end
+        -- Setup currentItems moved from here to after readed event.
 
         DEBUG("items id=" .. Id64ToString(id))
         CORE.state = STATE_READ
@@ -366,6 +359,24 @@ end
 
 local function LootMailsCont()
   DEBUG( "LootMailsCont" )
+
+  -- Reading the attached items works better after reading the mail.
+  CORE.currentItems = {}
+
+  for i=1,CORE.currentMail.att do
+    local icon, stack, creator = GetAttachedItemInfo(
+      CORE.currentMail.id, i)
+    local link = GetAttachedItemLink(
+      CORE.currentMail.id, i, LINK_STYLE_DEFAULT)
+
+    DEBUG("  item: " .. link .. " icon: " .. icon)
+
+    table.insert(
+      CORE.currentItems,
+      { icon=icon, stack=stack, link=link, 
+        mailType=CORE.currentMail.mailType }
+    )
+  end
 
   CORE.state = STATE_ITEMS
   -- BUG: Why does this sometimes fail???
@@ -497,7 +508,7 @@ function CORE.TakeItemsEvt( eventCode, mailId )
     if CORE.state ~= STATE_ITEMS then return end
 
     if CORE.currentMail.id == mailId then
-      AddItemsToHistory()
+      AddItemsToHistory(CORE.loot, CORE.currentItems)
       CORE.currentItems = {}
 
       if (CORE.currentMail.money ~= nil) and (CORE.currentMail.money > 0) then
