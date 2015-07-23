@@ -51,15 +51,26 @@ local function SetupRowData(rowControl, data, scrollList)
 end
 
 local function SelectRow(prev, new, rebuild)
-  d("Row Selected")
+  prev:GetNamedChild("_Highlight"):SetHidden(true)
+  new:GetNamedChild("_Highlight"):SetHidden(false)
 end
 
 --
 -- Functions
 --
 
-function UI.CreateLootFragment()
-  local fragment = {}
+UI.LootFragmentClass = ZO_Object:Subclass()
+
+function UI.LootFragmentClass:New()
+  local obj = ZO_Object.New(self)
+  obj:Initialize()
+  return obj
+end
+
+
+function UI.LootFragmentClass:Initialize()
+  local fragment = self
+
   fragment.win = WINDOW_MANAGER:CreateTopLevelWindow(
                    "MailLooterLootFragment")
  
@@ -93,7 +104,7 @@ function UI.CreateLootFragment()
 
   ZO_ScrollList_AddCategory(scrollList, 1, nil)
 
-  UI.lootScrollList = scrollList
+  fragment.scrollList = scrollList
 
   --
   -- Footer
@@ -110,6 +121,7 @@ function UI.CreateLootFragment()
     nil, fragment.win, CT_LABEL)
   invLabel:SetFont("ZoFontGameBold")
   invLabel:SetText("|cC0C0A0Inventory Space: ")
+  invLabel:SetHeight(invLabel:GetFontHeight())
   invLabel:SetHorizontalAlignment(TEXT_ALIGN_LEFT)
   invLabel:SetAnchor(TOPLEFT, div, BOTTOMLEFT, 40, 10)
 
@@ -117,15 +129,17 @@ function UI.CreateLootFragment()
     nil, fragment.win, CT_LABEL)
   invValue:SetFont("ZoFontGameBold")
   invValue:SetText("XXX / XXX (4 Reserved)")
+  invValue:SetHeight(invValue:GetFontHeight())
   invValue:SetHorizontalAlignment(TEXT_ALIGN_LEFT)
   invValue:SetAnchor(LEFT, invLabel, RIGHT, 10, 0)
 
-  UI.lootInventoryText = invValue
+  fragment.lootInventoryText = invValue
 
   local moneyLabel = WINDOW_MANAGER:CreateControl(
     nil, fragment.win, CT_LABEL)
   moneyLabel:SetFont("ZoFontGameBold")
   moneyLabel:SetText(" |cC0C0A0Looted")
+  moneyLabel:SetHeight(moneyLabel:GetFontHeight())
   moneyLabel:SetHorizontalAlignment(TEXT_ALIGN_RIGHT)
   moneyLabel:SetAnchor(TOPRIGHT, div, BOTTOMRIGHT, -40, 10)
 
@@ -133,20 +147,20 @@ function UI.CreateLootFragment()
     nil, fragment.win, CT_LABEL)
   moneyValue:SetFont("ZoFontGameBold")
   moneyValue:SetText("Money: |u0:4:currency:1")
+  moneyValue:SetHeight(moneyValue:GetFontHeight())
   moneyValue:SetHorizontalAlignment(TEXT_ALIGN_RIGHT)
   moneyValue:SetAnchor(TOPRIGHT, moneyLabel, TOPLEFT, -10, 0)
 
-  UI.lootMoneyText = moneyValue
-  UI.LootFragUpdateMoney(0)
+  fragment.lootMoneyText = moneyValue
 
   fragment.FRAGMENT = ZO_FadeSceneFragment:New(fragment.win)
 
   fragment.win:SetResizeToFitDescendents(true)
 
-  return fragment
+  self:UpdateMoney(0)
 end
 
-function UI.LootFragUpdateInv(current, max, reserved)
+function UI.LootFragmentClass:UpdateInv(current, max, reserved)
 
   local msg = ""
 
@@ -163,18 +177,18 @@ function UI.LootFragUpdateInv(current, max, reserved)
     end
   end
 
-  UI.lootInventoryText:SetText(msg)
+  self.lootInventoryText:SetText(msg)
 end
 
-function UI.LootFragUpdateMoney(gold)
+function UI.LootFragmentClass:UpdateMoney(gold)
  
   ZO_CurrencyControl_SetSimpleCurrency(
-    UI.lootMoneyText, CURRENCY_TYPE_MONEY, gold, 
+    self.lootMoneyText, CURRENCY_TYPE_MONEY, gold, 
     currencyOptions, CURRENCY_SHOW_ALL, CURRENCY_HAS_ENOUGH)
 
 end
 
-function UI.LootFragAddLooted(item, isNewItemType)
+function UI.LootFragmentClass:AddLooted(item, isNewItemType)
 
   if isNewItemType then
     -- add row
@@ -183,12 +197,12 @@ function UI.LootFragAddLooted(item, isNewItemType)
 
     table.insert(
       ZO_ScrollList_GetDataList(
-        UI.lootScrollList),
+        self.scrollList),
         row)
   else
     -- update row
     --
-    local data = ZO_ScrollList_GetDataList(UI.lootScrollList)
+    local data = ZO_ScrollList_GetDataList(self.scrollList)
     for i,v in ipairs(data) do
       local data = ZO_ScrollList_GetDataEntryData(v)
       if data.link == item.link then
@@ -197,18 +211,18 @@ function UI.LootFragAddLooted(item, isNewItemType)
       end
     end
 
-    -- ZO_ScrollList_Clear(UI.lootScrollList)
-    -- ZO_ScrollList_AddCategory(UI.lootScrollList, 1, nil)
+    -- ZO_ScrollList_Clear(UI.scrollList)
+    -- ZO_ScrollList_AddCategory(UI.scrollList, 1, nil)
 
   end
 
-  ZO_ScrollList_Commit(UI.lootScrollList)
+  ZO_ScrollList_Commit(self.scrollList)
 
 end
 
-function UI.LootFragClear()
-  ZO_ScrollList_Clear(UI.lootScrollList)
-  ZO_ScrollList_Commit(UI.lootScrollList)
-  UI.LootFragUpdateMoney(0)
+function UI.LootFragmentClass:Clear()
+  ZO_ScrollList_Clear(self.scrollList)
+  ZO_ScrollList_Commit(self.scrollList)
+  self:UpdateMoney(0)
 end
 

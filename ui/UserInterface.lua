@@ -25,18 +25,18 @@ function UI.CoreListUpdateCB(loot, complete, itemLink, isNewItemType)
     end
   end 
 
-  UI.LootFragUpdateMoney(loot.money)
+  UI.lootFragment:UpdateMoney(loot.money)
 
   if complete then
     
     -- Done...
-    UI.summaryLabel:SetText("Done.")
+    UI.summaryFragment:UpdateSummarySimple("Done.")
     ADDON.SetSetting_SaveHistory(loot)
 
   elseif itemLink ~= nil then
-    UI.LootFragAddLooted(loot.items[itemLink], isNewItemType)
+    UI.lootFragment:AddLooted(loot.items[itemLink], isNewItemType)
 
-    UI.LootFragUpdateInv(
+    UI.lootFragment:UpdateInv(
       GetNumBagUsedSlots(BAG_BACKPACK),
       GetBagSize(BAG_BACKPACK),
       ADDON.Core.GetSaveDeconSpace())
@@ -50,7 +50,7 @@ function UI.CoreStatusUpdateCB(inProgress, success, msg)
   KEYBIND_STRIP:UpdateKeybindButtonGroup(UI.mailLooterButtonGroup)
 
   if inProgress then
-    UI.summaryLabel:SetText("Looting...")
+    UI.summaryFragment:UpdateSummarySimple("Looting...")
   end
 
 end
@@ -70,9 +70,9 @@ function UI.CoreScanUpdateCB(summary)
     DEBUG( "Total Money:    " .. summary.countMoney )
   end
 
-  UI.UpdateSummary(summary)
+  UI.summaryFragment:UpdateSummary(summary)
 
-  UI.LootFragUpdateInv(
+  UI.lootFragment:UpdateInv(
     GetNumBagUsedSlots(BAG_BACKPACK),
     GetBagSize(BAG_BACKPACK),
     ADDON.Core.GetSaveDeconSpace())
@@ -84,7 +84,7 @@ function UI.SceneStateChange(_, newState)
 
   if newState == SCENE_SHOWING then
     KEYBIND_STRIP:AddKeybindButtonGroup(UI.mailLooterButtonGroup)
-    UI.LootFragClear()
+    UI.lootFragment:Clear()
     ADDON.Core.OpenMailLooter()
 
     -- NOTE: HACK
@@ -109,9 +109,9 @@ function UI.InitUserInterface(debugFunction)
   end
 
   UI.InitSettings()
-  UI.SummaryFragment = UI.CreateSummaryFragment()
-  UI.LootFragment = UI.CreateLootFragment()
-  UI.CreateScene()
+  UI.summaryFragment = UI.SummaryFragmentClass:New()
+  UI.lootFragment = UI.LootFragmentClass:New()
+  UI.CreateScene(UI.summaryFragment, UI.lootFragment)
 
   ADDON.Core.NewCallbacks(
     UI.CoreListUpdateCB,

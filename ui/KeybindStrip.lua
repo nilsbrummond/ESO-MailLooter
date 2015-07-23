@@ -10,7 +10,7 @@ UI.mailLooterButtonGroup = {
         keybind = "UI_SHORTCUT_PRIMARY",
         visible = function() return ADDON.Core.IsActionReady() end,
         callback = function() 
-            UI.LootFragClear()
+            UI.lootFragment:Clear()
             ADDON.Core.ProcessMailAll()
           end,
     },

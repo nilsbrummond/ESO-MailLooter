@@ -6,10 +6,11 @@ local function CommandHandler(text)
   if text == "" then
     d( ADDON.NAME .. " version " .. ADDON.VERSION )
     d( "Commands:" )
-    d( "debug [on/off]  -  Turns debug messages on and off" )
+    d( "debug [on/off]  -  Turns debug messages on and off." )
+    d( "debug [hide/show]  -  Hide and Shows the debug msg window." )
     d( "reset  -  Reset the maillooter in case it is stuck." )
     d( "test  -  Test looting..." )
-    d( "scan  -  scan the inbox" )
+    d( "scan  -  scan the inbox." )
 
     return
   elseif text == "debug off" then

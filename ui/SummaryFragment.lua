@@ -53,8 +53,21 @@ end
 --   return win
 -- end
 
-function UI.CreateSummaryFragment()
-  local fragment = {}
+--
+-- Functions
+--
+
+UI.SummaryFragmentClass = ZO_Object:Subclass()
+
+function UI.SummaryFragmentClass:New()
+  local obj = ZO_Object.New(self)
+  obj:Initialize()
+  return obj
+end
+
+function UI.SummaryFragmentClass:Initialize()
+  local fragment = self
+
   fragment.win = WINDOW_MANAGER:CreateTopLevelWindow(
                    "MailLooterSummaryFragment")
  
@@ -132,21 +145,24 @@ function UI.CreateSummaryFragment()
 
   label:SetFont("ZoFontGame")
   label:SetText("XXX")
+  label:SetHeight(label:GetFontHeight())
   label:SetWidth(800)
   label:SetHorizontalAlignment(TEXT_ALIGN_CENTER)
   label:SetAnchor(TOP, MAIL_LOOTER_SUMMARY_TITLEDivider, BOTTOM, 0, 10)
 
-  UI.summaryLabel = label
+  self.summaryLabel = label
 
   fragment.FRAGMENT = ZO_FadeSceneFragment:New(fragment.win)
 
   fragment.win:SetResizeToFitDescendents(true)
 
-  return fragment
 end
 
+function UI.SummaryFragmentClass:UpdateSummarySimple(text)
+  self.summaryLabel:SetText(text)
+end
 
-function UI.UpdateSummary(summary)
+function UI.SummaryFragmentClass:UpdateSummary(summary)
 
   local full = IsLocalMailboxFull()
   local mailCount = GetNumMailItems()
@@ -174,10 +190,10 @@ function UI.UpdateSummary(summary)
 --  UI.summaryLabelCOD:SetText(strCoD)
 --  UI.summaryLabelOther:SetText(strOther)
 
-  GetInterfaceColor(INTERFACE_COLOR_TYPE_STAT_VALUE, 1)
-  GetInterfaceColor(INTERFACE_COLOR_TYPE_STAT_VALUE, 1)
+  -- GetInterfaceColor(INTERFACE_COLOR_TYPE_STAT_VALUE, 1)
+  -- GetInterfaceColor(INTERFACE_COLOR_TYPE_STAT_VALUE, 1)
 
-  UI.summaryLabel:SetText(
+  self.summaryLabel:SetText(
     colortxt(   "All Mail: ") .. colorval(strAllMail) ..
     colortxt("   Unread: ") .. colorval(strUnread) ..
     colortxt("   Lootable: ") .. colorval(strLootable) ..
