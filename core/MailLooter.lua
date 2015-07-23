@@ -1,7 +1,7 @@
 
 
-eso_addon_MailLooter = eso_addon_MailLooter or {}
-local ADDON = eso_addon_MailLooter
+MailLooter = MailLooter or {}
+local ADDON = MailLooter
 ADDON.Core = ADDON.Core or {}
 local CORE = ADDON.Core
 
@@ -23,7 +23,7 @@ CORE.MAILTYPE_COD      = MAILTYPE_COD
 local TitlesAvA = { 
   -- English
   ["Rewards for the Worthy!"] = true,
-  ["For the Covenant!"] = true,  -- TODO: Need AD and EP versions too
+  -- ["For the Covenant!"] = true,  -- TODO: Need AD and EP versions too
 
   -- German
   ["Gerechter Lohn!"] = true,
@@ -40,7 +40,7 @@ local TitlesHirelings = {
   ["Raw Clothier Materials"] = true, 
   ["Raw Enchanter Materials"] = true, 
   ["Raw Provisioner Materials"] = true,
-  ["Getting Groceries"] = true,  -- TODO: is this one obsolete?
+  -- ["Getting Groceries"] = true,  -- TODO: is this one obsolete?
 
   -- German
   ["Schmiedematerial"] = true,

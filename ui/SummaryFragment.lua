@@ -1,6 +1,6 @@
 
-eso_addon_MailLooter = eso_addon_MailLooter or {}
-local ADDON = eso_addon_MailLooter
+MailLooter = MailLooter or {}
+local ADDON = MailLooter
 ADDON.UI = ADDON.UI or {}
 local UI = ADDON.UI
 
