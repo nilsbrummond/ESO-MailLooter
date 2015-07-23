@@ -72,7 +72,7 @@ function UI.SummaryFragmentClass:Initialize()
                    "MailLooterSummaryFragment")
  
   fragment.win:SetWidth(ZO_MailInbox:GetWidth())
-  fragment.win:SetAnchor(TOP, ZO_MailInbox, TOP, 0, 0)
+  fragment.win:SetAnchor(TOP, ZO_MailInbox, TOP, -20, 0)
   fragment.win:SetHidden(true)
 
   WINDOW_MANAGER:CreateControlFromVirtual(
