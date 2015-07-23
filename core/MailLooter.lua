@@ -50,6 +50,11 @@ local TitlesHirelings = {
   ["Versorgerzutaten"] = true,
 
   -- French
+  ["Matériaux bruts de forge"] = true,
+  ["Matériaux bruts de travail du bois"] = true,
+  ["Matériaux bruts de couture"] = true,
+  ["Matériaux bruts d'enchantement"] = true,
+  ["Matériaux bruts de cuisine"] = true,
 }
 
 -- TODO: item sold. item expired, item bought, etc...
