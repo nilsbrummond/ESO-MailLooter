@@ -4,8 +4,10 @@
       <Dimensions x="750" y="52" />
 
       <Controls>
-        <Texture name="$(parent)_BG" textureFile="/esoui/art/miscellaneous/listItem_backdrop.dds" layer="BACKGROUND" alpha="1">
-          <Dimensions x="750" y="52" />
+        <Texture name="$(parent)_BG" textureFile="/esoui/art/miscellaneous/listitem_backdrop.dds" layer="BACKGROUND" alpha="1">
+          <AnchorFill />
+        </Texture>
+        <Texture name="$(parent)_Highlight" textureFile="/esoui/art/miscellaneous/listitem_highlight.dds" layer="BACKGROUND" alpha="1" hidden="true">
           <AnchorFill />
         </Texture>
 

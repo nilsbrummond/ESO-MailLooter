@@ -21,31 +21,57 @@ CORE.MAILTYPE_STORE    = MAILTYPE_STORE
 CORE.MAILTYPE_COD      = MAILTYPE_COD
 
 local TitlesAvA = { 
+  -- English
   ["Rewards for the Worthy!"] = true,
-  ["For the Covenant!"] = true  -- TODO: Need AD and EP versions too
+  ["For the Covenant!"] = true,  -- TODO: Need AD and EP versions too
 
-  -- TODO: Add titles in other languages
+  -- German
+  ["Gerechter Lohn!"] = true,
+
+  -- French
+  ["La récompense des braves !"] = true,
+
 }
 
 local TitlesHirelings = {
+  -- English
   ["Raw Blacksmith Materials"] = true, 
   ["Raw Woodworker Materials"] = true, 
   ["Raw Clothier Materials"] = true, 
   ["Raw Enchanter Materials"] = true, 
   ["Raw Provisioner Materials"] = true,
-  ["Getting Groceries"] = true   -- TODO: is this one obsolete?
+  ["Getting Groceries"] = true,  -- TODO: is this one obsolete?
 
-  -- TODO: Add titles in other languages
+  -- German
+  ["Schmiedematerial"] = true,
+  ["Schreinermaterial"] = true,
+  ["Schneidermaterial"] = true,
+  ["Verzauberermaterial"] = true,
+  ["Versorgerzutaten"] = true,
+
+  -- French
 }
 
 -- TODO: item sold. item expired, item bought, etc...
 local TitlesStores = {
+  -- English
   ["Item Expired"] = true,
   ["Item Purchased"] = true,
   ["Item Canceled"] = true,
-  ["Item Sold"] = true
+  ["Item Sold"] = true,
 
-  -- TODO: Add titles in other languages
+  -- German
+  -- Need Expired
+  ["Gegenstand gekauft"] = true, 
+  ["Verkauf abgebrochen"] = true,
+  ["Gegenstand verkauft"] = true, 
+
+  -- French
+  -- Need Expired
+  ["Objet acheté"] = true,
+  ["Objet annulé"] = true,
+  ["Objet vendu"] = true,
+  
 }
 
 local _
@@ -53,9 +79,8 @@ local _
 CORE.deconSpace = false
 
 CORE.initialized = false
-CORE.debug = true
 CORE.state = nil
-CORE.loot = {items={}, money=0, mails=0}
+CORE.loot = {items={}, money=0, mails=0, codTotal=0}
 CORE.currentMail = {}
 CORE.currentItems = {}
 
@@ -83,21 +108,18 @@ CORE.state = STATE_IDLE
 
 
 CORE.filters = {}
-CORE.filters[MAILTYPE_UNKNOWN] = false
+CORE.filters[MAILTYPE_UNKNOWN] = true
 CORE.filters[MAILTYPE_AVA] = true
 CORE.filters[MAILTYPE_HIRELING] = true
 CORE.filters[MAILTYPE_STORE] = true
-CORE.filters[MAILTYPE_COD] = true
+CORE.filters[MAILTYPE_COD] = false 
 
 --
 -- Local Functions
 --
 
-local function DEBUG(str)
-  if CORE.debug then
-    d("MailLooter: " .. str)
-  end
-end
+-- Placeholder.
+local function DEBUG(str) end
 
 -- Detect the type of a mail message.
 local function GetMailType(subject, fromSystem, codAmount)
@@ -119,10 +141,26 @@ local function GetMailType(subject, fromSystem, codAmount)
   return MAILTYPE_UNKNOWN
 end
 
+-- placeholder
+local function LootThisMailCOD(codAmount, codTotal)
+  return false
+end
+
 -- Return based on mailType and type filter.
-local function LootThisMail(mailType)
- 
-  return CORE.filters[mailType]
+local function LootThisMail(mailType, codAmount)
+
+  -- filter
+  if CORE.filters[mailType] then
+    
+    -- COD checks
+    if (mailType == MAILTYPE_COD) then
+      return LootThisMailCOD(codAmount, CORE.loot.codTotal)
+    end
+
+    return true
+  else
+    return false
+  end
 
 end
 
@@ -287,14 +325,15 @@ local function LootMails()
 
     local mailType = GetMailType(subject, fromSystem, codAmount)
 
-    if LootThisMail(mailType) then
+    if LootThisMail(mailType, codAmount) then
 
       -- Loot this Mail
       DEBUG( "found mail: " .. Id64ToString(id) .. " '" .. 
              subject .. "' " .. numAttachments .. " " .. (secsSinceReceived/60))
 
       CORE.currentMail = { 
-        id=id, att=numAttachments, money=attachedMoney, mailType=mailType
+        id=id, att=numAttachments, money=attachedMoney, 
+        codAmount=codAmount, mailType=mailType
       }
 
       local v = CORE.currentMail
@@ -346,12 +385,14 @@ local function LootMails()
     DEBUG ( "No room left in inventory" )
     CORE.callbacks.ListUpdateCB(CORE.loot, true, nil, false)
     CORE.state = STATE_IDLE
+    CORE.loot = {items={}, money=0, mails=0, codTotal=0}
     CORE.callbacks.StatusUpdateCB(false, false, "Inventory Full")
     SummaryScanMail()
   else
     DEBUG ( "Done" )
     CORE.callbacks.ListUpdateCB(CORE.loot, true, nil, false)
     CORE.state = STATE_IDLE
+    CORE.loot = {items={}, money=0, mails=0, codTotal=0}
     CORE.callbacks.StatusUpdateCB(false, true, nil)
     SummaryScanMail()
   end
@@ -395,7 +436,7 @@ local function Start(filter)
 
   CORE.filters = filter
 
-  CORE.loot = { items = {}, money = 0, mails = 0 }
+  CORE.loot = { items = {}, money = 0, mails = 0, codTotal=0 }
   CORE.currentMail = {}
 
   CORE.callbacks.StatusUpdateCB(true, true, nil)
@@ -508,6 +549,11 @@ function CORE.TakeItemsEvt( eventCode, mailId )
     if CORE.state ~= STATE_ITEMS then return end
 
     if CORE.currentMail.id == mailId then
+
+      if CORE.currentMail.codAmount > 0 then
+        CORE.loot.codTotal = CORE.loot.codTotal + CORE.currentMail.codAmount
+      end
+
       AddItemsToHistory(CORE.loot, CORE.currentItems)
       CORE.currentItems = {}
 
@@ -563,19 +609,42 @@ function CORE.InventoryFullEvt( eventCode, numSlotsReq, numSlotFree )
   DEBUG( "InventoryFull end" )
 end
 
+function CORE.NotEnoughMoneyEvt( eventCode )
+  DEBUG( "NotEnoughMoney state=" .. CORE.state )
+
+  if mailLooterOpen then
+    if CORE.state ~= STATE_ITEMS then return end
+
+    if CORE.currentMail.codAmount > 0 then 
+      DEBUG( "Not enough money for COD!" )
+      CORE.state = STATE_IDLE
+      CORE.callbacks.StatusUpdateCB(false, false, "Not enough money")
+      SummaryScanMail()
+    end
+  end
+end
+
 --
 -- Public Functions
 --
 
 -- This function must be called from the client ADDON's 
 -- EVENT_ADD_ON_LOADED handler.
-function CORE.Initialize(saveDeconSpace)
+function CORE.Initialize(saveDeconSpace, debugFunction, codTestFunction)
 
   if CORE.initialized then return end -- exit if already init'd.
 
   CORE.initialized = true
 
   CORE.deconSpace = saveDeconSpace
+
+  if debugFunction then
+    DEBUG = function(msg) debugFunction("CORE: " .. msg) end
+  end
+
+  if codTestFunction then
+    LootThisMailCOD = codTestFunction
+  end
 
   EVENT_MANAGER:RegisterForEvent(
     ADDON.NAME, EVENT_MAIL_OPEN_MAILBOX, CORE.OpenMailboxEvt )
@@ -596,6 +665,8 @@ function CORE.Initialize(saveDeconSpace)
 
   EVENT_MANAGER:RegisterForEvent(
     ADDON.NAME, EVENT_INVENTORY_IS_FULL, CORE.InventoryFullEvt )
+  EVENT_MANAGER:RegisterForEvent(
+    ADDON.NAME, EVENT_NOT_ENOUGH_MONEY, CORE.NotEnoughMoneyEvt )
 
 end
 
@@ -676,6 +747,9 @@ function CORE.ProcessMailAll()
   filter[MAILTYPE_AVA] = true
   filter[MAILTYPE_HIRELING] = true
   filter[MAILTYPE_STORE] = true
+
+  -- Don't auto loot COD.  So one can troll you for
+  -- lots of money if your not watching..
   filter[MAILTYPE_COD] = true
 
   DEBUG( "MailLooter starting all loot" )
@@ -721,7 +795,7 @@ end
 function CORE.TestLoot()
   
   if not (mailLooterOpen and (CORE.state == STATE_IDLE)) then
-    DEBUG("Test function can not run right now")
+    d("Test function can not run right now")
     return
   end
 
@@ -733,7 +807,7 @@ function CORE.TestLoot()
     ["stack"] = 1,
     ["icon"] = "/esoui/art/icons/crafting_forester_weapon_vendor_component_002.dds",
     ["mailType"] = MAILTYPE_HIRELING,
-    ["link"] = "|H1:item:54171:32:50:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[dwarven oil]|h",
+    ["link"] = "|H1:item:54171:32:50:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|hdwarven oil|h",
     ["creator"] = "",
   }
 
@@ -742,7 +816,7 @@ function CORE.TestLoot()
     ["stack"] = 5,
     ["icon"] = "/esoui/art/icons/crafting_ore_voidstone.dds",
     ["mailType"] = 3,
-    ["link"] = "|H1:item:23135:30:50:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[voidstone ore]|h",
+    ["link"] = "|H1:item:23135:30:50:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|hvoidstone ore|h",
     ["creator"] = "",
   }
 
@@ -751,7 +825,7 @@ function CORE.TestLoot()
     ["stack"] = 2,
     ["icon"] = "/esoui/art/icons/crafting_ore_palladium.dds",
     ["mailType"] = 3,
-    ["link"] = "|H1:item:46152:30:50:0:0:0:0:0:0:0:0:0:0:0:0:15:0:0:0:0:0|h[Palladium]|h",
+    ["link"] = "|H1:item:46152:30:50:0:0:0:0:0:0:0:0:0:0:0:0:15:0:0:0:0:0|hPalladium|h",
     ["creator"] = "",
   }
 
@@ -760,7 +834,7 @@ function CORE.TestLoot()
     ["stack"] = 1,
     ["icon"] = "/esoui/art/icons/crafting_wood_turpen.dds",
     ["mailType"] = 3,
-    ["link"] = "|H1:item:54179:32:50:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h[turpen]|h",
+    ["link"] = "|H1:item:54179:32:50:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|hturpen|h",
     ["creator"] = "",
   }
 
@@ -778,7 +852,7 @@ function CORE.TestLoot()
 
 
   testData = {
-    loot = { items={}, money=0, mails=0 },
+    loot = { items={}, money=0, mails=0, codTotal=0 },
     nextStep = 1,
     testSteps = {
       { items={realItem[1],realItem[2],realItem[3]}, money=25 },
@@ -802,3 +876,38 @@ function CORE.TestLoot()
   zo_callLater(DoTestLoot, 250)
 
 end
+
+-- Scan inbox and print out interesting things about mails.
+function CORE.Scan()
+
+  if not (mailLooterOpen and (CORE.state == STATE_IDLE)) then
+    d("Scan function can not run right now")
+    return
+  end
+
+  local id = GetNextMailId(nil)
+
+  local t = {}
+
+  while id ~= nil do
+
+    local _, _, subject, icon, unread, fromSystem, fromCustomerService, returned, 
+      numAttachments, attachedMoney, codAmount, expiresInDays, secsSinceReceived = GetMailItemInfo(id)
+
+    local mailType = GetMailType(subject, fromSystem, codAmount)
+
+    d("mail id=" .. Id64ToString(id) )
+    d("-> subject='" .. subject .. "'")
+    d("-> system=" .. tostring(fromSystem))
+    d("-> custService=" .. tostring(fromCustomerService))
+    d("-> returned=" .. tostring(returned))
+    d("-> numAtt=" .. numAttachments .. " money=" .. attachedMoney .. " cod=" .. codAmount)
+
+    table.insert(t, {id=id, subject=subject, sytem=system})
+
+    id = GetNextMailId(id)
+  end
+
+  return t
+end
+

@@ -50,6 +50,10 @@ local function SetupRowData(rowControl, data, scrollList)
 
 end
 
+local function SelectRow(prev, new, rebuild)
+  d("Row Selected")
+end
+
 --
 -- Functions
 --
@@ -85,7 +89,7 @@ function UI.CreateLootFragment()
   ZO_ScrollList_AddDataType(scrollList, ROW_TYPE_ID, "MailLooterLootListRow",
       52, SetupRowData, nil, nil, nil)
 
-  ZO_ScrollList_EnableSelection(scrollList, "ZO_ThingListHighlight", nil)
+  ZO_ScrollList_EnableSelection(scrollList, nil, SelectRow)
 
   ZO_ScrollList_AddCategory(scrollList, 1, nil)
 
@@ -136,6 +140,8 @@ function UI.CreateLootFragment()
   UI.LootFragUpdateMoney(0)
 
   fragment.FRAGMENT = ZO_FadeSceneFragment:New(fragment.win)
+
+  fragment.win:SetResizeToFitDescendents(true)
 
   return fragment
 end

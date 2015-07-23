@@ -4,29 +4,24 @@ local ADDON = eso_addon_MailLooter
 ADDON.UI = ADDON.UI or {}
 local UI = ADDON.UI
 
-UI.debug = true
-
 --
 -- Functions
 --
 
-local function DEBUG(str)
-  if UI.debug then
-    d("UI: " .. str)
-  end
-end
+-- placeholder
+local function DEBUG(str) end
 
 function UI.CoreListUpdateCB(loot, complete, itemLink, isNewItemType)
-  DEBUG("ListUpdateCB")
+  local debugOn = DEBUG("ListUpdateCB")
 
-  if UI.debug and complete then
+  if complete and debugOn then
 
-    d("Mails looted: " .. loot.mails)
-    d("Gold looted: " .. loot.money)
+    DEBUG("Mails looted: " .. loot.mails)
+    DEBUG("Gold looted: " .. loot.money)
 
-    d("Items looted:")
+    DEBUG("Items looted:")
     for i1,v1 in pairs(loot.items) do
-      d("  " .. GetItemLinkName(v1.link) .. " (" .. v1.stack .. ")" )
+      DEBUG("  " .. GetItemLinkName(v1.link) .. " (" .. v1.stack .. ")" )
     end
   end 
 
@@ -61,18 +56,18 @@ function UI.CoreStatusUpdateCB(inProgress, success, msg)
 end
 
 function UI.CoreScanUpdateCB(summary)
-  DEBUG("ScanUpdateCB")
+  local debugOn = DEBUG("ScanUpdateCB")
 
-  if UI.debug then
-    d( "Mail type counts" )
-    d( "AvA Mails:      " .. summary.countAvA )
-    d( "Hireling Mails: " .. summary.countHireling )
-    d( "Store Mails:    " .. summary.countStore )
-    d( "COD Mails:      " .. summary.countCOD )
-    d( "Other Mails:    " .. summary.countOther )
-    d( "More Mail:      " .. tostring(summary.more) )
-    d( "Total Items:    " .. summary.countItems )
-    d( "Total Money:    " .. summary.countMoney )
+  if debugOn then
+    DEBUG( "Mail type counts" )
+    DEBUG( "AvA Mails:      " .. summary.countAvA )
+    DEBUG( "Hireling Mails: " .. summary.countHireling )
+    DEBUG( "Store Mails:    " .. summary.countStore )
+    DEBUG( "COD Mails:      " .. summary.countCOD )
+    DEBUG( "Other Mails:    " .. summary.countOther )
+    DEBUG( "More Mail:      " .. tostring(summary.more) )
+    DEBUG( "Total Items:    " .. summary.countItems )
+    DEBUG( "Total Money:    " .. summary.countMoney )
   end
 
   UI.UpdateSummary(summary)
@@ -107,7 +102,11 @@ function UI.SceneStateChange(_, newState)
 end
 
 
-function UI.InitUserInterface()
+function UI.InitUserInterface(debugFunction)
+
+  if debugFunction then
+    DEBUG = function(msg) debugFunction("UI: " .. msg) end
+  end
 
   UI.InitSettings()
   UI.SummaryFragment = UI.CreateSummaryFragment()

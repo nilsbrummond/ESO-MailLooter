@@ -4,11 +4,17 @@ local ADDON = eso_addon_MailLooter
 ADDON.initialized = false
 
 ADDON.settingsDefaults = {
-  ["saveDeconSpace"] = true,
-  ["debug"]          = false,
-  ["history"]        = {},
+  ["saveDeconSpace"]      = true,
+  ["lootCODMails"]        = false,
+  ["singleCODPriceMax"]   = 1000,
+  ["combinedCODSpentMax"] = 5000,
+  ["debug"]               = false,
+  ["history"]             = {},
+  ["scan"]                = {},
 }
 
+ADDON.debug = false
+ADDON.debugMsgWin = false
 
 local function Initialize( eventCode, addOnName )
 
@@ -24,9 +30,27 @@ local function Initialize( eventCode, addOnName )
 
   -- Clear the history table.
   ADDON.settings.history = {}
+  ADDON.settings.scan = {}
 
-  ADDON.Core.Initialize(ADDON.settings.saveDeconSpace)
-  ADDON.UI.InitUserInterface()
+  local function DoCODTest(codAmount, codTotal)
+    if not ADDON.settings.lootCODMails then return false end
+
+    if (ADDON.settings.singleCODPriceMax > 0) and
+       (codAmount > ADDON.settings.singleCODPriceMax) then 
+      return false 
+    end
+
+    if (ADDON.settings.combinedCODSpentMax > 0) and
+       ((codAmount + codTotal) > ADDON.settings.combinedCODSpentMax) then
+      return false
+    end
+
+    return true
+  end
+
+  ADDON.Core.Initialize(
+    ADDON.settings.saveDeconSpace, ADDON.DebugMsg, DoCODTest)
+  ADDON.UI.InitUserInterface(ADDON.DebugMsg)
 
   ADDON.initialized = true
 
@@ -46,6 +70,32 @@ function ADDON.SetSetting_debug(val)
   ADDON.SetDebug(val)
 end 
 
+function ADDON.GetSetting_lootCODMails()
+  return ADDON.settings.lootCODMails
+end
+
+function ADDON.SetSetting_lootCODMails(loot)
+  ADDON.settings.lootCODMails = loot
+end
+
+function ADDON.GetSetting_singleCODPriceMax()
+  return ADDON.settings.singleCODPriceMax
+end
+
+function ADDON.SetSetting_singleCODPriceMax(value)
+  if type(value) ~= 'number' then return end
+  ADDON.settings.singleCODPriceMax = value
+end
+
+function ADDON.GetSetting_combinedCODSpentMax()
+  return ADDON.settings.combinedCODSpentMax
+end
+
+function ADDON.SetSetting_combinedCODSpentMax(value)
+  if type(value) ~= 'number' then return end
+  ADDON.settings.combinedCODSpentMax = value
+end
+
 function ADDON.SetSetting_SaveHistory(loot)
   -- Only store the history for debugging...
   if ADDON.debug then
@@ -55,8 +105,28 @@ end
 
 function ADDON.SetDebug(on)
   ADDON.debug = on
-  ADDON.Core.debug = on
-  ADDON.UI.debug = on
+
+  if on then
+    if ADDON.debugMsgWin then
+      ADDON.debugMsgWin:SetHidden(false)
+    else
+
+      -- Create the window first time debug is turned on..
+      local LIBMW = LibStub:GetLibrary("LibMsgWin-1.0")
+      ADDON.debugMsgWin = LIBMW:CreateMsgWindow(
+        "MailLooterDebugWindow", "MailLooter Debug")
+
+    end
+  elseif ADDON.debugMsgWin then
+    ADDON.debugMsgWin:SetHidden(true)
+  end
+end
+
+function ADDON.DebugMsg(msg)
+  if ADDON.debug then
+    ADDON.debugMsgWin:AddText(msg, 1, 1, 0)
+  end
+  return ADDON.debug
 end
 
 -- Init Hook --
