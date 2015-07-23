@@ -40,7 +40,6 @@ local TitlesHirelings = {
   ["Raw Clothier Materials"] = true, 
   ["Raw Enchanter Materials"] = true, 
   ["Raw Provisioner Materials"] = true,
-  -- ["Getting Groceries"] = true,  -- TODO: is this one obsolete?
 
   -- German
   ["Schmiedematerial"] = true,
@@ -57,7 +56,6 @@ local TitlesHirelings = {
   ["Matériaux bruts de cuisine"] = true,
 }
 
--- TODO: item sold. item expired, item bought, etc...
 local TitlesStores = {
   -- English
   ["Item Expired"] = true,
@@ -159,6 +157,11 @@ local function LootThisMail(mailType, codAmount)
     
     -- COD checks
     if (mailType == MAILTYPE_COD) then
+  
+      -- price check
+      if codAmount > GetCurrentMoney() then return false end
+
+      -- policy check
       return LootThisMailCOD(codAmount, CORE.loot.codTotal)
     end
 

@@ -16,9 +16,13 @@ ADDON.settingsDefaults = {
 ADDON.debug = false
 ADDON.debugMsgWin = false
 
+local DEBUG = function(msg) return false end
+
 local function Initialize( eventCode, addOnName )
 
   if addOnName ~= ADDON.NAME then return end
+
+  DEBUG = function(msg) ADDON.DebugMsg("MAIN: " .. msg) end
 
   ADDON.settings = ZO_SavedVars:NewAccountWide(
     "MailLooter_Settings", 
@@ -33,15 +37,20 @@ local function Initialize( eventCode, addOnName )
   ADDON.settings.scan = {}
 
   local function DoCODTest(codAmount, codTotal)
-    if not ADDON.settings.lootCODMails then return false end
+    if not ADDON.settings.lootCODMails then 
+      DEBUG("COD DENY - All")
+      return false
+    end
 
     if (ADDON.settings.singleCODPriceMax > 0) and
        (codAmount > ADDON.settings.singleCODPriceMax) then 
+      DEBUG("COD DENY - Per COD price")
       return false 
     end
 
     if (ADDON.settings.combinedCODSpentMax > 0) and
        ((codAmount + codTotal) > ADDON.settings.combinedCODSpentMax) then
+      DEBUG("COD DENY - Total COD price")
       return false
     end
 
