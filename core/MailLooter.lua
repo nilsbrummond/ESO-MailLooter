@@ -911,7 +911,7 @@ function CORE.Scan()
     d("-> returned=" .. tostring(returned))
     d("-> numAtt=" .. numAttachments .. " money=" .. attachedMoney .. " cod=" .. codAmount)
 
-    table.insert(t, {id=id, subject=subject, sytem=system})
+    table.insert(t, {id=id, subject=subject, system=fromSystem})
 
     id = GetNextMailId(id)
   end
