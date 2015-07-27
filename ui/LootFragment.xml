@@ -4,11 +4,21 @@
       <Dimensions x="750" y="52" />
 
       <Controls>
-        <Texture name="$(parent)_BG" textureFile="/esoui/art/miscellaneous/listitem_backdrop.dds" layer="BACKGROUND" alpha="1">
+<!--
+        <Backdrop name="$(parent)_BG" centerColor="FF0000">
+          <Center file="/esoui/art/miscellaneous/listitem_backdrop.dds" tiled="false" />
           <AnchorFill />
+        </Backdrop>
+-->
+
+        <Texture name="$(parent)_BG" textureFile="/esoui/art/miscellaneous/listitem_backdrop.dds" layer="BACKGROUND" alpha="1" pixelRoundingEnabled="true" >
+          <AnchorFill />
+          <TextureCoords left="0" right="1" top="0" bottom="0.625" />
         </Texture>
-        <Texture name="$(parent)_Highlight" textureFile="/esoui/art/miscellaneous/listitem_highlight.dds" layer="BACKGROUND" alpha="1" hidden="true">
+
+        <Texture name="$(parent)_Highlight" textureFile="/esoui/art/miscellaneous/listitem_highlight.dds" layer="BACKGROUND" alpha="1" pixelRoundingEnabled="true" hidden="true">
           <AnchorFill />
+          <TextureCoords left="0" right="1" top="0" bottom="0.625" />
         </Texture>
 
         <Texture name="$(parent)_Type" alpha="0.7">
@@ -17,12 +27,12 @@
         </Texture>
 
         <Texture name="$(parent)_Icon">
-          <Dimensions x="50" y="50" />
-          <Anchor point="LEFT" relativePoint="RIGHT" relativeTo="$(parent)_Type" offsetX="30" offsetY="0" />
+          <Dimensions x="40" y="40" />
+          <Anchor point="LEFT" relativePoint="RIGHT" relativeTo="$(parent)_Type" offsetX="42" offsetY="0" />
         </Texture>
 
         <Label name="$(parent)_Name" font="ZoFontGameBold" text="" wrapMode="ELLIPSIS">
-          <Anchor point="LEFT" relativePoint="RIGHT" relativeTo="$(parent)_Icon" offsetX="15" offsetY="0" />
+          <Anchor point="LEFT" relativePoint="RIGHT" relativeTo="$(parent)_Icon" offsetX="27" offsetY="0" />
         </Label>
 
         <Label name="$(parent)_Value" font="ZoFontGameBold" text="">
