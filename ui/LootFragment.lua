@@ -67,6 +67,20 @@ local NoComparisionTooltip =
 -- Local functions
 --
 
+local function SenderString(sdn, scn)
+  if scn then
+    if sdn then
+      return "(" .. scn .. ") " .. sdn
+    else
+      return "(" .. scn .. ")"
+    end
+  elseif sdn then
+    return sdn
+  else
+    return "UNKNOWN"
+  end
+end
+
 local function SetListHighlightHidden(listPart, hidden)
     if(listPart) then
         local highlight = listPart:GetNamedChild("_Highlight")
@@ -175,9 +189,8 @@ local function SetupRowData(rowControl, data, scrollList)
 
   if data.mailType == ADDON.Core.MAILTYPE_RETURNED then
     local extra = rowControl:GetNamedChild("_Extra")
-    extra:SetHidden(false)
     extra:SetText(
-      "|cFF0000Returned|r from: " .. data.scn .. " (@" .. data.sdn .. ")")
+      "|cFF0000Returned|r from: " .. SenderString(data.sdn, data.scn))
   end
 
   ZO_CurrencyControl_SetSimpleCurrency(

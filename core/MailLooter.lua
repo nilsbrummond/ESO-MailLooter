@@ -438,7 +438,10 @@ local function LootMailsCont()
     table.insert(
       CORE.currentItems,
       { icon=icon, stack=stack, link=link, 
-        mailType=CORE.currentMail.mailType }
+        mailType=CORE.currentMail.mailType,
+        sdn=CORE.currentMail.sdn,
+        scn=CORE.currentMail.scn,
+      }
     )
   end
 
