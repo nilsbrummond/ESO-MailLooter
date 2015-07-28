@@ -154,7 +154,7 @@ function UI.SummaryFragmentClass:Initialize()
 
   fragment.FRAGMENT = ZO_FadeSceneFragment:New(fragment.win)
 
-  fragment.win:SetResizeToFitDescendents(true)
+  -- fragment.win:SetResizeToFitDescendents(true)
 
 end
 
