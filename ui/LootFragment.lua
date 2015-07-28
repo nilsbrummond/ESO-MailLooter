@@ -13,6 +13,7 @@ local typeIcons = {
   [ADDON.Core.MAILTYPE_HIRELING] = "/esoui/art/mainmenu/menuBar_group_up.dds",
   [ADDON.Core.MAILTYPE_STORE] = "/esoui/art/mainmenu/menuBar_guilds_up.dds",
   [ADDON.Core.MAILTYPE_COD] = "/esoui/art/mainmenu/menuBar_mail_up.dds",
+  [ADDON.Core.MAILTYPE_RETURNED] = "/esoui/art/mainmenu/menuBar_mail_up.dds",
 }
 
 -- TODO: Translate:
@@ -22,6 +23,7 @@ local typeTooltips = {
   [ADDON.Core.MAILTYPE_HIRELING]  = "Hireling Mail",
   [ADDON.Core.MAILTYPE_STORE]     = "Guild Store Mail",
   [ADDON.Core.MAILTYPE_COD]       = "COD Mail",
+  [ADDON.Core.MAILTYPE_RETURNED]  = "Returned Mail",
 }
 
 local currencyOptions = {
@@ -159,7 +161,14 @@ local function SetupRowData(rowControl, data, scrollList)
  
   rowControl:GetNamedChild("_Name"):SetText(
     text .. "|r   (" .. data.stack .. ")")
- 
+
+  if data.mailType == ADDON.Core.MAILTYPE_RETURNED then
+    local extra = rowControl:GetNamedChild("_Extra")
+    extra:SetHidden(false)
+    extra:SetText(
+      "|cFF0000Returned|r from: " .. data.scn .. " (@" .. data.sdn .. ")")
+  end
+
   ZO_CurrencyControl_SetSimpleCurrency(
     rowControl:GetNamedChild("_Value"),
     CURRENCY_TYPE_MONEY,
@@ -191,6 +200,7 @@ end
 
 local function RowDataReset(control)
   control:SetHidden(true)
+  control:GetNamedChild("_Extra"):SetHidden(true)
   control.data = nil
 end
 

@@ -29,6 +29,10 @@
           <Anchor point="LEFT" relativePoint="RIGHT" relativeTo="$(parent)_Type" offsetX="109" offsetY="0" />
         </Label>
 
+        <Label name="$(parent)_Extra" font="ZoFontGameSmall" text="" wrapMode="ELLIPSIS" hidden="true">
+          <Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" relativeTo="$(parent)_Type" offsetX="109" offsetY="5" />
+        </Label>
+
         <Label name="$(parent)_Value" font="ZoFontGameBold" text="">
           <Anchor point="RIGHT" relativePoint="RIGHT" relativeTo="$(parent)" offsetX="-10" offsetY="0" />
         </Label>
