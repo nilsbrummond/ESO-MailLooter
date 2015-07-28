@@ -12,6 +12,7 @@ local MAILTYPE_AVA      = 2
 local MAILTYPE_HIRELING = 3
 local MAILTYPE_STORE    = 4
 local MAILTYPE_COD      = 5
+local MAILTYPE_RETURNED = 6
 
 -- exported
 CORE.MAILTYPE_UNKNOWN  = MAILTYPE_UNKNOWN
@@ -19,6 +20,7 @@ CORE.MAILTYPE_AVA      = MAILTYPE_AVA
 CORE.MAILTYPE_HIRELING = MAILTYPE_HIRELING
 CORE.MAILTYPE_STORE    = MAILTYPE_STORE
 CORE.MAILTYPE_COD      = MAILTYPE_COD
+CORE.MAILTYPE_RETURNED = MAILTYPE_RETURNED
 
 local TitlesAvA = { 
   -- English
@@ -116,6 +118,7 @@ CORE.filters[MAILTYPE_AVA] = true
 CORE.filters[MAILTYPE_HIRELING] = true
 CORE.filters[MAILTYPE_STORE] = true
 CORE.filters[MAILTYPE_COD] = false 
+CORE.filters[MAILTYPE_RETURNED] = true 
 
 --
 -- Local Functions
@@ -125,7 +128,7 @@ CORE.filters[MAILTYPE_COD] = false
 local function DEBUG(str) end
 
 -- Detect the type of a mail message.
-local function GetMailType(subject, fromSystem, codAmount)
+local function GetMailType(subject, fromSystem, codAmount, returned)
 
   if fromSystem then
     if TitlesAvA[subject] then
@@ -136,6 +139,8 @@ local function GetMailType(subject, fromSystem, codAmount)
       return MAILTYPE_STORE
     end
   else
+    if returned then return MAILTYPE_RETURNED end
+
     if codAmount > 0 then
       return MAILTYPE_COD
     end
@@ -278,6 +283,7 @@ local function SummaryScanMail()
   local countHireling = 0
   local countCOD = 0
   local countStore = 0
+  local countReturned = 0
   local countOther = 0
   local countItems = 0
   local countMoney = 0
@@ -300,6 +306,8 @@ local function SummaryScanMail()
       countHireling = countHireling + 1
     elseif TitlesStores[subject] then
       countStore = countStore + 1
+    elseif returned then
+      countReturned = countReturned + 1
     else
       countOther = countOther + 1
     end
@@ -309,6 +317,7 @@ local function SummaryScanMail()
 
   local result = { countAvA = countAvA, countHireling=countHireling, 
                    countCOD = countCOD, countStore = countStore,
+                   countReturned = countReturned,
                    countOther = countOther, more = IsLocalMailboxFull(),
                    countItems = countItems, countMoney = countMoney }
 
@@ -329,9 +338,9 @@ local function LootMails()
 
   while id ~= nil do
 
-    local _, _, subject, icon, unread, fromSystem, fromCustomerService, returned, numAttachments, attachedMoney, codAmount, expiresInDays, secsSinceReceived = GetMailItemInfo(id)
+    local sdn, scn, subject, icon, unread, fromSystem, fromCustomerService, returned, numAttachments, attachedMoney, codAmount, expiresInDays, secsSinceReceived = GetMailItemInfo(id)
 
-    local mailType = GetMailType(subject, fromSystem, codAmount)
+    local mailType = GetMailType(subject, fromSystem, codAmount, returned)
 
     if LootThisMail(mailType, codAmount) then
 
@@ -343,6 +352,12 @@ local function LootMails()
         id=id, att=numAttachments, money=attachedMoney, 
         codAmount=codAmount, mailType=mailType
       }
+
+      -- Might care who it is from for non-system mail...
+      if not fromSystem then
+        CORE.currentMail.sdn = sdn
+        CORE.currentMail.scn = scn
+      end
 
       local v = CORE.currentMail
 
@@ -423,7 +438,10 @@ local function LootMailsCont()
     table.insert(
       CORE.currentItems,
       { icon=icon, stack=stack, link=link, 
-        mailType=CORE.currentMail.mailType }
+        mailType=CORE.currentMail.mailType,
+        sdn=CORE.currentMail.sdn,
+        scn=CORE.currentMail.scn,
+      }
     )
   end
 
@@ -755,6 +773,7 @@ function CORE.ProcessMailAll()
   filter[MAILTYPE_AVA] = true
   filter[MAILTYPE_HIRELING] = true
   filter[MAILTYPE_STORE] = true
+  filter[MAILTYPE_RETURNED] = true
 
   -- Don't auto loot COD.  So one can troll you for
   -- lots of money if your not watching..
@@ -852,9 +871,11 @@ function CORE.TestLoot()
       link=ZO_LinkHandler_CreateLink(
         "Test Trash" .. i, nil, ITEM_LINK_TYPE, 45336, 1, 26, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 10000, 0),
       stack=1, 
-      mailType=(i%5)+1, 
+      mailType=(i%6)+1, 
       icon='/esoui/art/icons/crafting_components_spice_004.dds',
       creator="",
+      sdn="@Lodur",
+      scn="",
     }
   end
 
@@ -902,7 +923,7 @@ function CORE.Scan()
     local _, _, subject, icon, unread, fromSystem, fromCustomerService, returned, 
       numAttachments, attachedMoney, codAmount, expiresInDays, secsSinceReceived = GetMailItemInfo(id)
 
-    local mailType = GetMailType(subject, fromSystem, codAmount)
+    local mailType = GetMailType(subject, fromSystem, codAmount, returned)
 
     d("mail id=" .. Id64ToString(id) )
     d("-> subject='" .. subject .. "'")

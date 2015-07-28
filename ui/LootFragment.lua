@@ -4,8 +4,10 @@ local ADDON = MailLooter
 ADDON.UI = ADDON.UI or {}
 local UI = ADDON.UI
 
--- Just one type for now
-local ROW_TYPE_ID = 1
+-- Row types:
+local ROW_TYPE_ID       = 1
+local ROW_TYPE_ID_EXTRA = 2
+
 
 local typeIcons = {
   [ADDON.Core.MAILTYPE_UNKNOWN] = "/esoui/art/menubar/menuBar_help_up.dds",
@@ -13,46 +15,216 @@ local typeIcons = {
   [ADDON.Core.MAILTYPE_HIRELING] = "/esoui/art/mainmenu/menuBar_group_up.dds",
   [ADDON.Core.MAILTYPE_STORE] = "/esoui/art/mainmenu/menuBar_guilds_up.dds",
   [ADDON.Core.MAILTYPE_COD] = "/esoui/art/mainmenu/menuBar_mail_up.dds",
+  [ADDON.Core.MAILTYPE_RETURNED] = "/esoui/art/mainmenu/menuBar_mail_up.dds",
+}
 
-  --  [ADDON.Core.MAILTYPE_HIRELING] = "/esoui/art/icons/ability_enchanter_008.dds",
+local typeRowType = {
+  [ADDON.Core.MAILTYPE_UNKNOWN]   = ROW_TYPE_ID,
+  [ADDON.Core.MAILTYPE_AVA]       = ROW_TYPE_ID,
+  [ADDON.Core.MAILTYPE_HIRELING]  = ROW_TYPE_ID,
+  [ADDON.Core.MAILTYPE_STORE]     = ROW_TYPE_ID,
+  [ADDON.Core.MAILTYPE_COD]       = ROW_TYPE_ID,
+  [ADDON.Core.MAILTYPE_RETURNED]  = ROW_TYPE_ID_EXTRA,
+}
+
+-- TODO: Translate:
+local typeTooltips = {
+  [ADDON.Core.MAILTYPE_UNKNOWN]   = "Unknown Mail Type",
+  [ADDON.Core.MAILTYPE_AVA]       = "AvA Mail",
+  [ADDON.Core.MAILTYPE_HIRELING]  = "Hireling Mail",
+  [ADDON.Core.MAILTYPE_STORE]     = "Guild Store Mail",
+  [ADDON.Core.MAILTYPE_COD]       = "COD Mail",
+  [ADDON.Core.MAILTYPE_RETURNED]  = "Returned Mail",
 }
 
 local currencyOptions = {
-  showTooltips = true,
+  showTooltips = false,
   useShortFormat = false,
   font = "ZoFontGameBold",
   iconSide = RIGHT,
 }
 
+-- Right from inventoryslot.lua
+-- It is local so had to copy it...
+local NoComparisionTooltip =
+{
+    [SLOT_TYPE_PENDING_CHARGE] = true,
+    [SLOT_TYPE_ENCHANTMENT] = true,
+    [SLOT_TYPE_ENCHANTMENT_RESULT] = true,
+    [SLOT_TYPE_REPAIR] = true,
+    [SLOT_TYPE_PENDING_REPAIR] = true,
+    [SLOT_TYPE_CRAFTING_COMPONENT] = true,
+    [SLOT_TYPE_PENDING_CRAFTING_COMPONENT] = true,
+    [SLOT_TYPE_SMITHING_MATERIAL] = true,
+    [SLOT_TYPE_SMITHING_STYLE] = true,
+    [SLOT_TYPE_SMITHING_TRAIT] = true,
+    [SLOT_TYPE_SMITHING_BOOSTER] = true,
+    [SLOT_TYPE_LIST_DIALOG_ITEM] = true,
+}
+
+
 --
 -- Local functions
 --
 
+local function SenderString(sdn, scn)
+  if scn and (scn ~= "") then
+    if sdn then
+      return "(" .. scn .. ") " .. sdn
+    else
+      return "(" .. scn .. ")"
+    end
+  elseif sdn then
+    return sdn
+  else
+    return "UNKNOWN"
+  end
+end
+
+local function SetListHighlightHidden(listPart, hidden)
+    if(listPart) then
+        local highlight = listPart:GetNamedChild("_Highlight")
+        if(highlight and (highlight:GetType() == CT_TEXTURE)) then
+            if not highlight.animation then
+                highlight.animation = 
+                  ANIMATION_MANAGER:CreateTimelineFromVirtual(
+                    "ShowOnMouseOverLabelAnimation", highlight)
+            end
+            if hidden then
+                highlight.animation:PlayBackward()
+            else
+                highlight.animation:PlayForward()
+            end
+        end
+    end
+end
+
+local function Row_OnMouseEnter(control, rowControl)
+
+  -- UI.DEBUG("Row_OnMouseEnter")
+
+  -- Scale the icon...
+  local iconPart = rowControl:GetNamedChild("_Icon")
+  if not iconPart.animation then
+    iconPart.animation = ANIMATION_MANAGER:CreateTimelineFromVirtual(
+      "IconSlotMouseOverAnimation", iconPart)
+  end
+  iconPart.animation:PlayForward()
+
+ 
+  -- Highlight backdrop
+  SetListHighlightHidden(rowControl, false)
+
+
+  -- Setup tooltips
+  InitializeTooltip(ItemTooltip)
+
+  ItemTooltip:SetLink(rowControl.data.link)
+  if not NoComparisionTooltip[GetItemLinkItemType(rowControl.data.link)] then
+    ItemTooltip:HideComparativeTooltips()
+    ItemTooltip:ShowComparativeTooltips()
+    ZO_PlayShowAnimationOnComparisonTooltip(ComparativeTooltip1)
+    ZO_PlayShowAnimationOnComparisonTooltip(ComparativeTooltip2)
+  end
+
+  ItemTooltip:SetHidden(false)
+
+  -- Attach the tooltip left of the type icon...
+  local typePart = rowControl:GetNamedChild("_Type")
+  if typePart.customTooltipAnchor then
+    typePart.customTooltipAnchor(
+      ItemTooltip, typePart, ComparativeTooltip1, ComparativeTooltip2)
+  else
+    ZO_Tooltips_SetupDynamicTooltipAnchors(
+      ItemTooltip, typePart.tooltipAnchor or typePart, 
+      ComparativeTooltip1, ComparativeTooltip2)
+  end
+
+end
+
+local function Row_OnMouseExit(control, rowControl)
+
+  -- UI.DEBUG("Row_OnMouseExit")
+
+  ClearTooltip(ItemTooltip)
+  ClearTooltip(InformationTooltip)
+  ZO_PlayHideAnimationOnComparisonTooltip(ComparativeTooltip1)
+  ZO_PlayHideAnimationOnComparisonTooltip(ComparativeTooltip2)
+
+  local iconPart = rowControl:GetNamedChild("_Icon")
+  if iconPart.animation then
+    iconPart.animation:PlayBackward()
+  end
+
+  SetListHighlightHidden(rowControl, true)
+
+end
+
+local function RowStatus_OnMouseEnter(control)
+  
+  local mailType = control:GetParent().data.mailType
+
+  InitializeTooltip(InformationTooltip, control, TOPRIGHT, 0, 0, TOPLEFT)
+  SetTooltipText(InformationTooltip, typeTooltips[mailType])
+end
+
+local function RowStatus_OnMouseExit(control)
+  ClearTooltip(InformationTooltip)
+end
+
 local function SetupRowData(rowControl, data, scrollList)
 
-  rowControl:GetNamedChild("_Type"):SetTexture(typeIcons[data.mailType])
+  data.control = rowControl
+  rowControl.data = data
+
+  local typeIcon = rowControl:GetNamedChild("_Type")
+  typeIcon:SetTexture(typeIcons[data.mailType])
+
   rowControl:GetNamedChild("_Icon"):SetTexture(data.icon)
 
   local text = zo_strformat("<<t:1>>", data.link)
  
   rowControl:GetNamedChild("_Name"):SetText(
     text .. "|r   (" .. data.stack .. ")")
- 
+
+  if data.mailType == ADDON.Core.MAILTYPE_RETURNED then
+    local extra = rowControl:GetNamedChild("_Extra")
+    extra:SetText(
+      "|cFF0000Returned|r from: " .. SenderString(data.sdn, data.scn))
+  end
+
   ZO_CurrencyControl_SetSimpleCurrency(
     rowControl:GetNamedChild("_Value"),
     CURRENCY_TYPE_MONEY,
     GetItemLinkValue(data.link, true) * data.stack, 
     currencyOptions, CURRENCY_SHOW_ALL, CURRENCY_HAS_ENOUGH)
 
-  rowControl:SetHandler("OnMouseUp", function()
-      ZO_ScrollList_MouseClick(scrollList, rowControl)
+  -- Handlers
+  rowControl:SetHandler("OnMouseEnter", function()
+      Row_OnMouseEnter(scrollList, rowControl)
+    end)
+
+  rowControl:SetHandler("OnMouseExit", function()
+      Row_OnMouseExit(scrollList, rowControl)
+    end)
+
+  typeIcon:SetHandler("OnMouseEnter", function()
+      RowStatus_OnMouseEnter(typeIcon)
+    end)
+
+  typeIcon:SetHandler("OnMouseExit", function()
+      RowStatus_OnMouseExit(typeIcon)
     end)
 
 end
 
-local function SelectRow(prev, new, rebuild)
-  prev:GetNamedChild("_Highlight"):SetHidden(true)
-  new:GetNamedChild("_Highlight"):SetHidden(false)
+local function RowDataHidden(rowControl, data)
+  data.control = nil
+end
+
+local function RowDataReset(control)
+  control:SetHidden(true)
+  control.data = nil
 end
 
 --
@@ -77,6 +249,7 @@ function UI.LootFragmentClass:Initialize()
   fragment.win:SetWidth(ZO_MailInbox:GetWidth())
   fragment.win:SetAnchor(TOP, ZO_MailInbox, TOP, -20, 100)
   fragment.win:SetHidden(true)
+  fragment.win:SetMouseEnabled(true)
 
   WINDOW_MANAGER:CreateControlFromVirtual(
     "MAIL_LOOTER_LOOT_TITLE", fragment.win, "ZO_PanelTitle")
@@ -97,12 +270,25 @@ function UI.LootFragmentClass:Initialize()
   scrollList:SetAnchor(
     TOP, MAIL_LOOTER_LOOT_TITLEDivider, BOTTOM, 0, 10)
 
-  ZO_ScrollList_AddDataType(scrollList, ROW_TYPE_ID, "MailLooterLootListRow",
-      52, SetupRowData, nil, nil, nil)
+  ZO_ScrollList_AddDataType(scrollList, ROW_TYPE_ID, 
+      "MailLooterLootListRow",
+      52, SetupRowData, RowDataHidden, nil, RowDataReset)
 
-  ZO_ScrollList_EnableSelection(scrollList, nil, SelectRow)
+  ZO_ScrollList_AddDataType(scrollList, ROW_TYPE_ID_EXTRA,
+      "MailLooterLootListRowExtra",
+      52, SetupRowData, RowDataHidden, nil, RowDataReset)
+
+  -- NOTE: No longer uses the ZO_ScrollList to handle the Highlight.
+  --       Follows the model of the default UI inventory list.
+  --
+  -- ZO_ScrollList_EnableHighlight(
+  --   scrollList, "MailLooterLootListRow", HighlightRow)
+  -- ZO_ScrollList_EnableHighlight(
+  --   scrollList, "ZO_ThinListHighlight", HighlightRow)
 
   ZO_ScrollList_AddCategory(scrollList, 1, nil)
+
+  ZO_ScrollList_AddResizeOnScreenResize(scrollList)
 
   fragment.scrollList = scrollList
 
@@ -155,7 +341,7 @@ function UI.LootFragmentClass:Initialize()
 
   fragment.FRAGMENT = ZO_FadeSceneFragment:New(fragment.win)
 
-  fragment.win:SetResizeToFitDescendents(true)
+  -- fragment.win:SetResizeToFitDescendents(true)
 
   self:UpdateMoney(0)
 end
@@ -193,7 +379,7 @@ function UI.LootFragmentClass:AddLooted(item, isNewItemType)
   if isNewItemType then
     -- add row
     local row = ZO_ScrollList_CreateDataEntry(
-      ROW_TYPE_ID, ZO_DeepTableCopy(item), 1)
+      typeRowType[item.mailType], ZO_DeepTableCopy(item), 1)
 
     table.insert(
       ZO_ScrollList_GetDataList(
@@ -210,9 +396,6 @@ function UI.LootFragmentClass:AddLooted(item, isNewItemType)
         break
       end
     end
-
-    -- ZO_ScrollList_Clear(UI.scrollList)
-    -- ZO_ScrollList_AddCategory(UI.scrollList, 1, nil)
 
   end
 

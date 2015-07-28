@@ -154,7 +154,7 @@ function UI.SummaryFragmentClass:Initialize()
 
   fragment.FRAGMENT = ZO_FadeSceneFragment:New(fragment.win)
 
-  fragment.win:SetResizeToFitDescendents(true)
+  -- fragment.win:SetResizeToFitDescendents(true)
 
 end
 
@@ -170,7 +170,7 @@ function UI.SummaryFragmentClass:UpdateSummary(summary)
 
   local lootableCount = 
     summary.countAvA + summary.countHireling +
-    summary.countStore + summary.countCOD
+    summary.countStore + summary.countCOD + summary.countReturned
 
   local strAllMail = mailfull(summaryStr(mailCount))
   local strUnread = mailfull(summaryStr(unreadCount))
