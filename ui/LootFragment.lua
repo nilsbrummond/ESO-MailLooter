@@ -15,8 +15,9 @@ local typeIcons = {
   [ADDON.Core.MAILTYPE_COD] = "/esoui/art/mainmenu/menuBar_mail_up.dds",
 }
 
+-- TODO: Translate:
 local typeTooltips = {
-  [ADDON.Core.MAILTYPE_UNKNOWN]   = "Unknown Mail",
+  [ADDON.Core.MAILTYPE_UNKNOWN]   = "Unknown Mail Type",
   [ADDON.Core.MAILTYPE_AVA]       = "AvA Mail",
   [ADDON.Core.MAILTYPE_HIRELING]  = "Hireling Mail",
   [ADDON.Core.MAILTYPE_STORE]     = "Guild Store Mail",
@@ -30,6 +31,8 @@ local currencyOptions = {
   iconSide = RIGHT,
 }
 
+-- Right from inventoryslot.lua
+-- It is local so had to copy it...
 local NoComparisionTooltip =
 {
     [SLOT_TYPE_PENDING_CHARGE] = true,
@@ -56,7 +59,9 @@ local function SetListHighlightHidden(listPart, hidden)
         local highlight = listPart:GetNamedChild("_Highlight")
         if(highlight and (highlight:GetType() == CT_TEXTURE)) then
             if not highlight.animation then
-                highlight.animation = ANIMATION_MANAGER:CreateTimelineFromVirtual("ShowOnMouseOverLabelAnimation", highlight)
+                highlight.animation = 
+                  ANIMATION_MANAGER:CreateTimelineFromVirtual(
+                    "ShowOnMouseOverLabelAnimation", highlight)
             end
             if hidden then
                 highlight.animation:PlayBackward()
@@ -73,13 +78,20 @@ local function Row_OnMouseEnter(control, rowControl)
 
   -- Scale the icon...
   local iconPart = rowControl:GetNamedChild("_Icon")
+  if not iconPart.animation then
+    iconPart.animation = ANIMATION_MANAGER:CreateTimelineFromVirtual(
+      "IconSlotMouseOverAnimation", iconPart)
+  end
+  iconPart.animation:PlayForward()
 
-  InitializeTooltip(ItemTooltip)
-  -- InitializeTooltip(InformationTooltip)
-
+ 
+  -- Highlight backdrop
   SetListHighlightHidden(rowControl, false)
 
+
   -- Setup tooltips
+  InitializeTooltip(ItemTooltip)
+
   ItemTooltip:SetLink(rowControl.data.link)
   if not NoComparisionTooltip[GetItemLinkItemType(rowControl.data.link)] then
     ItemTooltip:HideComparativeTooltips()
@@ -90,12 +102,14 @@ local function Row_OnMouseEnter(control, rowControl)
   
   ItemTooltip:SetHidden(false)
 
-  if iconPart.customTooltipAnchor then
-    iconPart.customTooltipAnchor(
-      ItemTooltip, iconPart, ComparativeTooltip1, ComparativeTooltip2)
+  -- Attach the tooltip left of the type icon...
+  local typePart = rowControl:GetNamedChild("_Type")
+  if typePart.customTooltipAnchor then
+    typePart.customTooltipAnchor(
+      ItemTooltip, typePart, ComparativeTooltip1, ComparativeTooltip2)
   else
     ZO_Tooltips_SetupDynamicTooltipAnchors(
-      ItemTooltip, iconPart.tooltipAnchor or iconPart, 
+      ItemTooltip, typePart.tooltipAnchor or typePart, 
       ComparativeTooltip1, ComparativeTooltip2)
   end
 
@@ -111,6 +125,9 @@ local function Row_OnMouseExit(control, rowControl)
   ZO_PlayHideAnimationOnComparisonTooltip(ComparativeTooltip2)
 
   local iconPart = rowControl:GetNamedChild("_Icon")
+  if iconPart.animation then
+    iconPart.animation:PlayBackward()
+  end
 
   SetListHighlightHidden(rowControl, true)
 
@@ -152,17 +169,11 @@ local function SetupRowData(rowControl, data, scrollList)
   -- Handlers
   rowControl:SetHandler("OnMouseEnter", function()
       Row_OnMouseEnter(scrollList, rowControl)
-      -- ZO_ScrollList_MouseEnter(scrollList, rowControl)
     end)
 
   rowControl:SetHandler("OnMouseExit", function()
       Row_OnMouseExit(scrollList, rowControl)
-      -- ZO_ScrollList_MouseExit(scrollList, rowControl)
     end)
-
---  rowControl:SetHandler("OnMouseUp", function()
---      ZO_ScrollList_MouseClick(scrollList, rowControl)
---    end)
 
   typeIcon:SetHandler("OnMouseEnter", function()
       RowStatus_OnMouseEnter(typeIcon)
@@ -174,12 +185,13 @@ local function SetupRowData(rowControl, data, scrollList)
 
 end
 
-local function HighlightRow(prevData, newData, rebuild)
+local function RowDataHidden(rowControl, data)
+  data.control = nil
+end
 
-  UI.DEBUG("HighlightRow")
-
-  -- prevData.control:GetNamedChild("_Highlight"):SetHidden(true)
-  -- newData.control:GetNamedChild("_Highlight"):SetHidden(false)
+local function RowDataReset(control)
+  control:SetHidden(true)
+  control.data = nil
 end
 
 --
@@ -226,14 +238,15 @@ function UI.LootFragmentClass:Initialize()
     TOP, MAIL_LOOTER_LOOT_TITLEDivider, BOTTOM, 0, 10)
 
   ZO_ScrollList_AddDataType(scrollList, ROW_TYPE_ID, "MailLooterLootListRow",
-      52, SetupRowData, nil, nil, nil)
+      52, SetupRowData, RowDataHidden, nil, RowDataReset)
 
   -- NOTE: No longer uses the ZO_ScrollList to handle the Highlight.
   --       Follows the model of the default UI inventory list.
   --
-
-  -- ZO_ScrollList_EnableHighlight(scrollList, "MailLooterLootListRow", HighlightRow)
-  -- ZO_ScrollList_EnableHighlight(scrollList, "ZO_ThinListHighlight", HighlightRow)
+  -- ZO_ScrollList_EnableHighlight(
+  --   scrollList, "MailLooterLootListRow", HighlightRow)
+  -- ZO_ScrollList_EnableHighlight(
+  --   scrollList, "ZO_ThinListHighlight", HighlightRow)
 
   ZO_ScrollList_AddCategory(scrollList, 1, nil)
 
