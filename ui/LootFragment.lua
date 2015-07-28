@@ -30,6 +30,23 @@ local currencyOptions = {
   iconSide = RIGHT,
 }
 
+local NoComparisionTooltip =
+{
+    [SLOT_TYPE_PENDING_CHARGE] = true,
+    [SLOT_TYPE_ENCHANTMENT] = true,
+    [SLOT_TYPE_ENCHANTMENT_RESULT] = true,
+    [SLOT_TYPE_REPAIR] = true,
+    [SLOT_TYPE_PENDING_REPAIR] = true,
+    [SLOT_TYPE_CRAFTING_COMPONENT] = true,
+    [SLOT_TYPE_PENDING_CRAFTING_COMPONENT] = true,
+    [SLOT_TYPE_SMITHING_MATERIAL] = true,
+    [SLOT_TYPE_SMITHING_STYLE] = true,
+    [SLOT_TYPE_SMITHING_TRAIT] = true,
+    [SLOT_TYPE_SMITHING_BOOSTER] = true,
+    [SLOT_TYPE_LIST_DIALOG_ITEM] = true,
+}
+
+
 --
 -- Local functions
 --
@@ -55,13 +72,32 @@ local function Row_OnMouseEnter(control, rowControl)
   -- UI.DEBUG("Row_OnMouseEnter")
 
   -- Scale the icon...
+  local iconPart = rowControl:GetNamedChild("_Icon")
 
-  --InitializeTooltip(ItemTooltip)
-  --InitializeTooltip(InformationTooltip)
+  InitializeTooltip(ItemTooltip)
+  -- InitializeTooltip(InformationTooltip)
 
   SetListHighlightHidden(rowControl, false)
 
   -- Setup tooltips
+  ItemTooltip:SetLink(rowControl.data.link)
+  if not NoComparisionTooltip[GetItemLinkItemType(rowControl.data.link)] then
+    ItemTooltip:HideComparativeTooltips()
+    ItemTooltip:ShowComparativeTooltips()
+    ZO_PlayShowAnimationOnComparisonTooltip(ComparativeTooltip1)
+    ZO_PlayShowAnimationOnComparisonTooltip(ComparativeTooltip2)
+  end
+  
+  ItemTooltip:SetHidden(false)
+
+  if iconPart.customTooltipAnchor then
+    iconPart.customTooltipAnchor(
+      ItemTooltip, iconPart, ComparativeTooltip1, ComparativeTooltip2)
+  else
+    ZO_Tooltips_SetupDynamicTooltipAnchors(
+      ItemTooltip, iconPart.tooltipAnchor or iconPart, 
+      ComparativeTooltip1, ComparativeTooltip2)
+  end
 
 end
 
@@ -69,10 +105,12 @@ local function Row_OnMouseExit(control, rowControl)
 
   -- UI.DEBUG("Row_OnMouseExit")
 
-  --ClearTooltip(ItemTooltip)
-  --ClearTooltip(InformationTooltip)
-  --ZO_PlayHideAnimationOnComparisonTooltip(ComparativeTooltip1)
-  --ZO_PlayHideAnimationOnComparisonTooltip(ComparativeTooltip2)
+  ClearTooltip(ItemTooltip)
+  ClearTooltip(InformationTooltip)
+  ZO_PlayHideAnimationOnComparisonTooltip(ComparativeTooltip1)
+  ZO_PlayHideAnimationOnComparisonTooltip(ComparativeTooltip2)
+
+  local iconPart = rowControl:GetNamedChild("_Icon")
 
   SetListHighlightHidden(rowControl, true)
 
