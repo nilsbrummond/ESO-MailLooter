@@ -107,6 +107,7 @@ function UI.InitUserInterface(debugFunction)
   if debugFunction then
     DEBUG = function(msg) debugFunction("UI: " .. msg) end
   end
+  UI.DEBUG = DEBUG
 
   UI.InitSettings()
   UI.summaryFragment = UI.SummaryFragmentClass:New()

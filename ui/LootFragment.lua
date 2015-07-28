@@ -13,12 +13,18 @@ local typeIcons = {
   [ADDON.Core.MAILTYPE_HIRELING] = "/esoui/art/mainmenu/menuBar_group_up.dds",
   [ADDON.Core.MAILTYPE_STORE] = "/esoui/art/mainmenu/menuBar_guilds_up.dds",
   [ADDON.Core.MAILTYPE_COD] = "/esoui/art/mainmenu/menuBar_mail_up.dds",
+}
 
-  --  [ADDON.Core.MAILTYPE_HIRELING] = "/esoui/art/icons/ability_enchanter_008.dds",
+local typeTooltips = {
+  [ADDON.Core.MAILTYPE_UNKNOWN]   = "Unknown Mail",
+  [ADDON.Core.MAILTYPE_AVA]       = "AvA Mail",
+  [ADDON.Core.MAILTYPE_HIRELING]  = "Hireling Mail",
+  [ADDON.Core.MAILTYPE_STORE]     = "Guild Store Mail",
+  [ADDON.Core.MAILTYPE_COD]       = "COD Mail",
 }
 
 local currencyOptions = {
-  showTooltips = true,
+  showTooltips = false,
   useShortFormat = false,
   font = "ZoFontGameBold",
   iconSide = RIGHT,
@@ -28,9 +34,70 @@ local currencyOptions = {
 -- Local functions
 --
 
+local function SetListHighlightHidden(listPart, hidden)
+    if(listPart) then
+        local highlight = listPart:GetNamedChild("_Highlight")
+        if(highlight and (highlight:GetType() == CT_TEXTURE)) then
+            if not highlight.animation then
+                highlight.animation = ANIMATION_MANAGER:CreateTimelineFromVirtual("ShowOnMouseOverLabelAnimation", highlight)
+            end
+            if hidden then
+                highlight.animation:PlayBackward()
+            else
+                highlight.animation:PlayForward()
+            end
+        end
+    end
+end
+
+local function Row_OnMouseEnter(control, rowControl)
+
+  -- UI.DEBUG("Row_OnMouseEnter")
+
+  -- Scale the icon...
+
+  --InitializeTooltip(ItemTooltip)
+  --InitializeTooltip(InformationTooltip)
+
+  SetListHighlightHidden(rowControl, false)
+
+  -- Setup tooltips
+
+end
+
+local function Row_OnMouseExit(control, rowControl)
+
+  -- UI.DEBUG("Row_OnMouseExit")
+
+  --ClearTooltip(ItemTooltip)
+  --ClearTooltip(InformationTooltip)
+  --ZO_PlayHideAnimationOnComparisonTooltip(ComparativeTooltip1)
+  --ZO_PlayHideAnimationOnComparisonTooltip(ComparativeTooltip2)
+
+  SetListHighlightHidden(rowControl, true)
+
+end
+
+local function RowStatus_OnMouseEnter(control)
+  
+  local mailType = control:GetParent().data.mailType
+
+  InitializeTooltip(InformationTooltip, control, TOPRIGHT, 0, 0, TOPLEFT)
+  SetTooltipText(InformationTooltip, typeTooltips[mailType])
+end
+
+local function RowStatus_OnMouseExit(control)
+  ClearTooltip(InformationTooltip)
+end
+
 local function SetupRowData(rowControl, data, scrollList)
 
-  rowControl:GetNamedChild("_Type"):SetTexture(typeIcons[data.mailType])
+  data.control = rowControl
+  rowControl.data = data
+
+  local typeIcon = rowControl:GetNamedChild("_Type")
+  typeIcon:SetTexture(typeIcons[data.mailType])
+
   rowControl:GetNamedChild("_Icon"):SetTexture(data.icon)
 
   local text = zo_strformat("<<t:1>>", data.link)
@@ -44,15 +111,37 @@ local function SetupRowData(rowControl, data, scrollList)
     GetItemLinkValue(data.link, true) * data.stack, 
     currencyOptions, CURRENCY_SHOW_ALL, CURRENCY_HAS_ENOUGH)
 
-  rowControl:SetHandler("OnMouseUp", function()
-      ZO_ScrollList_MouseClick(scrollList, rowControl)
+  -- Handlers
+  rowControl:SetHandler("OnMouseEnter", function()
+      Row_OnMouseEnter(scrollList, rowControl)
+      -- ZO_ScrollList_MouseEnter(scrollList, rowControl)
+    end)
+
+  rowControl:SetHandler("OnMouseExit", function()
+      Row_OnMouseExit(scrollList, rowControl)
+      -- ZO_ScrollList_MouseExit(scrollList, rowControl)
+    end)
+
+--  rowControl:SetHandler("OnMouseUp", function()
+--      ZO_ScrollList_MouseClick(scrollList, rowControl)
+--    end)
+
+  typeIcon:SetHandler("OnMouseEnter", function()
+      RowStatus_OnMouseEnter(typeIcon)
+    end)
+
+  typeIcon:SetHandler("OnMouseExit", function()
+      RowStatus_OnMouseExit(typeIcon)
     end)
 
 end
 
-local function SelectRow(prev, new, rebuild)
-  prev:GetNamedChild("_Highlight"):SetHidden(true)
-  new:GetNamedChild("_Highlight"):SetHidden(false)
+local function HighlightRow(prevData, newData, rebuild)
+
+  UI.DEBUG("HighlightRow")
+
+  -- prevData.control:GetNamedChild("_Highlight"):SetHidden(true)
+  -- newData.control:GetNamedChild("_Highlight"):SetHidden(false)
 end
 
 --
@@ -77,6 +166,7 @@ function UI.LootFragmentClass:Initialize()
   fragment.win:SetWidth(ZO_MailInbox:GetWidth())
   fragment.win:SetAnchor(TOP, ZO_MailInbox, TOP, -20, 100)
   fragment.win:SetHidden(true)
+  fragment.win:SetMouseEnabled(true)
 
   WINDOW_MANAGER:CreateControlFromVirtual(
     "MAIL_LOOTER_LOOT_TITLE", fragment.win, "ZO_PanelTitle")
@@ -100,9 +190,16 @@ function UI.LootFragmentClass:Initialize()
   ZO_ScrollList_AddDataType(scrollList, ROW_TYPE_ID, "MailLooterLootListRow",
       52, SetupRowData, nil, nil, nil)
 
-  ZO_ScrollList_EnableSelection(scrollList, nil, SelectRow)
+  -- NOTE: No longer uses the ZO_ScrollList to handle the Highlight.
+  --       Follows the model of the default UI inventory list.
+  --
+
+  -- ZO_ScrollList_EnableHighlight(scrollList, "MailLooterLootListRow", HighlightRow)
+  -- ZO_ScrollList_EnableHighlight(scrollList, "ZO_ThinListHighlight", HighlightRow)
 
   ZO_ScrollList_AddCategory(scrollList, 1, nil)
+
+  ZO_ScrollList_AddResizeOnScreenResize(scrollList)
 
   fragment.scrollList = scrollList
 
@@ -155,7 +252,7 @@ function UI.LootFragmentClass:Initialize()
 
   fragment.FRAGMENT = ZO_FadeSceneFragment:New(fragment.win)
 
-  fragment.win:SetResizeToFitDescendents(true)
+  -- fragment.win:SetResizeToFitDescendents(true)
 
   self:UpdateMoney(0)
 end
@@ -210,9 +307,6 @@ function UI.LootFragmentClass:AddLooted(item, isNewItemType)
         break
       end
     end
-
-    -- ZO_ScrollList_Clear(UI.scrollList)
-    -- ZO_ScrollList_AddCategory(UI.scrollList, 1, nil)
 
   end
 
