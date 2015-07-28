@@ -874,8 +874,8 @@ function CORE.TestLoot()
       mailType=(i%6)+1, 
       icon='/esoui/art/icons/crafting_components_spice_004.dds',
       creator="",
-      sdn="Lodur",
-      scn="Lodur Ravensen",
+      sdn="@Lodur",
+      scn="",
     }
   end
 

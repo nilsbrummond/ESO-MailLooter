@@ -68,7 +68,7 @@ local NoComparisionTooltip =
 --
 
 local function SenderString(sdn, scn)
-  if scn then
+  if scn and (scn ~= "") then
     if sdn then
       return "(" .. scn .. ") " .. sdn
     else
@@ -126,7 +126,7 @@ local function Row_OnMouseEnter(control, rowControl)
     ZO_PlayShowAnimationOnComparisonTooltip(ComparativeTooltip1)
     ZO_PlayShowAnimationOnComparisonTooltip(ComparativeTooltip2)
   end
-  
+
   ItemTooltip:SetHidden(false)
 
   -- Attach the tooltip left of the type icon...
