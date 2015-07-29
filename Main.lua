@@ -12,7 +12,7 @@ ADDON.settingsDefaults = {
   ["deleteSimple"]        = true,
   ["simpleSubjectWC"]     = 0,
   ["simpleBodyWC"]        = 0,
-  ["autoReturnSubject"]   = { "return", "bounce", "rts", "return to sender" },
+  ["autoReturnSubjects"]  = { "return", "bounce", "rts", "return to sender" },
 
   -- debug
   ["debug"]               = false,
@@ -64,8 +64,33 @@ local function Initialize( eventCode, addOnName )
     return true
   end
 
+  local function DoSimplePreTest(subject, attachments, money)
+    -- simple mail enabled?
+    if not ADDON.GetSetting_enableSimple() then return false end
+
+    -- Must have stuff...
+    if (attachments + money) == 0 then return false end
+   
+    -- Subject word count test
+    local _, n = subject:gsub("%S+","")
+    if n <= ADDON.GetSetting_simpleSubjectWC() then return true end
+
+    return false
+  end
+
+  local function DoSimplePostTest(body)
+    -- body word count test
+    local _, n = body:gsub("%S+","")
+    return (n <= ADDON.GetSetting_simpleBodyWC())
+  end
+
   ADDON.Core.Initialize(
-    ADDON.settings.saveDeconSpace, ADDON.DebugMsg, DoCODTest)
+    ADDON.settings.saveDeconSpace, ADDON.DebugMsg,
+    DoCODTest, DoSimplePreTest, DoSimplePostTest,
+    ADDON.GetSetting_deleteSimple)
+
+  ADDON.Core.SetAutoReturnStrings(ADDON.settings.autoReturnSubjects)
+
   ADDON.UI.InitUserInterface(ADDON.DebugMsg)
 
   ADDON.initialized = true
@@ -152,11 +177,12 @@ function ADDON.SetSetting_simpleBodyWC(val)
 end
 
 function ADDON.GetSetting_autoReturnSubject(index)
-  return ADDON.settings.autoReturnSubject[index]
+  return ADDON.settings.autoReturnSubjects[index]
 end
 
 function ADDON.SetSetting_autoReturnSubject(val, index)
-  ADDON.settings.autoReturnSubject[index] = val
+  ADDON.settings.autoReturnSubjects[index] = val
+  ADDON.Core.SetAutoReturnStrings(ADDON.settings.autoReturnSubjects)
 end
 
 function ADDON.SetDebug(on)
