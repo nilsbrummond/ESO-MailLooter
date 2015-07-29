@@ -7,12 +7,14 @@ local CORE = ADDON.Core
 
 
 -- MAIL_TYPE
-local MAILTYPE_UNKNOWN  = 1
-local MAILTYPE_AVA      = 2
-local MAILTYPE_HIRELING = 3
-local MAILTYPE_STORE    = 4
-local MAILTYPE_COD      = 5
-local MAILTYPE_RETURNED = 6
+local MAILTYPE_UNKNOWN      = 1
+local MAILTYPE_AVA          = 2
+local MAILTYPE_HIRELING     = 3
+local MAILTYPE_STORE        = 4
+local MAILTYPE_COD          = 5
+local MAILTYPE_RETURNED     = 6
+local MAILTYPE_SIMPLE       = 7
+local MAILTYPE_BOUNCE       = 8
 
 -- exported
 CORE.MAILTYPE_UNKNOWN  = MAILTYPE_UNKNOWN
@@ -21,6 +23,8 @@ CORE.MAILTYPE_HIRELING = MAILTYPE_HIRELING
 CORE.MAILTYPE_STORE    = MAILTYPE_STORE
 CORE.MAILTYPE_COD      = MAILTYPE_COD
 CORE.MAILTYPE_RETURNED = MAILTYPE_RETURNED
+CORE.MAILTYPE_SIMPLE   = MAILTYPE_SIMPLE
+CORE.MAILTYPE_BOUNCE   = MAILTYPE_BOUNCE
 
 local TitlesAvA = { 
   -- English
@@ -119,6 +123,8 @@ CORE.filters[MAILTYPE_HIRELING] = true
 CORE.filters[MAILTYPE_STORE] = true
 CORE.filters[MAILTYPE_COD] = false 
 CORE.filters[MAILTYPE_RETURNED] = true 
+CORE.filters[MAILTYPE_SIMPLE] = true 
+CORE.filters[MAILTYPE_BOUNCE] = false 
 
 --
 -- Local Functions
@@ -140,10 +146,12 @@ local function GetMailType(subject, fromSystem, codAmount, returned)
     end
   else
     if returned then return MAILTYPE_RETURNED end
+    if codAmount > 0 then return MAILTYPE_COD end
 
-    if codAmount > 0 then
-      return MAILTYPE_COD
-    end
+    -- Check bounce type
+
+    -- Check simple type
+
   end
 
   return MAILTYPE_UNKNOWN
@@ -774,6 +782,8 @@ function CORE.ProcessMailAll()
   filter[MAILTYPE_HIRELING] = true
   filter[MAILTYPE_STORE] = true
   filter[MAILTYPE_RETURNED] = true
+  filter[MAILTYPE_SIMPLE] = true 
+  filter[MAILTYPE_BOUNCE] = false 
 
   -- Don't auto loot COD.  So one can troll you for
   -- lots of money if your not watching..

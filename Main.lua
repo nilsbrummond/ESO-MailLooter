@@ -8,6 +8,13 @@ ADDON.settingsDefaults = {
   ["lootCODMails"]        = false,
   ["singleCODPriceMax"]   = 1000,
   ["combinedCODSpentMax"] = 5000,
+  ["enableSimple"]        = true,
+  ["deleteSimple"]        = true,
+  ["simpleSubjectWC"]     = 0,
+  ["simpleBodyWC"]        = 0,
+  ["autoReturnSubject"]   = { "return", "bounce", "rts", "return to sender" },
+
+  -- debug
   ["debug"]               = false,
   ["history"]             = {},
   ["scan"]                = {},
@@ -110,6 +117,46 @@ function ADDON.SetSetting_SaveHistory(loot)
   if ADDON.debug then
     table.insert( ADDON.settings.history, loot)
   end
+end
+
+function ADDON.GetSetting_enableSimple()
+  return ADDON.settings.enableSimple
+end
+
+function ADDON.SetSetting_enableSimple(val)
+  ADDON.settings.enableSimple = val
+end
+
+function ADDON.GetSetting_deleteSimple()
+  return ADDON.settings.deleteSimple
+end
+
+function ADDON.SetSetting_deleteSimple(val)
+  ADDON.settings.deleteSimple = val
+end
+
+function ADDON.GetSetting_simpleSubjectWC()
+  return ADDON.settings.simpleSubjectWC
+end
+
+function ADDON.SetSetting_simpleSubjectWC(val)
+  ADDON.settings.simpleSubjectWC = val
+end
+
+function ADDON.GetSetting_simpleBodyWC()
+  return ADDON.settings.simpleBodyWC
+end
+
+function ADDON.SetSetting_simpleBodyWC(val)
+  ADDON.settings.simpleBodyWC = val
+end
+
+function ADDON.GetSetting_autoReturnSubject(index)
+  return ADDON.settings.autoReturnSubject[index]
+end
+
+function ADDON.SetSetting_autoReturnSubject(val, index)
+  ADDON.settings.autoReturnSubject[index] = val
 end
 
 function ADDON.SetDebug(on)
