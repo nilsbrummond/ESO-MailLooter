@@ -107,17 +107,19 @@ local mailboxOpen = false
 local mailLooterOpen = false
 
 -- Processing States
-local STATE_IDLE   = 0
+local STATE_IDLE   = 0    -- Opening
 local STATE_OPEN   = 1
-local STATE_UPDATE = 11
-local STATE_SCAN   = 2
-local STATE_READ   = 3
-local STATE_LOOT   = 4
+local STATE_UPDATE = 2
+
+local STATE_LOOT   = 3    -- Looting
+local STATE_READ   = 4
 local STATE_ITEMS  = 5
 local STATE_MONEY  = 6
 local STATE_DELETE = 7
-local STATE_CLOSE  = 8
-local STATE_TEST   = 42
+
+local STATE_CLOSE  = 8    -- closing
+local STATE_TEST   = 42   -- testing
+
 
 CORE.state = STATE_IDLE
 
@@ -137,11 +139,13 @@ CORE.filters[MAILTYPE_BOUNCE] = false
 -- Local Functions
 --
 
--- Placeholder.
+-- Placeholders.
 local function DEBUG(str) end
 local function IsSimplePre(subject, attachments, money) return false end
 local function IsSimplePost(body) return false end
 local function IsDeleteSimpleAfter() return false end
+local function LootThisMailCOD(codAmount, codTotal) return false end
+
 
 local function CleanBouncePhrase(phrase)
   if (phrase == nil) or (phrase == '') then return false end
@@ -207,11 +211,6 @@ local function GetMailType(subject, fromSystem, codAmount, returned, attachments
   end
 
   return MAILTYPE_UNKNOWN
-end
-
--- placeholder
-local function LootThisMailCOD(codAmount, codTotal)
-  return false
 end
 
 -- Return based on mailType and type filter.
@@ -732,7 +731,11 @@ function CORE.MailRemovedEvt( eventCode, mailId )
              (CORE.state == STATE_MONEY) then
 
         DEBUG("Mail delete on us!!!")
-        -- FIXME
+
+        CORE.currentMail = nil
+        CORE.state = STATE_IDLE
+        CORE.callbacks.StatusUpdateCB(false, false, "Our mail was deleted.")
+        SummaryScanMail()
         
       end
     end
