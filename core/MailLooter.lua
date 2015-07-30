@@ -148,7 +148,7 @@ local function CleanBouncePhrase(phrase)
 
   local words = {}
   local function AddWord(w) table.insert(words, w) end
-  string.gsub(phrase.lower(), "(%w+)", AddWord)
+  string.gsub(string.lower(phrase), "(%w+)", AddWord)
 
   local cleaned = false
   for k,w in pairs(words) do
