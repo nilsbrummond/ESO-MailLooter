@@ -4,8 +4,10 @@ local ADDON = MailLooter
 ADDON.UI = ADDON.UI or {}
 local UI = ADDON.UI
 
--- Just one type for now
-local ROW_TYPE_ID = 1
+-- Row types:
+local ROW_TYPE_ID       = 1
+local ROW_TYPE_ID_EXTRA = 2
+
 
 local typeIcons = {
   [ADDON.Core.MAILTYPE_UNKNOWN] = "/esoui/art/menubar/menuBar_help_up.dds",
@@ -14,6 +16,17 @@ local typeIcons = {
   [ADDON.Core.MAILTYPE_STORE] = "/esoui/art/mainmenu/menuBar_guilds_up.dds",
   [ADDON.Core.MAILTYPE_COD] = "/esoui/art/mainmenu/menuBar_mail_up.dds",
   [ADDON.Core.MAILTYPE_RETURNED] = "/esoui/art/mainmenu/menuBar_mail_up.dds",
+  [ADDON.Core.MAILTYPE_SIMPLE] = "/esoui/art/mainmenu/menuBar_mail_up.dds",
+}
+
+local typeRowType = {
+  [ADDON.Core.MAILTYPE_UNKNOWN]   = ROW_TYPE_ID,
+  [ADDON.Core.MAILTYPE_AVA]       = ROW_TYPE_ID,
+  [ADDON.Core.MAILTYPE_HIRELING]  = ROW_TYPE_ID,
+  [ADDON.Core.MAILTYPE_STORE]     = ROW_TYPE_ID,
+  [ADDON.Core.MAILTYPE_COD]       = ROW_TYPE_ID,
+  [ADDON.Core.MAILTYPE_RETURNED]  = ROW_TYPE_ID_EXTRA,
+  [ADDON.Core.MAILTYPE_SIMPLE]    = ROW_TYPE_ID_EXTRA,
 }
 
 -- TODO: Translate:
@@ -24,6 +37,7 @@ local typeTooltips = {
   [ADDON.Core.MAILTYPE_STORE]     = "Guild Store Mail",
   [ADDON.Core.MAILTYPE_COD]       = "COD Mail",
   [ADDON.Core.MAILTYPE_RETURNED]  = "Returned Mail",
+  [ADDON.Core.MAILTYPE_SIMPLE]    = "Simple Mail",
 }
 
 local currencyOptions = {
@@ -55,6 +69,20 @@ local NoComparisionTooltip =
 --
 -- Local functions
 --
+
+local function SenderString(sdn, scn)
+  if scn and (scn ~= "") then
+    if sdn then
+      return "(" .. scn .. ") " .. sdn
+    else
+      return "(" .. scn .. ")"
+    end
+  elseif sdn then
+    return sdn
+  else
+    return "UNKNOWN"
+  end
+end
 
 local function SetListHighlightHidden(listPart, hidden)
     if(listPart) then
@@ -101,7 +129,7 @@ local function Row_OnMouseEnter(control, rowControl)
     ZO_PlayShowAnimationOnComparisonTooltip(ComparativeTooltip1)
     ZO_PlayShowAnimationOnComparisonTooltip(ComparativeTooltip2)
   end
-  
+
   ItemTooltip:SetHidden(false)
 
   -- Attach the tooltip left of the type icon...
@@ -164,9 +192,12 @@ local function SetupRowData(rowControl, data, scrollList)
 
   if data.mailType == ADDON.Core.MAILTYPE_RETURNED then
     local extra = rowControl:GetNamedChild("_Extra")
-    extra:SetHidden(false)
     extra:SetText(
-      "|cFF0000Returned|r from: " .. data.scn .. " (@" .. data.sdn .. ")")
+      "|cFF0000Returned|r from: " .. SenderString(data.sdn, data.scn))
+  elseif data.mailType == ADDON.Core.MAILTYPE_SIMPLE then
+    local extra = rowControl:GetNamedChild("_Extra")
+    extra:SetText(
+      "From: " .. SenderString(data.sdn, data.scn))
   end
 
   ZO_CurrencyControl_SetSimpleCurrency(
@@ -200,7 +231,6 @@ end
 
 local function RowDataReset(control)
   control:SetHidden(true)
-  control:GetNamedChild("_Extra"):SetHidden(true)
   control.data = nil
 end
 
@@ -247,7 +277,12 @@ function UI.LootFragmentClass:Initialize()
   scrollList:SetAnchor(
     TOP, MAIL_LOOTER_LOOT_TITLEDivider, BOTTOM, 0, 10)
 
-  ZO_ScrollList_AddDataType(scrollList, ROW_TYPE_ID, "MailLooterLootListRow",
+  ZO_ScrollList_AddDataType(scrollList, ROW_TYPE_ID, 
+      "MailLooterLootListRow",
+      52, SetupRowData, RowDataHidden, nil, RowDataReset)
+
+  ZO_ScrollList_AddDataType(scrollList, ROW_TYPE_ID_EXTRA,
+      "MailLooterLootListRowExtra",
       52, SetupRowData, RowDataHidden, nil, RowDataReset)
 
   -- NOTE: No longer uses the ZO_ScrollList to handle the Highlight.
@@ -351,7 +386,7 @@ function UI.LootFragmentClass:AddLooted(item, isNewItemType)
   if isNewItemType then
     -- add row
     local row = ZO_ScrollList_CreateDataEntry(
-      ROW_TYPE_ID, ZO_DeepTableCopy(item), 1)
+      typeRowType[item.mailType], ZO_DeepTableCopy(item), 1)
 
     table.insert(
       ZO_ScrollList_GetDataList(

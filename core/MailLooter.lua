@@ -7,12 +7,15 @@ local CORE = ADDON.Core
 
 
 -- MAIL_TYPE
-local MAILTYPE_UNKNOWN  = 1
-local MAILTYPE_AVA      = 2
-local MAILTYPE_HIRELING = 3
-local MAILTYPE_STORE    = 4
-local MAILTYPE_COD      = 5
-local MAILTYPE_RETURNED = 6
+local MAILTYPE_UNKNOWN      = 1
+local MAILTYPE_AVA          = 2
+local MAILTYPE_HIRELING     = 3
+local MAILTYPE_STORE        = 4
+local MAILTYPE_COD          = 5
+local MAILTYPE_RETURNED     = 6
+local MAILTYPE_SIMPLE       = 7
+local MAILTYPE_BOUNCE       = 8
+local MAILTYPE_SIMPLE_PRE   = 9 -- Need to read body to classify...
 
 -- exported
 CORE.MAILTYPE_UNKNOWN  = MAILTYPE_UNKNOWN
@@ -21,6 +24,11 @@ CORE.MAILTYPE_HIRELING = MAILTYPE_HIRELING
 CORE.MAILTYPE_STORE    = MAILTYPE_STORE
 CORE.MAILTYPE_COD      = MAILTYPE_COD
 CORE.MAILTYPE_RETURNED = MAILTYPE_RETURNED
+CORE.MAILTYPE_SIMPLE   = MAILTYPE_SIMPLE
+CORE.MAILTYPE_BOUNCE   = MAILTYPE_BOUNCE
+
+-- internal only
+-- CORE.MAILTYPE_SIMPLE_PRE
 
 local TitlesAvA = { 
   -- English
@@ -82,12 +90,14 @@ local TitlesStores = {
 local _
 
 CORE.deconSpace = false
+CORE.bounceWords = {}
 
 CORE.initialized = false
 CORE.state = nil
 CORE.loot = {items={}, money=0, mails=0, codTotal=0}
 CORE.currentMail = {}
 CORE.currentItems = {}
+CORE.skippedMails = {}
 
 CORE.callbacks = nil
 
@@ -97,17 +107,19 @@ local mailboxOpen = false
 local mailLooterOpen = false
 
 -- Processing States
-local STATE_IDLE   = 0
+local STATE_IDLE   = 0    -- Opening
 local STATE_OPEN   = 1
-local STATE_UPDATE = 11
-local STATE_SCAN   = 2
-local STATE_READ   = 3
-local STATE_LOOT   = 4
+local STATE_UPDATE = 2
+
+local STATE_LOOT   = 3    -- Looting
+local STATE_READ   = 4
 local STATE_ITEMS  = 5
 local STATE_MONEY  = 6
 local STATE_DELETE = 7
-local STATE_CLOSE  = 8
-local STATE_TEST   = 42
+
+local STATE_CLOSE  = 8    -- closing
+local STATE_TEST   = 42   -- testing
+
 
 CORE.state = STATE_IDLE
 
@@ -119,16 +131,62 @@ CORE.filters[MAILTYPE_HIRELING] = true
 CORE.filters[MAILTYPE_STORE] = true
 CORE.filters[MAILTYPE_COD] = false 
 CORE.filters[MAILTYPE_RETURNED] = true 
+CORE.filters[MAILTYPE_SIMPLE_PRE] = true 
+CORE.filters[MAILTYPE_SIMPLE] = true 
+CORE.filters[MAILTYPE_BOUNCE] = false 
 
 --
 -- Local Functions
 --
 
--- Placeholder.
+-- Placeholders.
 local function DEBUG(str) end
+local function IsSimplePre(subject, attachments, money) return false end
+local function IsSimplePost(body) return false end
+local function IsDeleteSimpleAfter() return false end
+local function LootThisMailCOD(codAmount, codTotal) return false end
+
+
+local function CleanBouncePhrase(phrase)
+  if (phrase == nil) or (phrase == '') then return false end
+
+  local words = {}
+  local function AddWord(w) table.insert(words, w) end
+  string.gsub(string.lower(phrase), "(%w+)", AddWord)
+
+  local cleaned = false
+  for k,w in pairs(words) do
+    if cleaned == false then 
+      cleaned = w
+    else
+      cleaned = cleaned .. " " .. w
+    end
+  end
+
+  return cleaned
+
+end
+
+-- Check the subject of a mail against the auto-return subjects.
+local function IsBounceReqMail(subject)
+
+  DEBUG("IsBounceReqMail: " .. subject)
+
+  local cleaned = CleanBouncePhrase(subject)
+  if cleaned == false then return false end
+
+  -- DEBUG("cleaned: " .. cleaned)
+
+  for k,v in pairs(CORE.bounceWords) do
+    -- DEBUG(cleaned .. " : " .. v)
+    if cleaned == v then return true end
+  end
+
+  return false
+end
 
 -- Detect the type of a mail message.
-local function GetMailType(subject, fromSystem, codAmount, returned)
+local function GetMailType(subject, fromSystem, codAmount, returned, attachments, money)
 
   if fromSystem then
     if TitlesAvA[subject] then
@@ -140,18 +198,19 @@ local function GetMailType(subject, fromSystem, codAmount, returned)
     end
   else
     if returned then return MAILTYPE_RETURNED end
+    if codAmount > 0 then return MAILTYPE_COD end
 
-    if codAmount > 0 then
-      return MAILTYPE_COD
+    -- Check bounce type
+    if IsBounceReqMail(subject) then return MAILTYPE_BOUNCE end
+
+    -- Check simple type
+    if IsSimplePre(subject, attachments, money) then
+      return MAILTYPE_SIMPLE_PRE 
     end
+
   end
 
   return MAILTYPE_UNKNOWN
-end
-
--- placeholder
-local function LootThisMailCOD(codAmount, codTotal)
-  return false
 end
 
 -- Return based on mailType and type filter.
@@ -284,30 +343,39 @@ local function SummaryScanMail()
   local countCOD = 0
   local countStore = 0
   local countReturned = 0
+  local countBounce = 0
   local countOther = 0
   local countItems = 0
   local countMoney = 0
 
   local id = GetNextMailId(nil)
   while id ~= nil do
-    local sdn, scn, subject, icon, unread, fromSystem, fromCustomerService, returned, numAttachments, attachedMoney, codAmount, expiresInDays, secsSinceReceived = GetMailItemInfo(id)
+    local _, _, subject, _, unread, fromSystem, fromCustomerService, returned, numAttachments, attachedMoney, codAmount = GetMailItemInfo(id)
 
     -- DEBUG(" -- Mail:" .. Id64ToString(id) .. " " .. subject .. " from:"..sdn.."/"..scn .. " sys:" .. tostring(fromSystem) .. " cs:"..tostring(fromCustomerService))
 
     countItems = countItems + numAttachments
     countMoney = countMoney + attachedMoney
 
-    if codAmount > 0 then
+    numAttachments = numAttachments or 0
+    attachedMoney = attachedMoney or 0
+
+    local mailType = GetMailType(
+      subject, fromSystem, codAmount, returned, numAttachments, attachedMoney)
+   
+    if mailType == MAILTYPE_COD then
       countCOD = countCOD + 1
       countMoney = countMoney + codAmount
-    elseif TitlesAvA[subject] then
+    elseif mailType == MAILTYPE_AVA then
       countAvA = countAvA + 1
-    elseif TitlesHirelings[subject] then
+    elseif mailType == MAILTYPE_HIRELING then
       countHireling = countHireling + 1
-    elseif TitlesStores[subject] then
+    elseif mailType == MAILTYPE_STORE then
       countStore = countStore + 1
-    elseif returned then
+    elseif mailType == MAILTYPE_RETURNED then
       countReturned = countReturned + 1
+    elseif mailType == MAILTYPE_BOUNCE then
+      countBounce = countBounce + 1
     else
       countOther = countOther + 1
     end
@@ -318,10 +386,27 @@ local function SummaryScanMail()
   local result = { countAvA = countAvA, countHireling=countHireling, 
                    countCOD = countCOD, countStore = countStore,
                    countReturned = countReturned,
+                   countBounce = countBounce,
                    countOther = countOther, more = IsLocalMailboxFull(),
                    countItems = countItems, countMoney = countMoney }
 
   CORE.callbacks.ScanUpdateCB(result)
+
+end
+
+local function StoreCurrentMail(
+  id, sdn, scn, numAttachments, attachedMoney, codAmount, mailType)
+
+  CORE.currentMail = { 
+    id=id, att=numAttachments, money=attachedMoney, 
+    codAmount=codAmount, mailType=mailType
+  }
+
+  -- Might care who it is from for non-system mail...
+  if not fromSystem then
+    CORE.currentMail.sdn = sdn
+    CORE.currentMail.scn = scn
+  end
 
 end
 
@@ -338,64 +423,97 @@ local function LootMails()
 
   while id ~= nil do
 
-    local sdn, scn, subject, icon, unread, fromSystem, fromCustomerService, returned, numAttachments, attachedMoney, codAmount, expiresInDays, secsSinceReceived = GetMailItemInfo(id)
+    if CORE.skippedMails[id] then
+      -- Already looked at and rejected this mail for looting...
+      DEBUG("skipping mail: " .. Id64ToString(id))
+    else
 
-    local mailType = GetMailType(subject, fromSystem, codAmount, returned)
+      local sdn, scn, subject, icon, unread, fromSystem, 
+            fromCustomerService, returned, numAttachments, 
+            attachedMoney, codAmount, expiresInDays, secsSinceReceived 
+        = GetMailItemInfo(id)
+      
+      numAttachments = numAttachments or 0
+      attachedMoney = attachedMoney or 0
 
-    if LootThisMail(mailType, codAmount) then
+      local mailType = GetMailType(
+        subject, fromSystem, codAmount, returned, numAttachments, attachedMoney)
 
-      -- Loot this Mail
-      DEBUG( "found mail: " .. Id64ToString(id) .. " '" .. 
-             subject .. "' " .. numAttachments .. " " .. (secsSinceReceived/60))
+      if fromCustomerService then
+        -- NOOP - just skip it.
+        -- Just being extra careful we don't mess with CS mail.
+        CORE.skippedMail[id] = true
 
-      CORE.currentMail = { 
-        id=id, att=numAttachments, money=attachedMoney, 
-        codAmount=codAmount, mailType=mailType
-      }
+      elseif mailType == MAILTYPE_BOUNCE then
+        -- Skip it for now.
+        -- TODO: Add mail auto-return option.
 
-      -- Might care who it is from for non-system mail...
-      if not fromSystem then
-        CORE.currentMail.sdn = sdn
-        CORE.currentMail.scn = scn
-      end
+        DEBUG("mail: " .. Id64ToString(id) .. 
+          " '" .. subject .. "' - Marked Auto-return")
 
-      local v = CORE.currentMail
+        CORE.skippedMails[id] = true
 
-      local doItemLoot = false
-      if (v.att > 0) then
-        if IsRoomToLoot(id, numAttachments) then
-          doItemLoot = true
-        else
-          failedNoSpace = true
+      elseif LootThisMail(mailType, codAmount) then
+
+
+        -- Loot this Mail
+        DEBUG( "found mail: " .. Id64ToString(id) .. " '" .. 
+               subject .. "' " .. numAttachments .. " " .. 
+               (secsSinceReceived/60))
+
+        StoreCurrentMail(
+          id, sdn, scn, numAttachments, attachedMoney, codAmount, mailType)
+
+        local doItemLoot = false
+        local noRoomToLoot = false
+        if (numAttachments > 0) then
+          if IsRoomToLoot(id, numAttachments) then
+            doItemLoot = true
+          else
+            failedNoSpace = true
+            noRoomToLoot = true
+          end
         end
-      end
 
-      if doItemLoot then
-        CORE.loot.mails = CORE.loot.mails + 1
+        if noRoomToLoot then
+          -- NOOP
+          -- Skip mails with no room to loot.
+          -- Don't loot the money.  It is all or nothing.
+        elseif mailType == MAILTYPE_SIMPLE_PRE then
+          -- Must read the mail to know if we loot it...
+   
+          DEBUG("simple-pre id=" .. Id64ToString(id))
+          CORE.state = STATE_READ
+          RequestReadMail(id)
+          return
 
-        -- Setup currentItems moved from here to after readed event.
+        elseif doItemLoot then
+          CORE.loot.mails = CORE.loot.mails + 1
 
-        DEBUG("items id=" .. Id64ToString(id))
-        CORE.state = STATE_READ
-        -- NOTE: Seems reading the mail help with getting items more reliably.
-        RequestReadMail(id)
-        return
-      elseif (v.money ~= nil) and (v.money > 0) then
-        DEBUG("money id=" .. Id64ToString(id))
-        CORE.loot.mails = CORE.loot.mails + 1
-        CORE.state = STATE_MONEY
-        TakeMailAttachedMoney(id)
-        return
-      elseif v.att == 0 then 
-        -- DELETE
-        -- player may have manually looted and not deleted it.
-        DEBUG("delete id=" .. Id64ToString(id))
-        CORE.loot.mails = CORE.loot.mails + 1
-        CORE.state = STATE_DELETE
-        DeleteMail(id, true)
-        return
-      else
-        -- NOOP
+          -- Setup currentItems moved from here to after read event.
+
+          DEBUG("items id=" .. Id64ToString(id))
+          CORE.state = STATE_READ
+          -- NOTE: Seems reading the mail help with getting items more reliably.
+          RequestReadMail(id)
+          return
+        elseif attachedMoney > 0 then
+          DEBUG("money id=" .. Id64ToString(id))
+          CORE.loot.mails = CORE.loot.mails + 1
+          CORE.state = STATE_MONEY
+          TakeMailAttachedMoney(id)
+          return
+        elseif numAttachments == 0 then 
+          -- DELETE
+          -- player may have manually looted and not deleted it.
+          DEBUG("delete id=" .. Id64ToString(id))
+          CORE.loot.mails = CORE.loot.mails + 1
+          CORE.state = STATE_DELETE
+          DeleteMail(id, true)
+          return
+        else
+          -- NOOP
+        end
       end
     end
 
@@ -424,6 +542,43 @@ end
 local function LootMailsCont()
   DEBUG( "LootMailsCont" )
 
+  if CORE.currentMail.mailType == MAILTYPE_SIMPLE_PRE then
+    local body = ReadMail(CORE.currentMail.id)
+    if IsSimplePost(body) then
+
+      CORE.currentMail.mailType = MAILTYPE_SIMPLE
+      CORE.loot.mails = CORE.loot.mails + 1
+
+      if (CORE.currentMail.att > 0) then
+        -- Fall through to loot items...
+      elseif CORE.currentMail.money > 0 then
+        -- loot money
+        DEBUG("money id=" .. Id64ToString(CORE.currentMail.id))
+        CORE.state = STATE_MONEY
+        TakeMailAttachedMoney(CORE.currentMail.id)
+        return
+      else
+        -- delete
+        DEBUG("delete id=" .. Id64ToString(CORE.currentMail.id))
+        CORE.state = STATE_DELETE
+        DeleteMail(CORE.currentMail.id, true)
+        return
+      end
+
+    else
+      -- Skip this mail...
+      DEBUG("not simple id=" .. Id64ToString(CORE.currentMail.id))
+      CORE.skippedMails[CORE.currentMail.id] = true
+      CORE.currentMail = {}
+      LootMails()
+      return
+    end
+  end
+
+  --
+  -- Loot Item....
+  --
+
   -- Reading the attached items works better after reading the mail.
   CORE.currentItems = {}
 
@@ -438,7 +593,10 @@ local function LootMailsCont()
     table.insert(
       CORE.currentItems,
       { icon=icon, stack=stack, link=link, 
-        mailType=CORE.currentMail.mailType }
+        mailType=CORE.currentMail.mailType,
+        sdn=CORE.currentMail.sdn,
+        scn=CORE.currentMail.scn,
+      }
     )
   end
 
@@ -458,9 +616,11 @@ local function Start(filter)
   end
 
   CORE.filters = filter
+  CORE.filters[MAILTYPE_SIMPLE_PRE] = CORE.filters[MAILTYPE_SIMPLE]
 
   CORE.loot = { items = {}, money = 0, mails = 0, codTotal=0 }
   CORE.currentMail = {}
+  CORE.skippedMails = {}
 
   CORE.callbacks.StatusUpdateCB(true, true, nil)
 
@@ -554,11 +714,30 @@ function CORE.MailRemovedEvt( eventCode, mailId )
   DEBUG( "MailRemoved state=" .. CORE.state .. " id=" .. Id64ToString(mailId) )
 
   if mailLooterOpen then
-    if CORE.state ~= STATE_DELETE then return end
+    if CORE.state == STATE_IDLE then return end
 
-    if (CORE.currentMail.id == mailId) then
-      CORE.currentMail = nil
-      LootMails()
+    -- For our mail.
+    if (CORE.currentMail ~= nil) and 
+       (CORE.currentMail.id == mailId) then
+
+      -- normal case.
+      if CORE.state == STATE_DELETE then
+        CORE.currentMail = nil
+        LootMails()
+
+      -- Our mail was deleted on us...
+      elseif (CORE.state == STATE_READ) or
+             (CORE.state == STATE_ITEMS) or
+             (CORE.state == STATE_MONEY) then
+
+        DEBUG("Mail delete on us!!!")
+
+        CORE.currentMail = nil
+        CORE.state = STATE_IDLE
+        CORE.callbacks.StatusUpdateCB(false, false, "Our mail was deleted.")
+        SummaryScanMail()
+        
+      end
     end
   end
 
@@ -653,7 +832,10 @@ end
 
 -- This function must be called from the client ADDON's 
 -- EVENT_ADD_ON_LOADED handler.
-function CORE.Initialize(saveDeconSpace, debugFunction, codTestFunction)
+function CORE.Initialize(
+  saveDeconSpace, debugFunction, codTestFunction, 
+  preSimpleTestFunction, bodySimpleTestFunction,
+  deleteSimpleAfter)
 
   if CORE.initialized then return end -- exit if already init'd.
 
@@ -667,6 +849,18 @@ function CORE.Initialize(saveDeconSpace, debugFunction, codTestFunction)
 
   if codTestFunction then
     LootThisMailCOD = codTestFunction
+  end
+
+  if preSimpleTestFunction then
+    IsSimplePre = preSimpleTestFunction
+  end
+  
+  if bodySimpleTestFunction then
+    IsSimplePost = bodySimpleTestFunction
+  end
+
+  if deleteSimpleAfter then
+    IsDeleteSimpleAfter =  deleteSimpleAfter
   end
 
   EVENT_MANAGER:RegisterForEvent(
@@ -690,6 +884,24 @@ function CORE.Initialize(saveDeconSpace, debugFunction, codTestFunction)
     ADDON.NAME, EVENT_INVENTORY_IS_FULL, CORE.InventoryFullEvt )
   EVENT_MANAGER:RegisterForEvent(
     ADDON.NAME, EVENT_NOT_ENOUGH_MONEY, CORE.NotEnoughMoneyEvt )
+
+end
+
+-- Set the set of phrases used to determine auto-return mails.
+function CORE.SetAutoReturnStrings(strings)
+  DEBUG("SetAutoReturnStrings")
+
+  local newWords = {}
+
+  for k,w in pairs(strings) do
+    local clean = CleanBouncePhrase(w)
+    if not (clean == false) then
+      DEBUG("Auto-Return word: " .. clean)
+      table.insert(newWords, clean)
+    end
+  end
+
+  CORE.bounceWords = newWords
 
 end
 
@@ -771,6 +983,8 @@ function CORE.ProcessMailAll()
   filter[MAILTYPE_HIRELING] = true
   filter[MAILTYPE_STORE] = true
   filter[MAILTYPE_RETURNED] = true
+  filter[MAILTYPE_SIMPLE] = true 
+  filter[MAILTYPE_BOUNCE] = false 
 
   -- Don't auto loot COD.  So one can troll you for
   -- lots of money if your not watching..
@@ -871,8 +1085,8 @@ function CORE.TestLoot()
       mailType=(i%6)+1, 
       icon='/esoui/art/icons/crafting_components_spice_004.dds',
       creator="",
-      sdn="Lodur",
-      scn="Lodur Ravensen",
+      sdn="@Lodur",
+      scn="",
     }
   end
 
@@ -920,7 +1134,11 @@ function CORE.Scan()
     local _, _, subject, icon, unread, fromSystem, fromCustomerService, returned, 
       numAttachments, attachedMoney, codAmount, expiresInDays, secsSinceReceived = GetMailItemInfo(id)
 
-    local mailType = GetMailType(subject, fromSystem, codAmount, returned)
+    numAttachments = numAttachments or 0
+    attachedMoney = attachedMoney or 0
+
+    local mailType = GetMailType(subject, fromSystem, codAmount, 
+                                 returned, numAttachments, attachedMoney)
 
     d("mail id=" .. Id64ToString(id) )
     d("-> subject='" .. subject .. "'")
@@ -928,8 +1146,13 @@ function CORE.Scan()
     d("-> custService=" .. tostring(fromCustomerService))
     d("-> returned=" .. tostring(returned))
     d("-> numAtt=" .. numAttachments .. " money=" .. attachedMoney .. " cod=" .. codAmount)
+    d("-> mailType=" .. mailType)
 
-    table.insert(t, {id=id, subject=subject, system=fromSystem})
+
+    table.insert(t, 
+      { id=id, subject=subject, system=fromSystem, 
+        returned=returned, mailType=mailType }
+    )
 
     id = GetNextMailId(id)
   end

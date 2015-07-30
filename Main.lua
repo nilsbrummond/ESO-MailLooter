@@ -8,6 +8,13 @@ ADDON.settingsDefaults = {
   ["lootCODMails"]        = false,
   ["singleCODPriceMax"]   = 1000,
   ["combinedCODSpentMax"] = 5000,
+  ["enableSimple"]        = true,
+  ["deleteSimple"]        = true,
+  ["simpleSubjectWC"]     = 0,
+  ["simpleBodyWC"]        = 0,
+  ["autoReturnSubjects"]  = { "return", "bounce", "rts", "return to sender" },
+
+  -- debug
   ["debug"]               = false,
   ["history"]             = {},
   ["scan"]                = {},
@@ -57,8 +64,33 @@ local function Initialize( eventCode, addOnName )
     return true
   end
 
+  local function DoSimplePreTest(subject, attachments, money)
+    -- simple mail enabled?
+    if not ADDON.GetSetting_enableSimple() then return false end
+
+    -- Must have stuff...
+    if (attachments + money) == 0 then return false end
+   
+    -- Subject word count test
+    local _, n = subject:gsub("%S+","")
+    if n <= ADDON.GetSetting_simpleSubjectWC() then return true end
+
+    return false
+  end
+
+  local function DoSimplePostTest(body)
+    -- body word count test
+    local _, n = body:gsub("%S+","")
+    return (n <= ADDON.GetSetting_simpleBodyWC())
+  end
+
   ADDON.Core.Initialize(
-    ADDON.settings.saveDeconSpace, ADDON.DebugMsg, DoCODTest)
+    ADDON.settings.saveDeconSpace, ADDON.DebugMsg,
+    DoCODTest, DoSimplePreTest, DoSimplePostTest,
+    ADDON.GetSetting_deleteSimple)
+
+  ADDON.Core.SetAutoReturnStrings(ADDON.settings.autoReturnSubjects)
+
   ADDON.UI.InitUserInterface(ADDON.DebugMsg)
 
   ADDON.initialized = true
@@ -110,6 +142,47 @@ function ADDON.SetSetting_SaveHistory(loot)
   if ADDON.debug then
     table.insert( ADDON.settings.history, loot)
   end
+end
+
+function ADDON.GetSetting_enableSimple()
+  return ADDON.settings.enableSimple
+end
+
+function ADDON.SetSetting_enableSimple(val)
+  ADDON.settings.enableSimple = val
+end
+
+function ADDON.GetSetting_deleteSimple()
+  return ADDON.settings.deleteSimple
+end
+
+function ADDON.SetSetting_deleteSimple(val)
+  ADDON.settings.deleteSimple = val
+end
+
+function ADDON.GetSetting_simpleSubjectWC()
+  return ADDON.settings.simpleSubjectWC
+end
+
+function ADDON.SetSetting_simpleSubjectWC(val)
+  ADDON.settings.simpleSubjectWC = val
+end
+
+function ADDON.GetSetting_simpleBodyWC()
+  return ADDON.settings.simpleBodyWC
+end
+
+function ADDON.SetSetting_simpleBodyWC(val)
+  ADDON.settings.simpleBodyWC = val
+end
+
+function ADDON.GetSetting_autoReturnSubject(index)
+  return ADDON.settings.autoReturnSubjects[index]
+end
+
+function ADDON.SetSetting_autoReturnSubject(val, index)
+  ADDON.settings.autoReturnSubjects[index] = val
+  ADDON.Core.SetAutoReturnStrings(ADDON.settings.autoReturnSubjects)
 end
 
 function ADDON.SetDebug(on)
