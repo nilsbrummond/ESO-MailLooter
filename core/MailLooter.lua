@@ -144,6 +144,8 @@ local function IsSimplePost(body) return false end
 local function IsDeleteSimpleAfter() return false end
 
 local function CleanBouncePhrase(phrase)
+  if (phrase == nil) or (phrase == '') then return false end
+
   local words = {}
   local function AddWord(w) table.insert(words, w) end
   string.gsub(phrase.lower(), "(%w+)", AddWord)
@@ -164,10 +166,15 @@ end
 -- Check the subject of a mail against the auto-return subjects.
 local function IsBounceReqMail(subject)
 
+  DEBUG("IsBounceReqMail: " .. subject)
+
   local cleaned = CleanBouncePhrase(subject)
   if cleaned == false then return false end
 
+  DEBUG("cleaned: " .. cleaned)
+
   for k,v in pairs(CORE.bounceWords) do
+    DEBUG(cleaned .. " : " .. v)
     if cleaned == v then return true end
   end
 
@@ -351,6 +358,9 @@ local function SummaryScanMail()
     countItems = countItems + numAttachments
     countMoney = countMoney + attachedMoney
 
+    numAttachments = numAttachments or 0
+    attachedMoney = attachedMoney or 0
+
     local mailType = GetMailType(
       subject, fromSystem, codAmount, returned, numAttachments, attachedMoney)
    
@@ -386,7 +396,7 @@ local function SummaryScanMail()
 end
 
 local function StoreCurrentMail(
-  id, sdn, scn, numAttachments, attchedMoney, codAmount, mailType)
+  id, sdn, scn, numAttachments, attachedMoney, codAmount, mailType)
 
   CORE.currentMail = { 
     id=id, att=numAttachments, money=attachedMoney, 
@@ -423,6 +433,9 @@ local function LootMails()
             fromCustomerService, returned, numAttachments, 
             attachedMoney, codAmount, expiresInDays, secsSinceReceived 
         = GetMailItemInfo(id)
+      
+      numAttachments = numAttachments or 0
+      attachedMoney = attachedMoney or 0
 
       local mailType = GetMailType(
         subject, fromSystem, codAmount, returned, numAttachments, attachedMoney)
@@ -450,7 +463,7 @@ local function LootMails()
                (secsSinceReceived/60))
 
         StoreCurrentMail(
-          id, sdn, scn, numAttachments, attchedMoney, codAmount, mailType)
+          id, sdn, scn, numAttachments, attachedMoney, codAmount, mailType)
 
         local doItemLoot = false
         local noRoomToLoot = false
@@ -485,13 +498,13 @@ local function LootMails()
           -- NOTE: Seems reading the mail help with getting items more reliably.
           RequestReadMail(id)
           return
-        elseif (attchedMoney ~= nil) and (attchedMoney > 0) then
+        elseif attachedMoney > 0 then
           DEBUG("money id=" .. Id64ToString(id))
           CORE.loot.mails = CORE.loot.mails + 1
           CORE.state = STATE_MONEY
           TakeMailAttachedMoney(id)
           return
-        elseif v.att == 0 then 
+        elseif numAttachments == 0 then 
           -- DELETE
           -- player may have manually looted and not deleted it.
           DEBUG("delete id=" .. Id64ToString(id))
@@ -702,11 +715,26 @@ function CORE.MailRemovedEvt( eventCode, mailId )
   DEBUG( "MailRemoved state=" .. CORE.state .. " id=" .. Id64ToString(mailId) )
 
   if mailLooterOpen then
-    if CORE.state ~= STATE_DELETE then return end
+    if CORE.state == STATE_IDLE then return end
 
-    if (CORE.currentMail.id == mailId) then
-      CORE.currentMail = nil
-      LootMails()
+    -- For our mail.
+    if (CORE.currentMail ~= nil) and 
+       (CORE.currentMail.id == mailId) then
+
+      -- normal case.
+      if CORE.state == STATE_DELETE then
+        CORE.currentMail = nil
+        LootMails()
+
+      -- Our mail was deleted on us...
+      elseif (CORE.state == STATE_READ) or
+             (CORE.state == STATE_ITEMS) or
+             (CORE.state == STATE_MONEY) then
+
+        DEBUG("Mail delete on us!!!")
+        -- FIXME
+        
+      end
     end
   end
 
@@ -858,6 +886,7 @@ end
 
 -- Set the set of phrases used to determine auto-return mails.
 function CORE.SetAutoReturnStrings(strings)
+  DEBUG("SetAutoReturnStrings")
 
   local newWords = {}
 
@@ -1102,7 +1131,11 @@ function CORE.Scan()
     local _, _, subject, icon, unread, fromSystem, fromCustomerService, returned, 
       numAttachments, attachedMoney, codAmount, expiresInDays, secsSinceReceived = GetMailItemInfo(id)
 
-    local mailType = GetMailType(subject, fromSystem, codAmount, returned)
+    numAttachments = numAttachments or 0
+    attachedMoney = attachedMoney or 0
+
+    local mailType = GetMailType(subject, fromSystem, codAmount, 
+                                 returned, numAttachments, attachedMoney)
 
     d("mail id=" .. Id64ToString(id) )
     d("-> subject='" .. subject .. "'")
@@ -1110,8 +1143,13 @@ function CORE.Scan()
     d("-> custService=" .. tostring(fromCustomerService))
     d("-> returned=" .. tostring(returned))
     d("-> numAtt=" .. numAttachments .. " money=" .. attachedMoney .. " cod=" .. codAmount)
+    d("-> mailType=" .. mailType)
 
-    table.insert(t, {id=id, subject=subject, system=fromSystem})
+
+    table.insert(t, 
+      { id=id, subject=subject, system=fromSystem, 
+        returned=returned, mailType=mailType }
+    )
 
     id = GetNextMailId(id)
   end

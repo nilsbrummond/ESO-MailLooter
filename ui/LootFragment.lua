@@ -16,6 +16,7 @@ local typeIcons = {
   [ADDON.Core.MAILTYPE_STORE] = "/esoui/art/mainmenu/menuBar_guilds_up.dds",
   [ADDON.Core.MAILTYPE_COD] = "/esoui/art/mainmenu/menuBar_mail_up.dds",
   [ADDON.Core.MAILTYPE_RETURNED] = "/esoui/art/mainmenu/menuBar_mail_up.dds",
+  [ADDON.Core.MAILTYPE_SIMPLE] = "/esoui/art/mainmenu/menuBar_mail_up.dds",
 }
 
 local typeRowType = {
@@ -25,6 +26,7 @@ local typeRowType = {
   [ADDON.Core.MAILTYPE_STORE]     = ROW_TYPE_ID,
   [ADDON.Core.MAILTYPE_COD]       = ROW_TYPE_ID,
   [ADDON.Core.MAILTYPE_RETURNED]  = ROW_TYPE_ID_EXTRA,
+  [ADDON.Core.MAILTYPE_SIMPLE]    = ROW_TYPE_ID_EXTRA,
 }
 
 -- TODO: Translate:
@@ -35,6 +37,7 @@ local typeTooltips = {
   [ADDON.Core.MAILTYPE_STORE]     = "Guild Store Mail",
   [ADDON.Core.MAILTYPE_COD]       = "COD Mail",
   [ADDON.Core.MAILTYPE_RETURNED]  = "Returned Mail",
+  [ADDON.Core.MAILTYPE_SIMPLE]    = "Simple Mail",
 }
 
 local currencyOptions = {
@@ -191,6 +194,10 @@ local function SetupRowData(rowControl, data, scrollList)
     local extra = rowControl:GetNamedChild("_Extra")
     extra:SetText(
       "|cFF0000Returned|r from: " .. SenderString(data.sdn, data.scn))
+  elseif data.mailType == ADDON.Core.MAILTYPE_SIMPLE then
+    local extra = rowControl:GetNamedChild("_Extra")
+    extra:SetText(
+      "From: " .. SenderString(data.sdn, data.scn))
   end
 
   ZO_CurrencyControl_SetSimpleCurrency(
