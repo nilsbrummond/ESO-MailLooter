@@ -395,7 +395,7 @@ local function SummaryScanMail()
 end
 
 local function StoreCurrentMail(
-  id, sdn, scn, numAttachments, attachedMoney, codAmount, mailType)
+  id, sdn, scn, fromSystem, numAttachments, attachedMoney, codAmount, mailType)
 
   CORE.currentMail = { 
     id=id, att=numAttachments, money=attachedMoney, 
@@ -462,7 +462,7 @@ local function LootMails()
                (secsSinceReceived/60))
 
         StoreCurrentMail(
-          id, sdn, scn, numAttachments, attachedMoney, codAmount, mailType)
+          id, sdn, scn, fromSystem, numAttachments, attachedMoney, codAmount, mailType)
 
         local doItemLoot = false
         local noRoomToLoot = false
