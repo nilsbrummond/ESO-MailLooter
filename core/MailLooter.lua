@@ -171,10 +171,10 @@ local function IsBounceReqMail(subject)
   local cleaned = CleanBouncePhrase(subject)
   if cleaned == false then return false end
 
-  DEBUG("cleaned: " .. cleaned)
+  -- DEBUG("cleaned: " .. cleaned)
 
   for k,v in pairs(CORE.bounceWords) do
-    DEBUG(cleaned .. " : " .. v)
+    -- DEBUG(cleaned .. " : " .. v)
     if cleaned == v then return true end
   end
 
