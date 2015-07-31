@@ -34,12 +34,17 @@ local TitlesAvA = {
   -- English
   ["Rewards for the Worthy!"] = true,
   -- ["For the Covenant!"] = true,  -- TODO: Need AD and EP versions too
+  -- ["Campaign Loyalty Reward"] = true,
 
   -- German
   ["Gerechter Lohn!"] = true,
+  -- ["Für das Bündnis!"] = true,
+  -- ["Für Eure Kampagnentreue"] = true,
 
   -- French
   ["La récompense des braves !"] = true,
+  -- ["Pour l'Alliance !"] = true,
+  -- ["La récompense de la loyauté"] = true,
 
 }
 
@@ -74,13 +79,13 @@ local TitlesStores = {
   ["Item Sold"] = true,
 
   -- German
-  -- Need Expired
+  ["Angebot ausgelaufen"] = true,
   ["Gegenstand gekauft"] = true, 
   ["Verkauf abgebrochen"] = true,
   ["Gegenstand verkauft"] = true, 
 
   -- French
-  -- Need Expired
+  ["Objet arrivé à expiration"]  = true,
   ["Objet acheté"] = true,
   ["Objet annulé"] = true,
   ["Objet vendu"] = true,
