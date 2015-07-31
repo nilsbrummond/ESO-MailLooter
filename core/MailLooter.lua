@@ -34,12 +34,17 @@ local TitlesAvA = {
   -- English
   ["Rewards for the Worthy!"] = true,
   -- ["For the Covenant!"] = true,  -- TODO: Need AD and EP versions too
+  -- ["Campaign Loyalty Reward"] = true,
 
   -- German
   ["Gerechter Lohn!"] = true,
+  -- ["Für das Bündnis!"] = true,
+  -- ["Für Eure Kampagnentreue"] = true,
 
   -- French
   ["La récompense des braves !"] = true,
+  -- ["Pour l'Alliance !"] = true,
+  -- ["La récompense de la loyauté"] = true,
 
 }
 
@@ -74,13 +79,13 @@ local TitlesStores = {
   ["Item Sold"] = true,
 
   -- German
-  -- Need Expired
+  ["Angebot ausgelaufen"] = true,
   ["Gegenstand gekauft"] = true, 
   ["Verkauf abgebrochen"] = true,
   ["Gegenstand verkauft"] = true, 
 
   -- French
-  -- Need Expired
+  ["Objet arrivé à expiration"]  = true,
   ["Objet acheté"] = true,
   ["Objet annulé"] = true,
   ["Objet vendu"] = true,
@@ -145,7 +150,7 @@ local function IsSimplePre(subject, attachments, money) return false end
 local function IsSimplePost(body) return false end
 local function IsDeleteSimpleAfter() return false end
 local function LootThisMailCOD(codAmount, codTotal) return false end
-
+local function IsBounceEnabled() return false end
 
 local function CleanBouncePhrase(phrase)
   if (phrase == nil) or (phrase == '') then return false end
@@ -395,7 +400,7 @@ local function SummaryScanMail()
 end
 
 local function StoreCurrentMail(
-  id, sdn, scn, numAttachments, attachedMoney, codAmount, mailType)
+  id, sdn, scn, fromSystem, numAttachments, attachedMoney, codAmount, mailType)
 
   CORE.currentMail = { 
     id=id, att=numAttachments, money=attachedMoney, 
@@ -445,16 +450,22 @@ local function LootMails()
         CORE.skippedMail[id] = true
 
       elseif mailType == MAILTYPE_BOUNCE then
-        -- Skip it for now.
-        -- TODO: Add mail auto-return option.
 
         DEBUG("mail: " .. Id64ToString(id) .. 
           " '" .. subject .. "' - Marked Auto-return")
 
-        CORE.skippedMails[id] = true
+        if IsBounceEnabled() then
+          DEBUG("bounce id=" .. Id64ToString(id))
+          CORE.state = STATE_DELETE
+          CORE.currentMail = {id=id}
+          ReturnMail(id)
+          return
+        else
+          -- Skip it.
+          CORE.skippedMails[id] = true
+        end
 
       elseif LootThisMail(mailType, codAmount) then
-
 
         -- Loot this Mail
         DEBUG( "found mail: " .. Id64ToString(id) .. " '" .. 
@@ -462,7 +473,7 @@ local function LootMails()
                (secsSinceReceived/60))
 
         StoreCurrentMail(
-          id, sdn, scn, numAttachments, attachedMoney, codAmount, mailType)
+          id, sdn, scn, fromSystem, numAttachments, attachedMoney, codAmount, mailType)
 
         local doItemLoot = false
         local noRoomToLoot = false
@@ -835,7 +846,7 @@ end
 function CORE.Initialize(
   saveDeconSpace, debugFunction, codTestFunction, 
   preSimpleTestFunction, bodySimpleTestFunction,
-  deleteSimpleAfter)
+  deleteSimpleAfter, isBounceEnabledFunction)
 
   if CORE.initialized then return end -- exit if already init'd.
 
@@ -861,6 +872,10 @@ function CORE.Initialize(
 
   if deleteSimpleAfter then
     IsDeleteSimpleAfter =  deleteSimpleAfter
+  end
+
+  if isBounceEnabledFunction then
+    IsBounceEnabled = isBounceEnabledFunction
   end
 
   EVENT_MANAGER:RegisterForEvent(
