@@ -79,13 +79,13 @@ local TitlesStores = {
   ["Item Sold"] = true,
 
   -- German
-  -- Need Expired
+  ["Angebot ausgelaufen"] = true,
   ["Gegenstand gekauft"] = true, 
   ["Verkauf abgebrochen"] = true,
   ["Gegenstand verkauft"] = true, 
 
   -- French
-  -- Need Expired
+  ["Objet arrivé à expiration"]  = true,
   ["Objet acheté"] = true,
   ["Objet annulé"] = true,
   ["Objet vendu"] = true,
