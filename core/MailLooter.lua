@@ -150,7 +150,7 @@ local function IsSimplePre(subject, attachments, money) return false end
 local function IsSimplePost(body) return false end
 local function IsDeleteSimpleAfter() return false end
 local function LootThisMailCOD(codAmount, codTotal) return false end
-
+local function IsBounceEnabled() return false end
 
 local function CleanBouncePhrase(phrase)
   if (phrase == nil) or (phrase == '') then return false end
@@ -450,16 +450,22 @@ local function LootMails()
         CORE.skippedMail[id] = true
 
       elseif mailType == MAILTYPE_BOUNCE then
-        -- Skip it for now.
-        -- TODO: Add mail auto-return option.
 
         DEBUG("mail: " .. Id64ToString(id) .. 
           " '" .. subject .. "' - Marked Auto-return")
 
-        CORE.skippedMails[id] = true
+        if IsBounceEnabled() then
+          DEBUG("bounce id=" .. Id64ToString(id))
+          CORE.state = STATE_DELETE
+          CORE.currentMail = {id=id}
+          ReturnMail(id)
+          return
+        else
+          -- Skip it.
+          CORE.skippedMails[id] = true
+        end
 
       elseif LootThisMail(mailType, codAmount) then
-
 
         -- Loot this Mail
         DEBUG( "found mail: " .. Id64ToString(id) .. " '" .. 
@@ -840,7 +846,7 @@ end
 function CORE.Initialize(
   saveDeconSpace, debugFunction, codTestFunction, 
   preSimpleTestFunction, bodySimpleTestFunction,
-  deleteSimpleAfter)
+  deleteSimpleAfter, isBounceEnabledFunction)
 
   if CORE.initialized then return end -- exit if already init'd.
 
@@ -866,6 +872,10 @@ function CORE.Initialize(
 
   if deleteSimpleAfter then
     IsDeleteSimpleAfter =  deleteSimpleAfter
+  end
+
+  if isBounceEnabledFunction then
+    IsBounceEnabled = isBounceEnabledFunction
   end
 
   EVENT_MANAGER:RegisterForEvent(

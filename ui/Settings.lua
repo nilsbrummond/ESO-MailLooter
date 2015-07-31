@@ -161,6 +161,17 @@ function ADDON.UI.InitSettings()
       setFunc = function(v) ADDON.SetSetting_autoReturnSubject(v, 6) end,
       isMultiline = false,
     },
+    {
+      type = "description",
+      title = "MailLooter has Changed it's Mind",
+      text = "MailLooter now can auto-return mail!  Mostly because this change was very simple to add at this point.  But please be warned that MailLooter is a little flakey and may change it's mind again at any time..."
+    },
+    {
+      type = "checkbox",
+      name = "Enable Mail Auto-Returning",
+      getFunc = ADDON.GetSetting_enableBounce,
+      setFunc = ADDON.SetSetting_enableBounce,
+    },
   }
 
   local LAM = LibStub("LibAddonMenu-2.0")

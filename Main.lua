@@ -13,6 +13,7 @@ ADDON.settingsDefaults = {
   ["simpleSubjectWC"]     = 0,
   ["simpleBodyWC"]        = 0,
   ["autoReturnSubjects"]  = { "return", "bounce", "rts", "return to sender" },
+  ["enableBounce"]        = false,
 
   -- debug
   ["debug"]               = false,
@@ -87,7 +88,8 @@ local function Initialize( eventCode, addOnName )
   ADDON.Core.Initialize(
     ADDON.settings.saveDeconSpace, ADDON.DebugMsg,
     DoCODTest, DoSimplePreTest, DoSimplePostTest,
-    ADDON.GetSetting_deleteSimple)
+    ADDON.GetSetting_deleteSimple,
+    ADDON.GetSetting_enableBounce)
 
   ADDON.Core.SetAutoReturnStrings(ADDON.settings.autoReturnSubjects)
 
@@ -184,6 +186,17 @@ function ADDON.SetSetting_autoReturnSubject(val, index)
   ADDON.settings.autoReturnSubjects[index] = val
   ADDON.Core.SetAutoReturnStrings(ADDON.settings.autoReturnSubjects)
 end
+
+
+function ADDON.GetSetting_enableBounce()
+  return ADDON.settings.enableBounce
+end
+
+function ADDON.SetSetting_enableBounce(val)
+  ADDON.settings.enableBounce = val
+end
+
+
 
 function ADDON.SetDebug(on)
   ADDON.debug = on
