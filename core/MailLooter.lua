@@ -94,7 +94,7 @@ CORE.bounceWords = {}
 
 CORE.initialized = false
 CORE.state = nil
-CORE.loot = {items={}, money=0, mails=0, codTotal=0}
+CORE.loot = {items={}, money=0, mails=0, codTotal=0, autoReturn=0}
 CORE.currentMail = {}
 CORE.currentItems = {}
 CORE.skippedMails = {}
@@ -451,6 +451,7 @@ local function LootMails()
 
         if IsBounceEnabled() then
           DEBUG("bounce id=" .. Id64ToString(id))
+          CORE.loot.autoReturn = CORE.loot.autoReturn + 1
           CORE.state = STATE_DELETE
           CORE.currentMail = {id=id}
           ReturnMail(id)
@@ -532,14 +533,14 @@ local function LootMails()
     DEBUG ( "No room left in inventory" )
     CORE.callbacks.ListUpdateCB(CORE.loot, true, nil, false)
     CORE.state = STATE_IDLE
-    CORE.loot = {items={}, money=0, mails=0, codTotal=0}
+    CORE.loot = {items={}, money=0, mails=0, codTotal=0, autoReturn=0}
     CORE.callbacks.StatusUpdateCB(false, false, "Inventory Full")
     SummaryScanMail()
   else
     DEBUG ( "Done" )
     CORE.callbacks.ListUpdateCB(CORE.loot, true, nil, false)
     CORE.state = STATE_IDLE
-    CORE.loot = {items={}, money=0, mails=0, codTotal=0}
+    CORE.loot = {items={}, money=0, mails=0, codTotal=0, autoReturn=0}
     CORE.callbacks.StatusUpdateCB(false, true, nil)
     SummaryScanMail()
   end
@@ -624,7 +625,7 @@ local function Start(filter)
   CORE.filters = filter
   CORE.filters[MAILTYPE_SIMPLE_PRE] = CORE.filters[MAILTYPE_SIMPLE]
 
-  CORE.loot = { items = {}, money = 0, mails = 0, codTotal=0 }
+  CORE.loot = { items = {}, money = 0, mails = 0, codTotal=0, autoReturn=0 }
   CORE.currentMail = {}
   CORE.skippedMails = {}
 
@@ -850,7 +851,7 @@ function CORE.Initialize(
   CORE.deconSpace = saveDeconSpace
 
   if debugFunction then
-    DEBUG = function(msg) debugFunction("CORE: " .. msg) end
+    DEBUG = function(msg) return debugFunction("CORE: " .. msg) end
   end
 
   if codTestFunction then
