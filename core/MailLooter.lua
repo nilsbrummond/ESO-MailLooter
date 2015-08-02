@@ -338,6 +338,7 @@ local function SummaryScanMail()
 
   DEBUG( "SummaryScanMail" )
 
+  local countLootable = 0
   local countAvA = 0
   local countHireling = 0
   local countCOD = 0
@@ -347,6 +348,8 @@ local function SummaryScanMail()
   local countOther = 0
   local countItems = 0
   local countMoney = 0
+
+  local codTotal = 0
 
   local id = GetNextMailId(nil)
   while id ~= nil do
@@ -362,18 +365,27 @@ local function SummaryScanMail()
 
     local mailType = GetMailType(
       subject, fromSystem, codAmount, returned, numAttachments, attachedMoney)
-   
+
     if mailType == MAILTYPE_COD then
       countCOD = countCOD + 1
-      countMoney = countMoney + codAmount
+      if LootThisMailCOD(codAmount, codTotal) then
+        countLootable = countLootable + 1
+        codTotal = codTotal + codAmount
+      end
+      -- Should not add this - subtract if anything... :
+      -- countMoney = countMoney + codAmount
     elseif mailType == MAILTYPE_AVA then
       countAvA = countAvA + 1
+      countLootable = countLootable + 1
     elseif mailType == MAILTYPE_HIRELING then
       countHireling = countHireling + 1
+      countLootable = countLootable + 1
     elseif mailType == MAILTYPE_STORE then
       countStore = countStore + 1
+      countLootable = countLootable + 1
     elseif mailType == MAILTYPE_RETURNED then
       countReturned = countReturned + 1
+      countLootable = countLootable + 1
     elseif mailType == MAILTYPE_BOUNCE then
       countBounce = countBounce + 1
     else
@@ -383,7 +395,8 @@ local function SummaryScanMail()
     id = GetNextMailId(id)
   end
 
-  local result = { countAvA = countAvA, countHireling=countHireling, 
+  local result = { countLootable = countLootable,
+                   countAvA = countAvA, countHireling=countHireling, 
                    countCOD = countCOD, countStore = countStore,
                    countReturned = countReturned,
                    countBounce = countBounce,

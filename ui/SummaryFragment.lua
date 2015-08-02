@@ -168,13 +168,9 @@ function UI.SummaryFragmentClass:UpdateSummary(summary)
   local mailCount = GetNumMailItems()
   local unreadCount = GetNumUnreadMail()
 
-  local lootableCount = 
-    summary.countAvA + summary.countHireling +
-    summary.countStore + summary.countCOD + summary.countReturned
-
   local strAllMail = mailfull(summaryStr(mailCount))
   local strUnread = mailfull(summaryStr(unreadCount))
-  local strLootable = mailfull(summaryStr(lootableCount))
+  local strLootable = mailfull(summaryStr(summary.countLootable))
   local strAVA = mailfull(summaryStr(summary.countAvA))
   local strHireling = mailfull(summaryStr(summary.countHireling))
   local strStore = mailfull(summaryStr(summary.countStore))
