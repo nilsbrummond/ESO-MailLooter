@@ -40,7 +40,7 @@ local typeTooltips = {
   [ADDON.Core.MAILTYPE_STORE]       = "Guild Store Mail",
   [ADDON.Core.MAILTYPE_COD]         = "COD Mail",
   [ADDON.Core.MAILTYPE_RETURNED]    = "Returned Mail",
-  [ADDON.Core.MAILTYPE_SIMPLE]      = "Simple Mail",
+  [ADDON.Core.MAILTYPE_SIMPLE]      = "Player Mail",
   [ADDON.Core.MAILTYPE_COD_RECEIPT] = "COD Receipt Mail",
 }
 
