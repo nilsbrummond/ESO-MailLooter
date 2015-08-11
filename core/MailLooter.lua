@@ -14,18 +14,20 @@ local MAILTYPE_STORE        = 4
 local MAILTYPE_COD          = 5
 local MAILTYPE_RETURNED     = 6
 local MAILTYPE_SIMPLE       = 7
-local MAILTYPE_BOUNCE       = 8
-local MAILTYPE_SIMPLE_PRE   = 9 -- Need to read body to classify...
+local MAILTYPE_COD_RECEIPT  = 8
+local MAILTYPE_BOUNCE       = 9
+local MAILTYPE_SIMPLE_PRE   = 10 -- Need to read body to classify...
 
 -- exported
-CORE.MAILTYPE_UNKNOWN  = MAILTYPE_UNKNOWN
-CORE.MAILTYPE_AVA      = MAILTYPE_AVA
-CORE.MAILTYPE_HIRELING = MAILTYPE_HIRELING
-CORE.MAILTYPE_STORE    = MAILTYPE_STORE
-CORE.MAILTYPE_COD      = MAILTYPE_COD
-CORE.MAILTYPE_RETURNED = MAILTYPE_RETURNED
-CORE.MAILTYPE_SIMPLE   = MAILTYPE_SIMPLE
-CORE.MAILTYPE_BOUNCE   = MAILTYPE_BOUNCE
+CORE.MAILTYPE_UNKNOWN     = MAILTYPE_UNKNOWN
+CORE.MAILTYPE_AVA         = MAILTYPE_AVA
+CORE.MAILTYPE_HIRELING    = MAILTYPE_HIRELING
+CORE.MAILTYPE_STORE       = MAILTYPE_STORE
+CORE.MAILTYPE_COD         = MAILTYPE_COD
+CORE.MAILTYPE_RETURNED    = MAILTYPE_RETURNED
+CORE.MAILTYPE_SIMPLE      = MAILTYPE_SIMPLE
+CORE.MAILTYPE_COD_RECEIPT = MAILTYPE_COD_RECEIPT
+CORE.MAILTYPE_BOUNCE      = MAILTYPE_BOUNCE
 
 -- internal only
 -- CORE.MAILTYPE_SIMPLE_PRE
@@ -134,6 +136,7 @@ CORE.filters[MAILTYPE_RETURNED] = true
 CORE.filters[MAILTYPE_SIMPLE_PRE] = true 
 CORE.filters[MAILTYPE_SIMPLE] = true 
 CORE.filters[MAILTYPE_BOUNCE] = false 
+CORE.filters[MAILTYPE_COD_RECEIPT] = true 
 
 --
 -- Local Functions
@@ -199,6 +202,16 @@ local function GetMailType(subject, fromSystem, codAmount, returned, attachments
   else
     if returned then return MAILTYPE_RETURNED end
     if codAmount > 0 then return MAILTYPE_COD end
+
+    -- COD receipt
+    -- has money only and subject starts with 'RE:'
+    -- NOTE: Check de and fr mail for 'RE:' - may need transalation.
+    -- NOTE: This is not perfect...  A player can send a mail
+    --       that looks like this.
+    if (attachments ==0) and (money > 0) and
+       (string.sub(subject, 1, 3) == "RE:") then 
+      return MAILTYPE_COD_RECEIPT
+    end
 
     -- Check bounce type
     if IsBounceReqMail(subject) then return MAILTYPE_BOUNCE end
@@ -342,6 +355,7 @@ local function SummaryScanMail()
   local countAvA = 0
   local countHireling = 0
   local countCOD = 0
+  local countCODReceipt = 0
   local countStore = 0
   local countReturned = 0
   local countBounce = 0
@@ -388,6 +402,9 @@ local function SummaryScanMail()
       countLootable = countLootable + 1
     elseif mailType == MAILTYPE_BOUNCE then
       countBounce = countBounce + 1
+    elseif mailType == MAILTYPE_COD_RECEIPT then
+      countCODReceipt = countCODReceipt + 1
+      countLootable = countLootable + 1
     else
       countOther = countOther + 1
     end
@@ -397,7 +414,8 @@ local function SummaryScanMail()
 
   local result = { countLootable = countLootable,
                    countAvA = countAvA, countHireling=countHireling, 
-                   countCOD = countCOD, countStore = countStore,
+                   countCOD = countCOD, countCODReceipt = countCODReceipt,
+                   countStore = countStore,
                    countReturned = countReturned,
                    countBounce = countBounce,
                    countOther = countOther, more = IsLocalMailboxFull(),
@@ -408,7 +426,7 @@ local function SummaryScanMail()
 end
 
 local function StoreCurrentMail(
-  id, sdn, scn, fromSystem, numAttachments, attachedMoney, codAmount, mailType)
+  id, sdn, scn, subject, fromSystem, numAttachments, attachedMoney, codAmount, mailType)
 
   CORE.currentMail = { 
     id=id, att=numAttachments, money=attachedMoney, 
@@ -417,8 +435,7 @@ local function StoreCurrentMail(
 
   -- Might care who it is from for non-system mail...
   if not fromSystem then
-    CORE.currentMail.sdn = sdn
-    CORE.currentMail.scn = scn
+    CORE.currentMail.text = { subject=subject, sdn=sdn, scn=scn }
   end
 
 end
@@ -475,7 +492,8 @@ local function LootMails()
                (secsSinceReceived/60))
 
         StoreCurrentMail(
-          id, sdn, scn, fromSystem, numAttachments, attachedMoney, codAmount, mailType)
+          id, sdn, scn, subject, fromSystem, numAttachments, 
+          attachedMoney, codAmount, mailType)
 
         local doItemLoot = false
         local noRoomToLoot = false
@@ -492,6 +510,11 @@ local function LootMails()
           -- NOOP
           -- Skip mails with no room to loot.
           -- Don't loot the money.  It is all or nothing.
+          --
+          -- NOTE:
+          -- Don't add to the skip list of faileNoSpace
+          --    may not be set on the last call of LootMails().
+
         elseif mailType == MAILTYPE_SIMPLE_PRE then
           -- Must read the mail to know if we loot it...
    
@@ -555,8 +578,15 @@ end
 local function LootMailsCont()
   DEBUG( "LootMailsCont" )
 
+  local body = false
+
+  if CORE.currentMail.text then
+    body = ReadMail(CORE.currentMail.id)
+    currentMail.text.body = body
+  end
+
   if CORE.currentMail.mailType == MAILTYPE_SIMPLE_PRE then
-    local body = ReadMail(CORE.currentMail.id)
+    body = (not body) and ReadMail(CORE.currentMail.id) or body
     if IsSimplePost(body) then
 
       CORE.currentMail.mailType = MAILTYPE_SIMPLE
@@ -607,8 +637,7 @@ local function LootMailsCont()
       CORE.currentItems,
       { icon=icon, stack=stack, link=link, 
         mailType=CORE.currentMail.mailType,
-        sdn=CORE.currentMail.sdn,
-        scn=CORE.currentMail.scn,
+        text=CORE.currentMail.text,
       }
     )
   end
@@ -998,6 +1027,7 @@ function CORE.ProcessMailAll()
   filter[MAILTYPE_RETURNED] = true
   filter[MAILTYPE_SIMPLE] = true 
   filter[MAILTYPE_BOUNCE] = false 
+  filter[MAILTYPE_COD_RECEIPT] = true 
 
   -- Don't auto loot COD.  So one can troll you for
   -- lots of money if your not watching..
@@ -1098,11 +1128,14 @@ function CORE.TestLoot()
       mailType=(i%6)+1, 
       icon='/esoui/art/icons/crafting_components_spice_004.dds',
       creator="",
-      sdn="@Lodur",
-      scn="",
+      text = {sdn="@Lodur", scn=""}
     }
   end
 
+  testItem[20].money = 1234
+  testItem[20].mailType = MAILTYPE_COD_RECEIPT
+  testItem[20].icon = nil
+  testItem[20].link = "money-link-placeholder"
 
   testData = {
     loot = { items={}, money=0, mails=0, codTotal=0 },
