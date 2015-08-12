@@ -7,6 +7,7 @@ local UI = ADDON.UI
 -- Row types:
 local ROW_TYPE_ID       = 1
 local ROW_TYPE_ID_EXTRA = 2
+local ROW_TYPE_ID_MONEY = 3
 
 
 local typeIcons = {
@@ -17,27 +18,30 @@ local typeIcons = {
   [ADDON.Core.MAILTYPE_COD] = "/esoui/art/mainmenu/menuBar_mail_up.dds",
   [ADDON.Core.MAILTYPE_RETURNED] = "/esoui/art/mainmenu/menuBar_mail_up.dds",
   [ADDON.Core.MAILTYPE_SIMPLE] = "/esoui/art/mainmenu/menuBar_mail_up.dds",
+  [ADDON.Core.MAILTYPE_COD_RECEIPT] = "/esoui/art/mainmenu/menuBar_mail_up.dds",
 }
 
 local typeRowType = {
-  [ADDON.Core.MAILTYPE_UNKNOWN]   = ROW_TYPE_ID,
-  [ADDON.Core.MAILTYPE_AVA]       = ROW_TYPE_ID,
-  [ADDON.Core.MAILTYPE_HIRELING]  = ROW_TYPE_ID,
-  [ADDON.Core.MAILTYPE_STORE]     = ROW_TYPE_ID,
-  [ADDON.Core.MAILTYPE_COD]       = ROW_TYPE_ID,
-  [ADDON.Core.MAILTYPE_RETURNED]  = ROW_TYPE_ID_EXTRA,
-  [ADDON.Core.MAILTYPE_SIMPLE]    = ROW_TYPE_ID_EXTRA,
+  [ADDON.Core.MAILTYPE_UNKNOWN]     = ROW_TYPE_ID,
+  [ADDON.Core.MAILTYPE_AVA]         = ROW_TYPE_ID,
+  [ADDON.Core.MAILTYPE_HIRELING]    = ROW_TYPE_ID,
+  [ADDON.Core.MAILTYPE_STORE]       = ROW_TYPE_ID,
+  [ADDON.Core.MAILTYPE_COD]         = ROW_TYPE_ID,
+  [ADDON.Core.MAILTYPE_RETURNED]    = ROW_TYPE_ID_EXTRA,
+  [ADDON.Core.MAILTYPE_SIMPLE]      = ROW_TYPE_ID_EXTRA,
+  [ADDON.Core.MAILTYPE_COD_RECEIPT] = ROW_TYPE_ID_MONEY,
 }
 
 -- TODO: Translate:
 local typeTooltips = {
-  [ADDON.Core.MAILTYPE_UNKNOWN]   = "Unknown Mail Type",
-  [ADDON.Core.MAILTYPE_AVA]       = "AvA Mail",
-  [ADDON.Core.MAILTYPE_HIRELING]  = "Hireling Mail",
-  [ADDON.Core.MAILTYPE_STORE]     = "Guild Store Mail",
-  [ADDON.Core.MAILTYPE_COD]       = "COD Mail",
-  [ADDON.Core.MAILTYPE_RETURNED]  = "Returned Mail",
-  [ADDON.Core.MAILTYPE_SIMPLE]    = "Simple Mail",
+  [ADDON.Core.MAILTYPE_UNKNOWN]     = "Unknown Mail Type",
+  [ADDON.Core.MAILTYPE_AVA]         = "AvA Mail",
+  [ADDON.Core.MAILTYPE_HIRELING]    = "Hireling Mail",
+  [ADDON.Core.MAILTYPE_STORE]       = "Guild Store Mail",
+  [ADDON.Core.MAILTYPE_COD]         = "COD Mail",
+  [ADDON.Core.MAILTYPE_RETURNED]    = "Returned Mail",
+  [ADDON.Core.MAILTYPE_SIMPLE]      = "Player Mail",
+  [ADDON.Core.MAILTYPE_COD_RECEIPT] = "COD Receipt Mail",
 }
 
 local currencyOptions = {
@@ -120,27 +124,29 @@ local function Row_OnMouseEnter(control, rowControl)
 
 
   -- Setup tooltips
-  InitializeTooltip(ItemTooltip)
+  if rowControl.data.link then
+    InitializeTooltip(ItemTooltip)
 
-  ItemTooltip:SetLink(rowControl.data.link)
-  if not NoComparisionTooltip[GetItemLinkItemType(rowControl.data.link)] then
-    ItemTooltip:HideComparativeTooltips()
-    ItemTooltip:ShowComparativeTooltips()
-    ZO_PlayShowAnimationOnComparisonTooltip(ComparativeTooltip1)
-    ZO_PlayShowAnimationOnComparisonTooltip(ComparativeTooltip2)
-  end
+    ItemTooltip:SetLink(rowControl.data.link)
+    if not NoComparisionTooltip[GetItemLinkItemType(rowControl.data.link)] then
+      ItemTooltip:HideComparativeTooltips()
+      ItemTooltip:ShowComparativeTooltips()
+      ZO_PlayShowAnimationOnComparisonTooltip(ComparativeTooltip1)
+      ZO_PlayShowAnimationOnComparisonTooltip(ComparativeTooltip2)
+    end
 
-  ItemTooltip:SetHidden(false)
+    ItemTooltip:SetHidden(false)
 
-  -- Attach the tooltip left of the type icon...
-  local typePart = rowControl:GetNamedChild("_Type")
-  if typePart.customTooltipAnchor then
-    typePart.customTooltipAnchor(
-      ItemTooltip, typePart, ComparativeTooltip1, ComparativeTooltip2)
-  else
-    ZO_Tooltips_SetupDynamicTooltipAnchors(
-      ItemTooltip, typePart.tooltipAnchor or typePart, 
-      ComparativeTooltip1, ComparativeTooltip2)
+    -- Attach the tooltip left of the type icon...
+    local typePart = rowControl:GetNamedChild("_Type")
+    if typePart.customTooltipAnchor then
+      typePart.customTooltipAnchor(
+        ItemTooltip, typePart, ComparativeTooltip1, ComparativeTooltip2)
+    else
+      ZO_Tooltips_SetupDynamicTooltipAnchors(
+        ItemTooltip, typePart.tooltipAnchor or typePart, 
+        ComparativeTooltip1, ComparativeTooltip2)
+    end
   end
 
 end
@@ -175,36 +181,12 @@ local function RowStatus_OnMouseExit(control)
   ClearTooltip(InformationTooltip)
 end
 
-local function SetupRowData(rowControl, data, scrollList)
-
+local function SetupRowDataBase(rowControl, data, scrollList)
   data.control = rowControl
   rowControl.data = data
 
   local typeIcon = rowControl:GetNamedChild("_Type")
   typeIcon:SetTexture(typeIcons[data.mailType])
-
-  rowControl:GetNamedChild("_Icon"):SetTexture(data.icon)
-
-  local text = zo_strformat("<<t:1>>", data.link)
- 
-  rowControl:GetNamedChild("_Name"):SetText(
-    text .. "|r   (" .. data.stack .. ")")
-
-  if data.mailType == ADDON.Core.MAILTYPE_RETURNED then
-    local extra = rowControl:GetNamedChild("_Extra")
-    extra:SetText(
-      "|cFF0000Returned|r from: " .. SenderString(data.sdn, data.scn))
-  elseif data.mailType == ADDON.Core.MAILTYPE_SIMPLE then
-    local extra = rowControl:GetNamedChild("_Extra")
-    extra:SetText(
-      "From: " .. SenderString(data.sdn, data.scn))
-  end
-
-  ZO_CurrencyControl_SetSimpleCurrency(
-    rowControl:GetNamedChild("_Value"),
-    CURRENCY_TYPE_MONEY,
-    GetItemLinkValue(data.link, true) * data.stack, 
-    currencyOptions, CURRENCY_SHOW_ALL, CURRENCY_HAS_ENOUGH)
 
   -- Handlers
   rowControl:SetHandler("OnMouseEnter", function()
@@ -222,6 +204,50 @@ local function SetupRowData(rowControl, data, scrollList)
   typeIcon:SetHandler("OnMouseExit", function()
       RowStatus_OnMouseExit(typeIcon)
     end)
+
+end
+
+local function SetupRowDataMoney(rowControl, data, scrollList)
+  SetupRowDataBase(rowControl, data, scrollList)
+
+  rowControl:GetNamedChild("_Name"):SetText("COD Payment")
+  
+  local extra = rowControl:GetNamedChild("_Extra")
+  extra:SetText("From: " .. SenderString(data.text.sdn, data.text.scn))
+
+  ZO_CurrencyControl_SetSimpleCurrency(
+    rowControl:GetNamedChild("_Value"),
+    CURRENCY_TYPE_MONEY,
+    data.money, 
+    currencyOptions, CURRENCY_SHOW_ALL, CURRENCY_HAS_ENOUGH)
+end
+
+local function SetupRowDataItem(rowControl, data, scrollList)
+
+  SetupRowDataBase(rowControl, data, scrollList)
+
+  rowControl:GetNamedChild("_Icon"):SetTexture(data.icon)
+
+  local text = zo_strformat("<<t:1>>", data.link)
+ 
+  rowControl:GetNamedChild("_Name"):SetText(
+    text .. "|r   (" .. data.stack .. ")")
+
+  if data.mailType == ADDON.Core.MAILTYPE_RETURNED then
+    local extra = rowControl:GetNamedChild("_Extra")
+    extra:SetText(
+      "|cFF0000Returned|r from: " .. SenderString(data.text.sdn, data.text.scn))
+  elseif data.mailType == ADDON.Core.MAILTYPE_SIMPLE then
+    local extra = rowControl:GetNamedChild("_Extra")
+    extra:SetText(
+      "From: " .. SenderString(data.text.sdn, data.text.scn))
+  end
+
+  ZO_CurrencyControl_SetSimpleCurrency(
+    rowControl:GetNamedChild("_Value"),
+    CURRENCY_TYPE_MONEY,
+    GetItemLinkValue(data.link, true) * data.stack, 
+    currencyOptions, CURRENCY_SHOW_ALL, CURRENCY_HAS_ENOUGH)
 
 end
 
@@ -279,11 +305,15 @@ function UI.LootFragmentClass:Initialize()
 
   ZO_ScrollList_AddDataType(scrollList, ROW_TYPE_ID, 
       "MailLooterLootListRow",
-      52, SetupRowData, RowDataHidden, nil, RowDataReset)
+      52, SetupRowDataItem, RowDataHidden, nil, RowDataReset)
 
   ZO_ScrollList_AddDataType(scrollList, ROW_TYPE_ID_EXTRA,
       "MailLooterLootListRowExtra",
-      52, SetupRowData, RowDataHidden, nil, RowDataReset)
+      52, SetupRowDataItem, RowDataHidden, nil, RowDataReset)
+
+  ZO_ScrollList_AddDataType(scrollList, ROW_TYPE_ID_MONEY,
+      "MailLooterLootListRowMoney",
+      52, SetupRowDataMoney, RowDataHidden, nil, RowDataReset)
 
   -- NOTE: No longer uses the ZO_ScrollList to handle the Highlight.
   --       Follows the model of the default UI inventory list.

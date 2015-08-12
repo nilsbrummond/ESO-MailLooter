@@ -1,0 +1,22 @@
+
+Sorting
+  - quality / value / alpha / type
+
+Player mail shouldn't stack bug...
+  - Makes break of of items with 'from' tag double counted
+
+Player mail as tooltip
+  - Just in case you want to see the mail after looting...
+
+Money 
+  - Show money like items are.
+
+Character filters: only loot hireling types on certain characters...
+ - based on character name
+ - based on crafting skill level?
+
+Remove auto clearing of loot list?
+
+Sandwitch
+ - Case every addon should be able to make a sandwitch...
+

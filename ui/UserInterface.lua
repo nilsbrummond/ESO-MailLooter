@@ -65,6 +65,7 @@ function UI.CoreScanUpdateCB(summary)
     DEBUG( "Store Mails:    " .. summary.countStore )
     DEBUG( "COD Mails:      " .. summary.countCOD )
     DEBUG( "Other Mails:    " .. summary.countOther )
+    DEBUG( "Bounce Mails:   " .. summary.countBounce )
     DEBUG( "More Mail:      " .. tostring(summary.more) )
     DEBUG( "Total Items:    " .. summary.countItems )
     DEBUG( "Total Money:    " .. summary.countMoney )
@@ -105,7 +106,7 @@ end
 function UI.InitUserInterface(debugFunction)
 
   if debugFunction then
-    DEBUG = function(msg) debugFunction("UI: " .. msg) end
+    DEBUG = function(msg) return debugFunction("UI: " .. msg) end
   end
   UI.DEBUG = DEBUG
 
