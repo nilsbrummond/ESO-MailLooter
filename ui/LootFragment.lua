@@ -208,12 +208,24 @@ local function SetupRowDataBase(rowControl, data, scrollList)
 end
 
 local function SetupRowDataMoney(rowControl, data, scrollList)
+
   SetupRowDataBase(rowControl, data, scrollList)
 
-  rowControl:GetNamedChild("_Name"):SetText("COD Payment")
-  
+  if data.mailType == ADDON.Core.MAILTYPE_COD_RECEIPT then
+    rowControl:GetNamedChild("_Name"):SetText("COD Payment")
+  elseif data.mailType == ADDON.Core.MAILTYPE_RETURNED then
+    rowControl:GetNamedChild("_Name"):SetText("Returned Money")
+  elseif data.mailType == ADDON.Core.MAILTYPE_SIMPLE then
+    rowControl:GetNamedChild("_Name"):SetText("Simple Mail")
+  end
+
   local extra = rowControl:GetNamedChild("_Extra")
-  extra:SetText("From: " .. SenderString(data.text.sdn, data.text.scn))
+  if data.mailType == ADDON.Core.MAILTYPE_RETURNED then
+    extra:SetText(
+      "|cFF0000Returned|r from: " .. SenderString(data.text.sdn, data.text.scn))
+  else
+    extra:SetText("From: " .. SenderString(data.text.sdn, data.text.scn))
+  end
 
   ZO_CurrencyControl_SetSimpleCurrency(
     rowControl:GetNamedChild("_Value"),
@@ -428,7 +440,7 @@ function UI.LootFragmentClass:AddLooted(item, isNewItemType)
     local data = ZO_ScrollList_GetDataList(self.scrollList)
     for i,v in ipairs(data) do
       local data = ZO_ScrollList_GetDataEntryData(v)
-      if data.link == item.link then
+      if (data.mailType == item.mailType) and (data.link == item.link) then
         data.stack = item.stack
         break
       end
@@ -437,6 +449,26 @@ function UI.LootFragmentClass:AddLooted(item, isNewItemType)
   end
 
   ZO_ScrollList_Commit(self.scrollList)
+
+end
+
+function UI.LootFragmentClass:AddLootedMoney(mail, isNewMoneyStack)
+
+  if isNewMoneyStack then
+
+    local row = ZO_ScrollList_CreateDataEntry(
+      ROW_TYPE_ID_MONEY, ZO_DeepTableCopy(mail), 1)
+
+    table.insert(
+      ZO_ScrollList_GetDataList(
+        self.scrollList),
+        row)
+    
+    ZO_ScrollList_Commit(self.scrollList)
+
+  else
+    -- NOT SUPPORTED CURRENTLY
+  end
 
 end
 
