@@ -440,9 +440,15 @@ function UI.LootFragmentClass:AddLooted(item, isNewItemType)
     local data = ZO_ScrollList_GetDataList(self.scrollList)
     for i,v in ipairs(data) do
       local data = ZO_ScrollList_GetDataEntryData(v)
-      if (data.mailType == item.mailType) and (data.link == item.link) then
+      if (data.link ~= nil) and                 -- is an item
+         (data.mailType == item.mailType) and   -- in the same category 
+         (data.link == item.link) then          -- and the same item.
+
+        UI.DEBUG("Updating stack")
+        -- update the stack size  
         data.stack = item.stack
         break
+
       end
     end
 

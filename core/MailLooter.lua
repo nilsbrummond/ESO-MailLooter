@@ -385,16 +385,30 @@ local function AddItemsToHistory(loot, currentItems)
 
   for ind,item in ipairs(currentItems) do
 
-    if loot.items[item.mailType][item.link] == nil then
-      loot.items[item.mailType][item.link] = item
-      newItemType = true
-    else
-      loot.items[item.mailType][item.link].stack = 
-        loot.items[item.mailType][item.link].stack + item.stack
-    end
+    if MailTypeStackable[item.mailType] then
 
-    DEBUG( "MailLooter: " .. tostring(item.link))
-    CORE.callbacks.ListUpdateCB(loot, false, item, newItemType)
+      if loot.items[item.mailType][item.link] == nil then
+        loot.items[item.mailType][item.link] = item
+        newItemType = true
+      else
+        loot.items[item.mailType][item.link].stack = 
+          loot.items[item.mailType][item.link].stack + item.stack
+
+        DEBUG("stack=" .. loot.items[item.mailType][item.link].stack)
+      end
+
+      DEBUG( "MailLooter: " .. tostring(item.link))
+      CORE.callbacks.ListUpdateCB(
+        loot, false, loot.items[item.mailType][item.link], newItemType)
+    else
+
+      -- Not stackable - keep them sepatated...
+      table.insert( loot.items[item.mailType], item )
+      
+      DEBUG( "MailLooter: " .. tostring(item.link))
+      CORE.callbacks.ListUpdateCB(loot, false, item, true)
+
+    end
   end
 
 end
@@ -648,7 +662,7 @@ local function LootMailsCont()
 
   if CORE.currentMail.text then
     body = ReadMail(CORE.currentMail.id)
-    currentMail.text.body = body
+    CORE.currentMail.text.body = body
   end
 
   if CORE.currentMail.mailType == MAILTYPE_SIMPLE_PRE then
@@ -741,6 +755,7 @@ local function DoTestLoot()
   local step = testData.testSteps[testData.nextStep]
   if step ~= nil then
     testData.nextStep = testData.nextStep + 1
+    step = ZO_DeepTableCopy(step)
 
     testData.loot.mailCount = testData.loot.mailCount + 1
 
@@ -1230,11 +1245,13 @@ function CORE.TestLoot()
   }
 
   for i=1,20 do
-    table.insert(testData.testSteps, {items={testItem[1]}, mail=Mail((i%5)+1, 1)})
+    table.insert(
+      testData.testSteps, {items={testItem[1]}, mail=Mail((i%5)+1, 1)})
   end
 
   for i=1,20 do
-    table.insert(testData.testSteps, {items={testItem[i]}, mail=Mail((i%5)+1, 1)})
+    table.insert(
+      testData.testSteps, {items={testItem[i]}, mail=Mail((i%5)+1, 1)})
   end
 
   -- with items

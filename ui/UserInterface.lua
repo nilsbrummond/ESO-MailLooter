@@ -23,7 +23,8 @@ function UI.CoreListUpdateCB(loot, complete,
 
     DEBUG("Items looted:")
     for i1,v1 in pairs(loot.items) do
-      for i2,v2 in paris(loot.items[i1]) do
+      DEBUG("index: " .. i1)
+      for i2,v2 in pairs(loot.items[i1]) do
         DEBUG("  " .. GetItemLinkName(v2.link) .. " (" .. v2.stack .. ")" )
       end
     end
