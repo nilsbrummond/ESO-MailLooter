@@ -17,6 +17,10 @@ Character filters: only loot hireling types on certain characters...
 
 Remove auto clearing of loot list?
 
+Hot key loot all 
+ - goto MailLooter screen
+ - start looting
+
 Sandwitch
  - Case every addon should be able to make a sandwitch...
 
