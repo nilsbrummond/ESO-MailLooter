@@ -9,6 +9,7 @@ local ROW_TYPE_ID       = 1
 local ROW_TYPE_ID_EXTRA = 2
 local ROW_TYPE_ID_MONEY = 3
 
+local CATEGORY_DEFAULT  = 1
 
 local typeIcons = {
   [ADDON.Core.MAILTYPE_UNKNOWN] = "/esoui/art/menubar/menuBar_help_up.dds",
@@ -333,6 +334,11 @@ function UI.LootFragmentClass:Initialize()
     ZO_SortHeaderGroup.HEADER_CLICKED, 
     function (a,b) self:ChangeSort(a,b) end)
 
+  -- call twice to toggle to current setting.
+  fragment.sortHeaders:SelectHeaderByKey(
+    self.currentSortKey, ZO_SortHeaderGroup.SUPPRESS_CALLBACKS)
+  fragment.sortHeaders:SelectHeaderByKey(
+    self.currentSortKey, ZO_SortHeaderGroup.SUPPRESS_CALLBACKS)
 
   --
   -- Scroll List
@@ -340,8 +346,8 @@ function UI.LootFragmentClass:Initialize()
 
   local scrollList = WINDOW_MANAGER:CreateControlFromVirtual(
     "MailLooterLootList", fragment.win, "ZO_ScrollList")
-  scrollList:SetDimensions(750, 500)
-  scrollList:SetAnchor(TOP, headers, BOTTOM, 0, 10)
+  scrollList:SetDimensions(750, 450)
+  scrollList:SetAnchor(TOP, headers, BOTTOM, 0, 0)
 
   ZO_ScrollList_AddDataType(scrollList, ROW_TYPE_ID, 
       "MailLooterLootListRow",
@@ -433,18 +439,24 @@ function UI.LootFragmentClass:ChangeSort(newSortKey, newSortOrder)
 end
 
 function UI.LootFragmentClass:ApplySort()
-  
+
   local scrollData = ZO_ScrollList_GetDataList(self.scrollList)
+
+  UI.DEBUG("ApplySort - start")
 
   if self.sortFn == nil then
     self.sortFn = function(entry1, entry2)
-                    return ZO_TableOrderingFunction(
-                      entry1.data, entry2.data, self.currentSortKey, 
-                      SortKeys, self.currentSortOrder)
+                    return ZO_TableOrderingFunction (
+                      ZO_ScrollList_GetDataEntryData(entry1),
+                      ZO_ScrollList_GetDataEntryData(entry2),
+                      self.currentSortKey, SortKeys, self.currentSortOrder)
                   end
   end
 
   table.sort(scrollData, self.sortFn)
+
+  UI.DEBUG("ApplySort - end")
+
   ZO_ScrollList_Commit(self.scrollList)
 
 end
@@ -481,13 +493,21 @@ function UI.LootFragmentClass:AddLooted(item, isNewItemType)
 
   if isNewItemType then
     -- add row
+    local data = ZO_DeepTableCopy(item)
+
+    data.quality = GetItemLinkQuality(item.link)
+    data.name = GetItemLinkName(item.link)
+    data.value = GetItemLinkValue(item.link, true) * item.stack
+
     local row = ZO_ScrollList_CreateDataEntry(
-      typeRowType[item.mailType], ZO_DeepTableCopy(item), 1)
+      typeRowType[item.mailType], data, CATEGORY_DEFAULT)
 
     table.insert(
       ZO_ScrollList_GetDataList(
         self.scrollList),
         row)
+
+    self:ApplySort()
   else
     -- update row
     --
@@ -501,14 +521,20 @@ function UI.LootFragmentClass:AddLooted(item, isNewItemType)
         UI.DEBUG("Updating stack")
         -- update the stack size  
         data.stack = item.stack
+        data.value = GetItemLinkValue(data.link, true) * data.stack
         break
 
       end
     end
 
+    if self.currentSortKey == "value" then
+      -- Order only changes on a value ordering.
+      self:ApplySort()
+    else
+      ZO_ScrollList_Commit(self.scrollList)
+    end
   end
 
-  ZO_ScrollList_Commit(self.scrollList)
 
 end
 
@@ -516,15 +542,21 @@ function UI.LootFragmentClass:AddLootedMoney(mail, isNewMoneyStack)
 
   if isNewMoneyStack then
 
+    local data = ZO_DeepTableCopy(mail)
+
+    data.quality = -1
+    data.name = "money"
+    data.value = mail.money
+
     local row = ZO_ScrollList_CreateDataEntry(
-      ROW_TYPE_ID_MONEY, ZO_DeepTableCopy(mail), 1)
+      ROW_TYPE_ID_MONEY, data, CATEGORY_DEFAULT)
 
     table.insert(
       ZO_ScrollList_GetDataList(
         self.scrollList),
         row)
     
-    ZO_ScrollList_Commit(self.scrollList)
+    self:ApplySort()
 
   else
     -- NOT SUPPORTED CURRENTLY
