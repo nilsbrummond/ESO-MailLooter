@@ -1294,6 +1294,16 @@ function CORE.TestLoot()
     { items={}, 
       mail=Mail(MAILTYPE_COD_RECEIPT, 7777, 
                 "Lodur", "Lodur", "Hi", "xxx")})
+  table.insert(
+    testData.testSteps,
+    { items={}, 
+      mail=Mail(MAILTYPE_COD_RECEIPT, 7777, 
+                "Lodur", "Lodur", "Hi", "xxx")})
+  table.insert(
+    testData.testSteps,
+    { items={}, 
+      mail=Mail(MAILTYPE_COD_RECEIPT, 7777, 
+                "Lodur", "Lodur", "Hi", "xxx")})
 
   CORE.callbacks.StatusUpdateCB(true, true, nil)
   CORE.state = STATE_TEST
