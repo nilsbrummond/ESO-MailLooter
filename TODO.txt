@@ -1,7 +1,4 @@
 
-Sorting
-  - quality / value / alpha / type
-
 Player mail as tooltip
   - Just in case you want to see the mail after looting...
 
@@ -21,6 +18,9 @@ Sandwitch
 
 DONE:
 ----
+
+Sorting
+  - quality / value / alpha / type
 
 Player mail shouldn't stack bug...
   - Makes break of of items with 'from' tag double counted
