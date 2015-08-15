@@ -69,6 +69,14 @@ local NoComparisionTooltip =
     [SLOT_TYPE_LIST_DIALOG_ITEM] = true,
 }
 
+local SortKeys =
+{
+  mailType = { tiebreaker = "name", isNumberic=true },
+  quality = { tiebreaker = "name", isNumberic=true },
+  name = { tiebreaker = "mailType" },
+  value = { tiebreaker = "quality", isNumberic=true },
+}
+
 
 --
 -- Local functions
@@ -272,6 +280,7 @@ local function RowDataReset(control)
   control.data = nil
 end
 
+
 --
 -- Functions
 --
@@ -286,6 +295,10 @@ end
 
 
 function UI.LootFragmentClass:Initialize()
+  
+  self.currentSortKey = "quality"
+  self.currentSortOrder = ZO_SORT_ORDER_DOWN
+
   local fragment = self
 
   fragment.win = WINDOW_MANAGER:CreateTopLevelWindow(
@@ -306,14 +319,29 @@ function UI.LootFragmentClass:Initialize()
   MAIL_LOOTER_LOOT_TITLEDivider:SetDimensions(900,2)
 
   --
+  -- Scroll List headers
+  --
+
+  local headers = WINDOW_MANAGER:CreateControlFromVirtual(
+    "MailLooterLootHeaders", fragment.win, "MailLooterLootListHeaders")
+  headers:SetAnchor(
+    TOP, MAIL_LOOTER_LOOT_TITLEDivider, BOTTOM, 0, 0)
+
+  fragment.sortHeaders = ZO_SortHeaderGroup:New(headers, true)
+  fragment.sortHeaders:AddHeadersFromContainer()
+  fragment.sortHeaders:RegisterCallback(
+    ZO_SortHeaderGroup.HEADER_CLICKED, 
+    function (a,b) self:ChangeSort(a,b) end)
+
+
+  --
   -- Scroll List
   --
 
   local scrollList = WINDOW_MANAGER:CreateControlFromVirtual(
     "MailLooterLootList", fragment.win, "ZO_ScrollList")
   scrollList:SetDimensions(750, 500)
-  scrollList:SetAnchor(
-    TOP, MAIL_LOOTER_LOOT_TITLEDivider, BOTTOM, 0, 10)
+  scrollList:SetAnchor(TOP, headers, BOTTOM, 0, 10)
 
   ZO_ScrollList_AddDataType(scrollList, ROW_TYPE_ID, 
       "MailLooterLootListRow",
@@ -393,6 +421,32 @@ function UI.LootFragmentClass:Initialize()
   -- fragment.win:SetResizeToFitDescendents(true)
 
   self:UpdateMoney(0)
+end
+
+function UI.LootFragmentClass:ChangeSort(newSortKey, newSortOrder)
+
+  self.currentSortKey = newSortKey
+  self.currentSortOrder = newSortOrder
+
+  self:ApplySort()
+
+end
+
+function UI.LootFragmentClass:ApplySort()
+  
+  local scrollData = ZO_ScrollList_GetDataList(self.scrollList)
+
+  if self.sortFn == nil then
+    self.sortFn = function(entry1, entry2)
+                    return ZO_TableOrderingFunction(
+                      entry1.data, entry2.data, self.currentSortKey, 
+                      SortKeys, self.currentSortOrder)
+                  end
+  end
+
+  table.sort(scrollData, self.sortFn)
+  ZO_ScrollList_Commit(self.scrollList)
+
 end
 
 function UI.LootFragmentClass:UpdateInv(current, max, reserved)
