@@ -99,7 +99,7 @@
           <Anchor point="CENTER" relativePoint="RIGHT" relativeTo="$(parent)_Type" offsetX="62" offsetY="0" />
           <TextureCoords left="0.10" right="0.90" top="0.10" bottom="0.90" />
           <Controls>
-            <Texture name="$(parent)_Coin" textureFile="/esoui/art/currency/currency_gold.dds">
+            <Texture name="$(parent)_Coin" textureFile="/esoui/art/currency/currency_gold.dds" inheritScale="false">
               <Anchor point="BOTTOMRIGHT" relativePoint="BOTTOMRIGHT" relativeTo="$(parent)_Icon" offsetX="0" offsetY="0" />
               <Dimensions x="16" y="16" />
             </Texture>
