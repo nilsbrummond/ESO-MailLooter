@@ -122,6 +122,7 @@ CORE.loot = false -- placehold till NewLootStruct() is defined.
 CORE.currentMail = {}
 CORE.currentItems = {}
 CORE.skippedMails = {}
+CORE.nextLootNum = 1
 
 CORE.callbacks = nil
 
@@ -373,6 +374,9 @@ local function AddMoneyToHistory(loot, mail)
      (mail.mailType == MAILTYPE_SIMPLE) or
      (mail.mailType == MAILTYPE_COD_RECEIPT) then
 
+    mail.lootNum = CORE.nextLootNum
+    CORE.nextLootNum = CORE.nextLootNum + 1
+
     table.insert(loot.moneys, mail)
 
     CORE.callbacks.ListUpdateCB(loot, false, nil, false, mail, true)
@@ -388,6 +392,9 @@ local function AddItemsToHistory(loot, currentItems)
     if MailTypeStackable[item.mailType] then
 
       if loot.items[item.mailType][item.link] == nil then
+        item.lootNum = CORE.nextLootNum
+        CORE.nextLootNum = CORE.nextLootNum + 1
+
         loot.items[item.mailType][item.link] = item
         newItemType = true
       else
@@ -403,6 +410,9 @@ local function AddItemsToHistory(loot, currentItems)
     else
 
       -- Not stackable - keep them sepatated...
+      item.lootNum = CORE.nextLootNum
+      CORE.nextLootNum = CORE.nextLootNum + 1
+
       table.insert( loot.items[item.mailType], item )
       
       DEBUG( "MailLooter: " .. tostring(item.link))
@@ -743,6 +753,7 @@ local function Start(filter)
   CORE.loot = NewLootStruct()
   CORE.currentMail = {}
   CORE.skippedMails = {}
+  CORE.nextLootNum = 1
 
   CORE.callbacks.StatusUpdateCB(true, true, nil)
 
@@ -1286,6 +1297,7 @@ function CORE.TestLoot()
 
   CORE.callbacks.StatusUpdateCB(true, true, nil)
   CORE.state = STATE_TEST
+  CORE.nextLootNum = 1
 
   zo_callLater(DoTestLoot, 250)
 

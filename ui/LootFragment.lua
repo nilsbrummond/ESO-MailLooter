@@ -72,16 +72,164 @@ local NoComparisionTooltip =
 
 local SortKeys =
 {
-  mailType = { tiebreaker = "name", isNumberic=true },
-  quality = { tiebreaker = "name", isNumberic=true },
-  name = { tiebreaker = "mailType" },
-  value = { tiebreaker = "quality", isNumberic=true },
+  mailType =  { tiebreaker = { "quality","name","stack","value" }, 
+                isNumberic=true },
+  quality =   { tiebreaker = { "mailType", "name", "stack", "value" },
+                isNumberic=true },
+  name =      { tiebreaker = { "mailType", "quality", "stack", "value" }},
+  value =     { tiebreaker = { "quality", "mailType", "name", "stack" },
+                isNumberic=true },
+
+  -- tiebreakers only:              
+  stack =     { isNumberic=true },
+  lootNum =   { isNumberic=true },
 }
 
 
 --
 -- Local functions
 --
+
+-- This function is must be determanistic.  less then or great then - no equal.
+local function TableOrderingFunction(entry1, entry2, key, keys, sortOrder)
+ 
+  local IS_LESS_THAN = -1
+  local IS_EQUAL_TO = 0
+  local IS_GREATER_THAN = 1
+
+  local function CompareSimple(entry1, entry2, key, keys)
+    local value1 = entry1[key]
+    local value2 = entry2[key]
+
+    if keys[key].isNumberic then
+      value1 = tonumber(value1)
+      value2 = tonumber(value2)
+    else -- "string"
+      value1 = zo_strlower(value1)
+      value2 = zo_strlower(value2)
+    end
+
+    local compareResult
+
+    if value1 < value2 then
+      compareResult = IS_LESS_THAN
+    elseif value1 > value2 then
+      compareResult = IS_GREATER_THAN
+    else
+      compareResult = IS_EQUAL_TO
+    end
+
+    return compareResult
+  end
+
+  local cr = CompareSimple(entry1, entry2, key, keys)
+
+  if (cr == IS_EQUAL_TO) and (keys[key].tieBreaker ~= nil) then
+
+    for i,v in keys[key].tieBreaker do
+      cr = CompareSimple(entry1, entry2, v, keys)
+      if cr ~= IS_EQUAL_TO then break end
+    end
+
+  end
+
+  -- last chance
+  if (cr == IS_EQUAL_TO) then
+    cr = CompareSimple(entry1, entry2, "lootNum", keys)
+  end
+
+  if sortOrder == ZO_SORT_ORDER_UP then
+    return cr == IS_LESS_THAN
+  end
+  return cr == IS_GREATER_THAN
+
+end
+
+local function SafeTableSort(t, sortFn)
+
+  -- be safe.
+  if (t == nil) then return "no-table" end
+  if (sortFn == nil) then return "no-func" end
+
+  -- to short to sort...
+  if #t < 2 then return "pre-sorted" end
+
+  -- compare first and last
+  local rtn1 = sortFn(t[1], t[#t])
+  local rtn2 = sortFn(t[#t], t[1])
+
+  UI.DEBUG("rtn1=" .. tostring(rtn1) .. " rtn2=" .. tostring(rtn2))
+
+  if rtn1 then
+    local tmp = t[1]
+    t[1] = t[#t]
+    t[#t] = tmp
+  end
+
+  table.sort(t, sortFn)
+
+  return "sorted"
+end
+
+-- ZO_DeepTableCopy enters an infinate loop on cyclic data.
+local function Safe_DeepTableCopy(obj, seen)
+if type(obj) ~= 'table' then return obj end
+if seen and seen[obj] then return seen[obj] end
+local s = seen or {}
+local res = setmetatable({}, getmetatable(obj))
+s[obj] = res
+for k, v in pairs(obj) do 
+  res[Safe_DeepTableCopy(k, s)] = Safe_DeepTableCopy(v, s) 
+end
+return res
+end
+
+local function LootTableDump(t, full)
+
+  local function Display(i, data)
+    UI.DEBUG("[" .. i .. "]: mt: " .. data.mailType .. " q: " .. 
+             data.quality ..  " name: '" .. data.name .. "' value: " .. 
+             data.value)
+  end
+
+  -- Validate
+
+  if #t > 1 then
+    local typeMailType = type(t[1].data.mailType)
+    local typeQuality = type(t[1].data.quality)
+    local typeName = type(t[1].data.name)
+    local typeValue = type(t[1].data.value)
+
+    for i,v in ipairs(t) do
+      if type(v.data.mailType) ~= typeMailType then
+        UI.DEBUG("[".. i .. "]: type error for mailType")
+      end
+      if type(v.data.quality) ~= typeQuality then
+        UI.DEBUG("[".. i .. "]: type error for quality")
+      end
+      if type(v.data.name) ~= typeName then
+        UI.DEBUG("[".. i .. "]: type error for name")
+      end
+      if type(v.data.value) ~= typeValue then
+        UI.DEBUG("[".. i .. "]: type error for value")
+      end
+    end
+  end
+
+  -- Dump
+  UI.DEBUG("LootTableDump:")
+
+  if full or (#t < 4) then
+    for i,v in ipairs(t) do
+      Display(i, v.data)
+    end
+  else
+    Display(1, t[1].data)
+    Display(2, t[2].data)
+    Display(#t - 1, t[#t - 1].data)
+    Display(#t, t[#t].data)
+  end
+end
 
 local function SenderString(sdn, scn)
   if scn and (scn ~= "") then
@@ -431,6 +579,9 @@ end
 
 function UI.LootFragmentClass:ChangeSort(newSortKey, newSortOrder)
 
+  UI.DEBUG("ChangeSort: newSortKey=" .. newSortKey .. 
+           " newSortOrder=" .. tostring(newSortOrder))
+
   self.currentSortKey = newSortKey
   self.currentSortOrder = newSortOrder
 
@@ -442,11 +593,9 @@ function UI.LootFragmentClass:ApplySort()
 
   local scrollData = ZO_ScrollList_GetDataList(self.scrollList)
 
-  UI.DEBUG("ApplySort - start")
-
   if self.sortFn == nil then
     self.sortFn = function(entry1, entry2)
-                    return ZO_TableOrderingFunction (
+                    return TableOrderingFunction (
                       ZO_ScrollList_GetDataEntryData(entry1),
                       ZO_ScrollList_GetDataEntryData(entry2),
                       self.currentSortKey, SortKeys, self.currentSortOrder)
@@ -454,9 +603,6 @@ function UI.LootFragmentClass:ApplySort()
   end
 
   table.sort(scrollData, self.sortFn)
-
-  UI.DEBUG("ApplySort - end")
-
   ZO_ScrollList_Commit(self.scrollList)
 
 end
