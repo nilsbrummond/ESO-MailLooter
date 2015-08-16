@@ -8,6 +8,7 @@ Player mail as tooltip
 Character filters: only loot hireling types on certain characters...
  - based on character name
  - based on crafting skill level?
+ - based on menu bar filter buttons that are remembered per character?
 
 Remove auto clearing of loot list?
 
