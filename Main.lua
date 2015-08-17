@@ -224,6 +224,14 @@ function ADDON.DebugMsg(msg)
   return ADDON.debug
 end
 
+-- Open the MailLooter UI and start looting all
+function ADDON.QuickLaunchAll()
+end
+
+-- Open the MailLooter UI and start looting according to the set filter
+function ADDON.QuickLaunchFiltered()
+end
+
 -- Init Hook --
 EVENT_MANAGER:RegisterForEvent(
   ADDON.NAME, EVENT_ADD_ON_LOADED, Initialize )

@@ -49,3 +49,4 @@ ui/LootFragment.xml
 Main.lua
 cli.lua
 
+bindings.xml
