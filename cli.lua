@@ -9,7 +9,7 @@ local function CommandHandler(text)
     d( "debug [on/off]  -  Turns debug messages on and off." )
     d( "debug [hide/show]  -  Hide and Shows the debug msg window." )
     d( "reset  -  Reset the maillooter in case it is stuck." )
-    d( "test  -  Test looting..." )
+    d( "test  -  Do a fake looting for UI testing." )
     d( "scan  -  scan the inbox." )
 
     return

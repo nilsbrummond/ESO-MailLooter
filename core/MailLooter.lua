@@ -123,6 +123,7 @@ CORE.currentMail = {}
 CORE.currentItems = {}
 CORE.skippedMails = {}
 CORE.nextLootNum = 1
+CORE.cancelClean = false
 
 CORE.callbacks = nil
 
@@ -215,7 +216,7 @@ end
 -- Check the subject of a mail against the auto-return subjects.
 local function IsBounceReqMail(subject)
 
-  DEBUG("IsBounceReqMail: " .. subject)
+  -- DEBUG("IsBounceReqMail: " .. subject)
 
   local cleaned = CleanBouncePhrase(subject)
   if cleaned == false then return false end
@@ -534,6 +535,21 @@ local function LootMails()
   local failedNoSpace = false
   local id = GetNextMailId(nil)
 
+  if CORE.cancelClean then
+    CORE.cancelClean = false
+
+    -- Canceled:
+    if id ~= nil then
+      DEBUG ( "Looting Canceled" )
+      CORE.state = STATE_IDLE
+      CORE.loot = NewLootStruct()
+      CORE.callbacks.StatusUpdateCB(false, false, "Canceled")
+      SummaryScanMail()
+      return
+    end
+  end
+
+
   while id ~= nil do
 
     if CORE.skippedMails[id] then
@@ -555,7 +571,7 @@ local function LootMails()
       if fromCustomerService then
         -- NOOP - just skip it.
         -- Just being extra careful we don't mess with CS mail.
-        CORE.skippedMail[id] = true
+        CORE.skippedMails[id] = true
 
       elseif mailType == MAILTYPE_BOUNCE then
 
@@ -602,7 +618,7 @@ local function LootMails()
           -- Don't loot the money.  It is all or nothing.
           --
           -- NOTE:
-          -- Don't add to the skip list of faileNoSpace
+          -- Don't add to the skip list or failedNoSpace
           --    may not be set on the last call of LootMails().
 
         elseif mailType == MAILTYPE_SIMPLE_PRE then
@@ -616,11 +632,11 @@ local function LootMails()
         elseif doItemLoot then
           CORE.loot.mailCount = CORE.loot.mailCount + 1
 
+          -- NOTE: Seems reading the mail help with getting items more reliably.
           -- Setup currentItems moved from here to after read event.
 
           DEBUG("items id=" .. Id64ToString(id))
           CORE.state = STATE_READ
-          -- NOTE: Seems reading the mail help with getting items more reliably.
           RequestReadMail(id)
           return
         elseif attachedMoney > 0 then
@@ -640,6 +656,13 @@ local function LootMails()
         else
           -- NOOP
         end
+
+      else
+
+        -- This mail is not for looting.
+        DEBUG("not-loot id=" .. Id64ToString(id))
+        CORE.skippedMails[id] = true
+
       end
     end
 
@@ -761,8 +784,26 @@ local function Start(filter)
 
 end
 
+-- Perform a test step on the timer.
 local function DoTestLoot()
 
+  if CORE.state ~= STATE_TEST then
+    DEBUG("Test Error - state=" .. CORE.state)
+    return
+  end
+
+  -- canceled:
+  if CORE.cancelClean then
+    DEBUG ( "Test Canceled" )
+    CORE.cancelClean = false
+    testData = {}
+    CORE.state = STATE_IDLE
+    CORE.callbacks.StatusUpdateCB(false, false, "Canceled")
+    SummaryScanMail()
+    return
+  end
+
+  -- Do a test step...
   local step = testData.testSteps[testData.nextStep]
   if step ~= nil then
     testData.nextStep = testData.nextStep + 1
@@ -1146,6 +1187,16 @@ end
 function CORE.ProcessMail(filter)
 end
 
+-- Stop the looting process after completing the current mail.
+function CORE.CancelClean()
+  DEBUG( "CancelClean state=" .. CORE.state )
+
+  if mailLooterOpen and (CORE.state ~= STATE_IDLE) then
+    CORE.cancelClean = true
+  end
+
+end
+
 -- Attempt to recover from a failure, or cancel an ongoing looting.
 function CORE.Reset()
   DEBUG( "MailLooter reset" )
@@ -1305,9 +1356,10 @@ function CORE.TestLoot()
       mail=Mail(MAILTYPE_COD_RECEIPT, 7777, 
                 "Lodur", "Lodur", "Hi", "xxx")})
 
-  CORE.callbacks.StatusUpdateCB(true, true, nil)
+  -- Start the test..
   CORE.state = STATE_TEST
   CORE.nextLootNum = 1
+  CORE.callbacks.StatusUpdateCB(true, true, nil)
 
   zo_callLater(DoTestLoot, 250)
 

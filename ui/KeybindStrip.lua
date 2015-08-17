@@ -18,7 +18,7 @@ UI.mailLooterButtonGroup = {
         name = "Cancel",
         keybind = "UI_SHORTCUT_NEGATIVE",
         visible = function() return not ADDON.Core.IsIdle() end,
-        callback = function() ADDON.Core.Reset() end,
+        callback = function() ADDON.Core.CancelClean() end,
     },
     alignment = KEYBIND_STRIP_ALIGN_CENTER,
 }
