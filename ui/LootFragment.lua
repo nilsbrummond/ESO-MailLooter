@@ -9,6 +9,7 @@ local ROW_TYPE_ID       = 1
 local ROW_TYPE_ID_EXTRA = 2
 local ROW_TYPE_ID_MONEY = 3
 
+local CATEGORY_DEFAULT  = 1
 
 local typeIcons = {
   [ADDON.Core.MAILTYPE_UNKNOWN] = "/esoui/art/menubar/menuBar_help_up.dds",
@@ -69,10 +70,92 @@ local NoComparisionTooltip =
     [SLOT_TYPE_LIST_DIALOG_ITEM] = true,
 }
 
+local SortKeys =
+{
+  mailType =  { tiebreaker = { "quality","name","stack","value" }, 
+                isNumberic=true },
+  quality =   { tiebreaker = { "name", "mailType", "stack", "value" },
+                isNumberic=true },
+  name =      { tiebreaker = { "mailType", "quality", "stack", "value" }},
+  value =     { tiebreaker = { "quality", "mailType", "name", "stack" },
+                isNumberic=true },
+
+  -- tiebreakers only:              
+  stack =     { isNumberic=true },
+  lootNum =   { isNumberic=true },
+
+  -- Meta:
+  final =     "lootNum"
+}
+
 
 --
 -- Local functions
 --
+
+-- This function is must be determanistic. 
+-- Less then or great then - no equal.
+--
+-- Based on ZOS code for ZO_TableOrderingFunction.  But this
+-- one makes sure we never end in a IS_EQUAL_TO case.  This was
+-- causing table.sort with a ZO_TableOrderingFunction to infinate 
+-- loop for MailLooter.
+--
+-- Return true if entry1 < entry2
+--
+local function TableOrderingFunction(entry1, entry2, key, keys, sortOrder)
+ 
+  local IS_LESS_THAN = -1
+  local IS_EQUAL_TO = 0
+  local IS_GREATER_THAN = 1
+
+  local function CompareSimple(entry1, entry2, key, keys)
+    local value1 = entry1[key]
+    local value2 = entry2[key]
+
+    if keys[key].isNumberic then
+      value1 = tonumber(value1)
+      value2 = tonumber(value2)
+    else -- "string"
+      value1 = zo_strlower(value1)
+      value2 = zo_strlower(value2)
+    end
+
+    local compareResult
+
+    if value1 < value2 then
+      compareResult = IS_LESS_THAN
+    elseif value1 > value2 then
+      compareResult = IS_GREATER_THAN
+    else
+      compareResult = IS_EQUAL_TO
+    end
+
+    return compareResult
+  end
+
+  local cr = CompareSimple(entry1, entry2, key, keys)
+
+  if (cr == IS_EQUAL_TO) and (keys[key].tieBreaker ~= nil) then
+
+    for i,v in keys[key].tieBreaker do
+      cr = CompareSimple(entry1, entry2, v, keys)
+      if cr ~= IS_EQUAL_TO then break end
+    end
+
+  end
+
+  -- last chance
+  if (cr == IS_EQUAL_TO) and (keys.final ~= nil) then
+    cr = CompareSimple(entry1, entry2, keys.final, keys)
+  end
+
+  if sortOrder == ZO_SORT_ORDER_UP then
+    return cr == IS_LESS_THAN
+  end
+  return cr == IS_GREATER_THAN
+
+end
 
 local function SenderString(sdn, scn)
   if scn and (scn ~= "") then
@@ -269,8 +352,10 @@ end
 
 local function RowDataReset(control)
   control:SetHidden(true)
+  control:GetNamedChild("_Highlight"):SetAlpha(0)
   control.data = nil
 end
+
 
 --
 -- Functions
@@ -286,6 +371,10 @@ end
 
 
 function UI.LootFragmentClass:Initialize()
+  
+  self.currentSortKey = "quality"
+  self.currentSortOrder = ZO_SORT_ORDER_DOWN
+
   local fragment = self
 
   fragment.win = WINDOW_MANAGER:CreateTopLevelWindow(
@@ -306,14 +395,34 @@ function UI.LootFragmentClass:Initialize()
   MAIL_LOOTER_LOOT_TITLEDivider:SetDimensions(900,2)
 
   --
+  -- Scroll List headers
+  --
+
+  local headers = WINDOW_MANAGER:CreateControlFromVirtual(
+    "MailLooterLootHeaders", fragment.win, "MailLooterLootListHeaders")
+  headers:SetAnchor(
+    TOP, MAIL_LOOTER_LOOT_TITLEDivider, BOTTOM, 0, 0)
+
+  fragment.sortHeaders = ZO_SortHeaderGroup:New(headers, true)
+  fragment.sortHeaders:AddHeadersFromContainer()
+  fragment.sortHeaders:RegisterCallback(
+    ZO_SortHeaderGroup.HEADER_CLICKED, 
+    function (a,b) self:ChangeSort(a,b) end)
+
+  -- call twice to toggle to current setting.
+  fragment.sortHeaders:SelectHeaderByKey(
+    self.currentSortKey, ZO_SortHeaderGroup.SUPPRESS_CALLBACKS)
+  fragment.sortHeaders:SelectHeaderByKey(
+    self.currentSortKey, ZO_SortHeaderGroup.SUPPRESS_CALLBACKS)
+
+  --
   -- Scroll List
   --
 
   local scrollList = WINDOW_MANAGER:CreateControlFromVirtual(
     "MailLooterLootList", fragment.win, "ZO_ScrollList")
-  scrollList:SetDimensions(750, 500)
-  scrollList:SetAnchor(
-    TOP, MAIL_LOOTER_LOOT_TITLEDivider, BOTTOM, 0, 10)
+  scrollList:SetDimensions(750, 450)
+  scrollList:SetAnchor(TOP, headers, BOTTOM, 0, 0)
 
   ZO_ScrollList_AddDataType(scrollList, ROW_TYPE_ID, 
       "MailLooterLootListRow",
@@ -395,6 +504,36 @@ function UI.LootFragmentClass:Initialize()
   self:UpdateMoney(0)
 end
 
+function UI.LootFragmentClass:ChangeSort(newSortKey, newSortOrder)
+
+  UI.DEBUG("ChangeSort: newSortKey=" .. newSortKey .. 
+           " newSortOrder=" .. tostring(newSortOrder))
+
+  self.currentSortKey = newSortKey
+  self.currentSortOrder = newSortOrder
+
+  self:ApplySort()
+
+end
+
+function UI.LootFragmentClass:ApplySort()
+
+  local scrollData = ZO_ScrollList_GetDataList(self.scrollList)
+
+  if self.sortFn == nil then
+    self.sortFn = function(entry1, entry2)
+                    return TableOrderingFunction (
+                      ZO_ScrollList_GetDataEntryData(entry1),
+                      ZO_ScrollList_GetDataEntryData(entry2),
+                      self.currentSortKey, SortKeys, self.currentSortOrder)
+                  end
+  end
+
+  table.sort(scrollData, self.sortFn)
+  ZO_ScrollList_Commit(self.scrollList)
+
+end
+
 function UI.LootFragmentClass:UpdateInv(current, max, reserved)
 
   local msg = ""
@@ -427,13 +566,21 @@ function UI.LootFragmentClass:AddLooted(item, isNewItemType)
 
   if isNewItemType then
     -- add row
+    local data = ZO_DeepTableCopy(item)
+
+    data.quality = GetItemLinkQuality(item.link)
+    data.name = GetItemLinkName(item.link)
+    data.value = GetItemLinkValue(item.link, true) * item.stack
+
     local row = ZO_ScrollList_CreateDataEntry(
-      typeRowType[item.mailType], ZO_DeepTableCopy(item), 1)
+      typeRowType[item.mailType], data, CATEGORY_DEFAULT)
 
     table.insert(
       ZO_ScrollList_GetDataList(
         self.scrollList),
         row)
+
+    self:ApplySort()
   else
     -- update row
     --
@@ -447,14 +594,20 @@ function UI.LootFragmentClass:AddLooted(item, isNewItemType)
         UI.DEBUG("Updating stack")
         -- update the stack size  
         data.stack = item.stack
+        data.value = GetItemLinkValue(data.link, true) * data.stack
         break
 
       end
     end
 
+    if self.currentSortKey == "value" then
+      -- Order only changes on a value ordering.
+      self:ApplySort()
+    else
+      ZO_ScrollList_Commit(self.scrollList)
+    end
   end
 
-  ZO_ScrollList_Commit(self.scrollList)
 
 end
 
@@ -462,15 +615,21 @@ function UI.LootFragmentClass:AddLootedMoney(mail, isNewMoneyStack)
 
   if isNewMoneyStack then
 
+    local data = ZO_DeepTableCopy(mail)
+
+    data.quality = -1
+    data.name = "money"
+    data.value = mail.money
+
     local row = ZO_ScrollList_CreateDataEntry(
-      ROW_TYPE_ID_MONEY, ZO_DeepTableCopy(mail), 1)
+      ROW_TYPE_ID_MONEY, data, CATEGORY_DEFAULT)
 
     table.insert(
       ZO_ScrollList_GetDataList(
         self.scrollList),
         row)
     
-    ZO_ScrollList_Commit(self.scrollList)
+    self:ApplySort()
 
   else
     -- NOT SUPPORTED CURRENTLY

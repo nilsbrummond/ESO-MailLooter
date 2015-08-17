@@ -1,5 +1,54 @@
 <GuiXml>
   <Controls>
+
+    <Control name="MailLooterLootListHeaders" virtual="true">
+      <Dimensions x="750" y="32" />
+      <Controls>
+
+        <Control name="$(parent)Type" inherits="ZO_SortHeader">
+          <Dimensions x="80" y="32" />
+          <Anchor point="CENTER" relativePoint="LEFT"  relativeTo="$(parent)" offsetX="30" offsetY="0" />
+          <OnInitialized>
+            ZO_SortHeader_Initialize(self, "Type", "mailType", ZO_SORT_ORDER_DOWN, TEXT_ALIGN_CENTER, "ZoFontGameShadow")
+          </OnInitialized>
+        </Control>
+
+        <Control name="$(parent)Quality" inherits="ZO_SortHeader">
+          <Dimensions x="16" y="32" />
+          <Anchor point="CENTER" relativePoint="LEFT" relativeTo="$(parent)" offsetX="112" offsetY="0" />
+          <Controls>
+            <Texture name="$(parent)Icon">
+              <AnchorFill />
+            </Texture>
+            <Texture name="$(parent)Mouseover">
+              <AnchorFill />
+            </Texture>
+          </Controls>
+          <OnInitialized>
+            ZO_SortHeader_InitializeArrowHeader(self, "quality", ZO_SORT_ORDER_DOWN)
+            ZO_SortHeader_SetTooltip(self, "Quality") 
+          </OnInitialized>
+        </Control>
+
+        <Control name="$(parent)Name" inherits="ZO_SortHeader">
+          <Dimensions x="80" y="32" />
+          <Anchor point="LEFT" relativePoint="LEFT" relativeTo="$(parent)" offsetX="159" offsetY="0" />
+          <OnInitialized>
+            ZO_SortHeader_Initialize(self, "Name", "name", ZO_SORT_ORDER_UP, TEXT_ALIGN_LEFT, "ZoFontGameShadow")
+          </OnInitialized>
+        </Control>
+
+        <Control name="$(parent)Value" inherits="ZO_SortHeader">
+          <Dimensions x="80" y="32" />
+          <Anchor point="RIGHT" relativeTo="$(parent)" offsetX="-30" offsetY="0" />
+          <OnInitialized>
+            ZO_SortHeader_Initialize(self, "Value", "value", ZO_SORT_ORDER_DOWN, TEXT_ALIGN_RIGHT, "ZoFontGameShadow")
+          </OnInitialized>
+        </Control>
+
+      </Controls>
+    </Control>
+
     <Control name="MailLooterLootListRow" mouseEnabled="true" virtual="true">
       <Dimensions x="750" y="52" />
 
