@@ -32,6 +32,23 @@ CORE.MAILTYPE_BOUNCE      = MAILTYPE_BOUNCE
 -- internal only
 -- CORE.MAILTYPE_SIMPLE_PRE
 
+-- Should these items be stacked or broken out for reporting.
+-- This is not if the actual item types will stack.
+-- This is how it is reported and therefore how displayed.
+local MailTypeStackable = {
+  [MAILTYPE_UNKNOWN]      = false,  -- n/a
+  [MAILTYPE_AVA]          = true,
+  [MAILTYPE_HIRELING]     = true,
+  [MAILTYPE_STORE]        = true,
+  [MAILTYPE_COD]          = false,
+  [MAILTYPE_RETURNED]     = false,
+  [MAILTYPE_SIMPLE]       = false,
+  [MAILTYPE_COD_RECEIPT]  = false,  -- n/a
+  [MAILTYPE_BOUNCE]       = false,  -- n/a
+  [MAILTYPE_SIMPLE_PRE]   = false,  -- n/a
+}
+
+
 local TitlesAvA = { 
   -- English
   ["Rewards for the Worthy!"] = true,
@@ -101,10 +118,12 @@ CORE.bounceWords = {}
 
 CORE.initialized = false
 CORE.state = nil
-CORE.loot = {items={}, money=0, mails=0, codTotal=0, autoReturn=0}
+CORE.loot = false -- placehold till NewLootStruct() is defined.
 CORE.currentMail = {}
 CORE.currentItems = {}
 CORE.skippedMails = {}
+CORE.nextLootNum = 1
+CORE.cancelClean = false
 
 CORE.callbacks = nil
 
@@ -155,6 +174,25 @@ local function IsDeleteSimpleAfter() return false end
 local function LootThisMailCOD(codAmount, codTotal) return false end
 local function IsBounceEnabled() return false end
 
+local function NewLootStruct()
+  local l = {
+    items={}, moneys={},
+    moneyTotal=0, mailCount=0, codTotal=0, autoReturnCount=0
+  }
+
+  l.items[MAILTYPE_UNKNOWN] = {}
+  l.items[MAILTYPE_AVA] = {}
+  l.items[MAILTYPE_HIRELING] = {}
+  l.items[MAILTYPE_STORE] = {}
+  l.items[MAILTYPE_COD] = {}
+  l.items[MAILTYPE_RETURNED] = {}
+  l.items[MAILTYPE_SIMPLE] = {}
+
+  return l
+end
+
+CORE.loot = NewLootStruct()
+
 local function CleanBouncePhrase(phrase)
   if (phrase == nil) or (phrase == '') then return false end
 
@@ -178,7 +216,7 @@ end
 -- Check the subject of a mail against the auto-return subjects.
 local function IsBounceReqMail(subject)
 
-  DEBUG("IsBounceReqMail: " .. subject)
+  -- DEBUG("IsBounceReqMail: " .. subject)
 
   local cleaned = CleanBouncePhrase(subject)
   if cleaned == false then return false end
@@ -326,21 +364,62 @@ local function IsRoomToLoot(mailId, numAtt)
 
 end
 
+local function AddMoneyToHistory(loot, mail)
+  if mail.money <= 0 then return end
+
+  -- Add the total money
+  loot.moneyTotal = loot.moneyTotal + mail.money
+
+  -- Is a breakout type..
+  if (mail.mailType == MAILTYPE_RETURNED) or
+     (mail.mailType == MAILTYPE_SIMPLE) or
+     (mail.mailType == MAILTYPE_COD_RECEIPT) then
+
+    mail.lootNum = CORE.nextLootNum
+    CORE.nextLootNum = CORE.nextLootNum + 1
+
+    table.insert(loot.moneys, mail)
+
+    CORE.callbacks.ListUpdateCB(loot, false, nil, false, mail, true)
+  end
+end
+
 local function AddItemsToHistory(loot, currentItems)
 
   local newItemType = false
 
   for ind,item in ipairs(currentItems) do
 
-    if loot.items[item.link] == nil then
-      loot.items[item.link] = item
-      newItemType = true
-    else
-      loot.items[item.link].stack = loot.items[item.link].stack + item.stack
-    end
+    if MailTypeStackable[item.mailType] then
 
-    DEBUG( "MailLooter: " .. tostring(item.link))
-    CORE.callbacks.ListUpdateCB(loot, false, item.link, newItemType)
+      if loot.items[item.mailType][item.link] == nil then
+        item.lootNum = CORE.nextLootNum
+        CORE.nextLootNum = CORE.nextLootNum + 1
+
+        loot.items[item.mailType][item.link] = item
+        newItemType = true
+      else
+        loot.items[item.mailType][item.link].stack = 
+          loot.items[item.mailType][item.link].stack + item.stack
+
+        DEBUG("stack=" .. loot.items[item.mailType][item.link].stack)
+      end
+
+      DEBUG( "MailLooter: " .. tostring(item.link))
+      CORE.callbacks.ListUpdateCB(
+        loot, false, loot.items[item.mailType][item.link], newItemType)
+    else
+
+      -- Not stackable - keep them sepatated...
+      item.lootNum = CORE.nextLootNum
+      CORE.nextLootNum = CORE.nextLootNum + 1
+
+      table.insert( loot.items[item.mailType], item )
+      
+      DEBUG( "MailLooter: " .. tostring(item.link))
+      CORE.callbacks.ListUpdateCB(loot, false, item, true)
+
+    end
   end
 
 end
@@ -456,11 +535,26 @@ local function LootMails()
   local failedNoSpace = false
   local id = GetNextMailId(nil)
 
+  if CORE.cancelClean then
+    CORE.cancelClean = false
+
+    -- Canceled:
+    if id ~= nil then
+      DEBUG ( "Looting Canceled" )
+      CORE.state = STATE_IDLE
+      CORE.loot = NewLootStruct()
+      CORE.callbacks.StatusUpdateCB(false, false, "Canceled")
+      SummaryScanMail()
+      return
+    end
+  end
+
+
   while id ~= nil do
 
     if CORE.skippedMails[id] then
       -- Already looked at and rejected this mail for looting...
-      DEBUG("skipping mail: " .. Id64ToString(id))
+      -- DEBUG("skipping mail: " .. Id64ToString(id))
     else
 
       local sdn, scn, subject, icon, unread, fromSystem, 
@@ -477,7 +571,7 @@ local function LootMails()
       if fromCustomerService then
         -- NOOP - just skip it.
         -- Just being extra careful we don't mess with CS mail.
-        CORE.skippedMail[id] = true
+        CORE.skippedMails[id] = true
 
       elseif mailType == MAILTYPE_BOUNCE then
 
@@ -486,7 +580,7 @@ local function LootMails()
 
         if IsBounceEnabled() then
           DEBUG("bounce id=" .. Id64ToString(id))
-          CORE.loot.autoReturn = CORE.loot.autoReturn + 1
+          CORE.loot.autoReturnCount = CORE.loot.autoReturnCount + 1
           CORE.state = STATE_DELETE
           CORE.currentMail = {id=id}
           ReturnMail(id)
@@ -500,8 +594,7 @@ local function LootMails()
 
         -- Loot this Mail
         DEBUG( "found mail: " .. Id64ToString(id) .. " '" .. 
-               subject .. "' " .. numAttachments .. " " .. 
-               (secsSinceReceived/60))
+               subject .. "' numAtt=" .. numAttachments)
 
         StoreCurrentMail(
           id, sdn, scn, subject, fromSystem, numAttachments, 
@@ -524,7 +617,7 @@ local function LootMails()
           -- Don't loot the money.  It is all or nothing.
           --
           -- NOTE:
-          -- Don't add to the skip list of faileNoSpace
+          -- Don't add to the skip list or failedNoSpace
           --    may not be set on the last call of LootMails().
 
         elseif mailType == MAILTYPE_SIMPLE_PRE then
@@ -536,18 +629,18 @@ local function LootMails()
           return
 
         elseif doItemLoot then
-          CORE.loot.mails = CORE.loot.mails + 1
+          CORE.loot.mailCount = CORE.loot.mailCount + 1
 
+          -- NOTE: Seems reading the mail help with getting items more reliably.
           -- Setup currentItems moved from here to after read event.
 
           DEBUG("items id=" .. Id64ToString(id))
           CORE.state = STATE_READ
-          -- NOTE: Seems reading the mail help with getting items more reliably.
           RequestReadMail(id)
           return
         elseif attachedMoney > 0 then
           DEBUG("money id=" .. Id64ToString(id))
-          CORE.loot.mails = CORE.loot.mails + 1
+          CORE.loot.mailCount = CORE.loot.mailCount + 1
           CORE.state = STATE_MONEY
           TakeMailAttachedMoney(id)
           return
@@ -555,13 +648,20 @@ local function LootMails()
           -- DELETE
           -- player may have manually looted and not deleted it.
           DEBUG("delete id=" .. Id64ToString(id))
-          CORE.loot.mails = CORE.loot.mails + 1
+          CORE.loot.mailCount = CORE.loot.mailCount + 1
           CORE.state = STATE_DELETE
           DeleteMail(id, true)
           return
         else
           -- NOOP
         end
+
+      else
+
+        -- This mail is not for looting.
+        DEBUG("not-loot id=" .. Id64ToString(id))
+        CORE.skippedMails[id] = true
+
       end
     end
 
@@ -574,14 +674,14 @@ local function LootMails()
     DEBUG ( "No room left in inventory" )
     CORE.callbacks.ListUpdateCB(CORE.loot, true, nil, false)
     CORE.state = STATE_IDLE
-    CORE.loot = {items={}, money=0, mails=0, codTotal=0, autoReturn=0}
+    CORE.loot = NewLootStruct()
     CORE.callbacks.StatusUpdateCB(false, false, "Inventory Full")
     SummaryScanMail()
   else
     DEBUG ( "Done" )
     CORE.callbacks.ListUpdateCB(CORE.loot, true, nil, false)
     CORE.state = STATE_IDLE
-    CORE.loot = {items={}, money=0, mails=0, codTotal=0, autoReturn=0}
+    CORE.loot = NewLootStruct()
     CORE.callbacks.StatusUpdateCB(false, true, nil)
     SummaryScanMail()
   end
@@ -594,7 +694,7 @@ local function LootMailsCont()
 
   if CORE.currentMail.text then
     body = ReadMail(CORE.currentMail.id)
-    currentMail.text.body = body
+    CORE.currentMail.text.body = body
   end
 
   if CORE.currentMail.mailType == MAILTYPE_SIMPLE_PRE then
@@ -602,7 +702,7 @@ local function LootMailsCont()
     if IsSimplePost(body) then
 
       CORE.currentMail.mailType = MAILTYPE_SIMPLE
-      CORE.loot.mails = CORE.loot.mails + 1
+      CORE.loot.mailCount = CORE.loot.mailCount + 1
 
       if (CORE.currentMail.att > 0) then
         -- Fall through to loot items...
@@ -672,31 +772,58 @@ local function Start(filter)
   CORE.filters = filter
   CORE.filters[MAILTYPE_SIMPLE_PRE] = CORE.filters[MAILTYPE_SIMPLE]
 
-  CORE.loot = { items = {}, money = 0, mails = 0, codTotal=0, autoReturn=0 }
+  CORE.loot = NewLootStruct()
   CORE.currentMail = {}
   CORE.skippedMails = {}
+  CORE.nextLootNum = 1
 
+  CORE.state = STATE_LOOT
   CORE.callbacks.StatusUpdateCB(true, true, nil)
 
   LootMails()
 
 end
 
+-- Perform a test step on the timer.
 local function DoTestLoot()
 
+  if CORE.state ~= STATE_TEST then
+    DEBUG("Test Error - state=" .. CORE.state)
+    return
+  end
+
+  -- canceled:
+  if CORE.cancelClean then
+    DEBUG ( "Test Canceled" )
+    CORE.cancelClean = false
+    testData = {}
+    CORE.state = STATE_IDLE
+    CORE.callbacks.StatusUpdateCB(false, false, "Canceled")
+    SummaryScanMail()
+    return
+  end
+
+  -- Do a test step...
   local step = testData.testSteps[testData.nextStep]
   if step ~= nil then
     testData.nextStep = testData.nextStep + 1
+    step = ZO_DeepTableCopy(step)
 
-    testData.loot.money = testData.loot.money + step.money
-    testData.loot.mails = testData.loot.mails + 1
+    testData.loot.mailCount = testData.loot.mailCount + 1
+
+    for ind,item in ipairs(step.items) do
+      item.mailType = step.mail.mailType
+      item.text = step.mail.text
+    end
 
     AddItemsToHistory(testData.loot, step.items)
+    AddMoneyToHistory(testData.loot, step.mail)
 
-    zo_callLater(DoTestLoot, 250)
+    zo_callLater(DoTestLoot, 50)
   else
     DEBUG ( "Test Done" )
     CORE.callbacks.ListUpdateCB(testData.loot, true, nil, false)
+    testData = {}
     CORE.state = STATE_IDLE
     CORE.callbacks.StatusUpdateCB(false, true, nil)
     SummaryScanMail()
@@ -833,7 +960,7 @@ function CORE.TakeMoneyEvt( eventCode, mailId )
     if CORE.state ~= STATE_MONEY then return end
 
     if (CORE.currentMail.id == mailId) then
-      CORE.loot.money = CORE.loot.money + CORE.currentMail.money
+      AddMoneyToHistory(CORE.loot, CORE.currentMail)
 
       CORE.state = STATE_DELETE
       zo_callLater(DoDeleteCmd, 1)
@@ -1060,6 +1187,17 @@ end
 function CORE.ProcessMail(filter)
 end
 
+-- Stop the looting process after completing the current mail.
+function CORE.CancelClean()
+  DEBUG( "CancelClean state=" .. CORE.state )
+
+  if mailLooterOpen and (CORE.state ~= STATE_IDLE) then
+    DEBUG( "----> Canceling")
+    CORE.cancelClean = true
+  end
+
+end
+
 -- Attempt to recover from a failure, or cancel an ongoing looting.
 function CORE.Reset()
   DEBUG( "MailLooter reset" )
@@ -1103,7 +1241,6 @@ function CORE.TestLoot()
   {
     ["stack"] = 1,
     ["icon"] = "/esoui/art/icons/crafting_forester_weapon_vendor_component_002.dds",
-    ["mailType"] = MAILTYPE_HIRELING,
     ["link"] = "|H1:item:54171:32:50:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|hdwarven oil|h",
     ["creator"] = "",
   }
@@ -1112,7 +1249,6 @@ function CORE.TestLoot()
   {
     ["stack"] = 5,
     ["icon"] = "/esoui/art/icons/crafting_ore_voidstone.dds",
-    ["mailType"] = 3,
     ["link"] = "|H1:item:23135:30:50:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|hvoidstone ore|h",
     ["creator"] = "",
   }
@@ -1121,7 +1257,6 @@ function CORE.TestLoot()
   {
     ["stack"] = 2,
     ["icon"] = "/esoui/art/icons/crafting_ore_palladium.dds",
-    ["mailType"] = 3,
     ["link"] = "|H1:item:46152:30:50:0:0:0:0:0:0:0:0:0:0:0:0:15:0:0:0:0:0|hPalladium|h",
     ["creator"] = "",
   }
@@ -1130,7 +1265,6 @@ function CORE.TestLoot()
   {
     ["stack"] = 1,
     ["icon"] = "/esoui/art/icons/crafting_wood_turpen.dds",
-    ["mailType"] = 3,
     ["link"] = "|H1:item:54179:32:50:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|hturpen|h",
     ["creator"] = "",
   }
@@ -1141,39 +1275,96 @@ function CORE.TestLoot()
       link=ZO_LinkHandler_CreateLink(
         "Test Trash" .. i, nil, ITEM_LINK_TYPE, 45336, 1, 26, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 10000, 0),
       stack=1, 
-      mailType=(i%6)+1, 
       icon='/esoui/art/icons/crafting_components_spice_004.dds',
       creator="",
-      text = {sdn="@Lodur", scn=""}
     }
   end
 
-  testItem[20].money = 1234
-  testItem[20].mailType = MAILTYPE_COD_RECEIPT
-  testItem[20].icon = nil
-  testItem[20].link = "money-link-placeholder"
+  local function Mail(mailType, money, sdn, scn, subject, body)
+    local mail = { mailType=mailType, money=money }
+
+    if (sdn ~= nil) or (scn ~= nil) then
+      mail.text={ sdn=sdn, scn=scn, subject=subject, body=body }
+    end
+
+    return mail
+  end
 
   testData = {
-    loot = { items={}, money=0, mails=0, codTotal=0 },
+    loot = NewLootStruct(),
+
     nextStep = 1,
+
     testSteps = {
-      { items={realItem[1],realItem[2],realItem[3]}, money=25 },
-      { items={realItem[4]}, money=25 },
-      { items={realItem[1],realItem[2],realItem[3]}, money=25 },
-      { items={realItem[4]}, money=25 },
-      { items={realItem[1],realItem[2],realItem[3]}, money=25 },
-      { items={realItem[4]}, money=25 },
-      { items={realItem[1],realItem[2],realItem[3]}, money=25 },
-      { items={realItem[4]}, money=25 },
+      { items={realItem[1],realItem[2],realItem[3]},
+        mail=Mail(MAILTYPE_HIRELING,25) },
+      { items={realItem[4]}, mail=Mail(MAILTYPE_HIRELING,25) },
+      { items={realItem[1],realItem[2],realItem[3]}, 
+        mail=Mail(MAILTYPE_HIRELING,25) },
+      { items={realItem[4]}, mail=Mail(MAILTYPE_HIRELING,25) },
+      { items={realItem[1],realItem[2],realItem[3]}, 
+        mail=Mail(MAILTYPE_HIRELING,25) },
+      { items={realItem[4]}, mail=Mail(MAILTYPE_HIRELING,25) },
+      { items={realItem[1],realItem[2],realItem[3]}, 
+        mail=Mail(MAILTYPE_HIRELING,25) },
+      { items={realItem[4]}, mail=Mail(MAILTYPE_HIRELING,25) },
     },
   }
 
   for i=1,20 do
-    table.insert(testData.testSteps, {items={testItem[i]}, money=1})
+    table.insert(
+      testData.testSteps, {items={testItem[1]}, mail=Mail((i%5)+1, 1)})
   end
 
-  CORE.callbacks.StatusUpdateCB(true, true, nil)
+  for i=1,20 do
+    table.insert(
+      testData.testSteps, {items={testItem[i]}, mail=Mail((i%5)+1, 1)})
+  end
+
+  -- with items
+  table.insert(
+    testData.testSteps,
+    { items={realItem[4]}, 
+      mail=Mail(MAILTYPE_RETURNED, 0, 
+                "Lodur", "Lodur", "Hi", "xxx")})
+
+  table.insert(
+    testData.testSteps,
+    { items={realItem[4]}, 
+      mail=Mail(MAILTYPE_SIMPLE, 0, 
+                "Lodur", "Lodur", "Hi", "xxx")})
+
+  -- Money only:
+  table.insert(
+    testData.testSteps,
+    { items={}, 
+      mail=Mail(MAILTYPE_RETURNED, 7777, 
+                "Lodur", "Lodur", "Hi", "xxx")})
+  table.insert(
+    testData.testSteps,
+    { items={}, 
+      mail=Mail(MAILTYPE_SIMPLE, 7777, 
+                "Lodur", "Lodur", "Hi", "xxx")})
+  table.insert(
+    testData.testSteps,
+    { items={}, 
+      mail=Mail(MAILTYPE_COD_RECEIPT, 7777, 
+                "Lodur", "Lodur", "Hi", "xxx")})
+  table.insert(
+    testData.testSteps,
+    { items={}, 
+      mail=Mail(MAILTYPE_COD_RECEIPT, 7777, 
+                "Lodur", "Lodur", "Hi", "xxx")})
+  table.insert(
+    testData.testSteps,
+    { items={}, 
+      mail=Mail(MAILTYPE_COD_RECEIPT, 7777, 
+                "Lodur", "Lodur", "Hi", "xxx")})
+
+  -- Start the test..
   CORE.state = STATE_TEST
+  CORE.nextLootNum = 1
+  CORE.callbacks.StatusUpdateCB(true, true, nil)
 
   zo_callLater(DoTestLoot, 250)
 

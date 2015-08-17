@@ -11,35 +11,56 @@ local UI = ADDON.UI
 -- placeholder
 local function DEBUG(str) end
 
-function UI.CoreListUpdateCB(loot, complete, itemLink, isNewItemType)
+function UI.CoreListUpdateCB(loot, complete, 
+                             item, isNewItemType,
+                             moneyMail, isNewMoneyStack)
   local debugOn = DEBUG("ListUpdateCB")
 
   if complete and debugOn then
 
-    DEBUG("Mails looted: " .. loot.mails)
-    DEBUG("Gold looted: " .. loot.money)
+    DEBUG("Mails looted: " .. loot.mailCount)
+    DEBUG("Gold looted: " .. loot.moneyTotal)
 
     DEBUG("Items looted:")
-    for i1,v1 in pairs(loot.items) do
-      DEBUG("  " .. GetItemLinkName(v1.link) .. " (" .. v1.stack .. ")" )
+    for i1,v1 in ipairs(loot.items) do
+      DEBUG("index: " .. i1)
+      -- some lists are arrays and some are link keyed.  Don't ipairs().
+      for i2,v2 in pairs(loot.items[i1]) do
+        DEBUG("  " .. GetItemLinkName(v2.link) .. " (" .. v2.stack .. ")" )
+      end
+    end
+
+    if loot.moneyTotal > 0 then
+      DEBUG("Moneys looted:")
+      for i1,v1 in ipairs(loot.moneys) do
+        DEBUG("  mt=" .. v1.mailType .. " money (" .. v1.money .. ")") 
+      end
     end
   end 
 
-  UI.lootFragment:UpdateMoney(loot.money)
+  UI.lootFragment:UpdateMoney(loot.moneyTotal)
 
   if complete then
-    
+
     -- Done...
     UI.summaryFragment:UpdateSummarySimple("Done.")
     ADDON.SetSetting_SaveHistory(loot)
 
-  elseif itemLink ~= nil then
-    UI.lootFragment:AddLooted(loot.items[itemLink], isNewItemType)
+  else
 
-    UI.lootFragment:UpdateInv(
-      GetNumBagUsedSlots(BAG_BACKPACK),
-      GetBagSize(BAG_BACKPACK),
-      ADDON.Core.GetSaveDeconSpace())
+    if item ~= nil then
+      UI.lootFragment:AddLooted(item, isNewItemType)
+
+      UI.lootFragment:UpdateInv(
+        GetNumBagUsedSlots(BAG_BACKPACK),
+        GetBagSize(BAG_BACKPACK),
+        ADDON.Core.GetSaveDeconSpace())
+    end
+
+    if moneyMail ~= nil then
+      UI.lootFragment:AddLootedMoney(moneyMail, isNewMoneyStack)
+    end
+
   end
 
 end

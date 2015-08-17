@@ -1,22 +1,32 @@
 
+Player mail as tooltip
+  - Just in case you want to see the mail after looting...
+
+Character filters: only loot hireling types on certain characters...
+ - based on character name
+ - based on crafting skill level?
+ - based on menu bar filter buttons that are remembered per character?
+
+Remove auto clearing of loot list?
+
+Hot key loot all 
+ - goto MailLooter screen
+ - start looting
+
+Sandwitch
+ - Cause every addon should be able to make a sandwitch...
+
+
+DONE:
+----
+
 Sorting
   - quality / value / alpha / type
 
 Player mail shouldn't stack bug...
   - Makes break of of items with 'from' tag double counted
 
-Player mail as tooltip
-  - Just in case you want to see the mail after looting...
-
 Money 
   - Show money like items are.
 
-Character filters: only loot hireling types on certain characters...
- - based on character name
- - based on crafting skill level?
-
-Remove auto clearing of loot list?
-
-Sandwitch
- - Case every addon should be able to make a sandwitch...
 

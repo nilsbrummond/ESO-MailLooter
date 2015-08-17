@@ -34,7 +34,7 @@ local function Initialize( eventCode, addOnName )
 
   ADDON.settings = ZO_SavedVars:NewAccountWide(
     "MailLooter_Settings", 
-    (ADDON.VERSION * 100), 
+    math.floor((ADDON.VERSION * 100)),
     "general", 
     ADDON.settingsDefaults)
 
@@ -219,7 +219,7 @@ end
 
 function ADDON.DebugMsg(msg)
   if ADDON.debug then
-    ADDON.debugMsgWin:AddText(msg, 1, 1, 0)
+    ADDON.debugMsgWin:AddText(GetTimeString() .. " " .. msg, 1, 1, 0)
   end
   return ADDON.debug
 end
