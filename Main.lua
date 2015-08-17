@@ -34,7 +34,7 @@ local function Initialize( eventCode, addOnName )
 
   ADDON.settings = ZO_SavedVars:NewAccountWide(
     "MailLooter_Settings", 
-    (ADDON.VERSION * 100), 
+    math.floor((ADDON.VERSION * 100)),
     "general", 
     ADDON.settingsDefaults)
 
