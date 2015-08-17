@@ -116,8 +116,30 @@ function ADDON.UI.InitSettings()
     },
     {
       type = "description",
-      title = "MailLooter is Not an Auto-return Mailer",
-      text = "MailLooter does not have this feature.  But if you do use another addon to auto-return mail, then set the keywords here so the MailLooter does not loot them.  You may set up to 6 subject words or phases to be defined as auto-return.  Capitalization is ignored.",
+      title = "MailLooter Auto-return Mail Detection",
+      text = "There may be up to 6 different Auto-return words or phases.  If any of the them match the subject of a mail then MailLooter considers the mail as Auto-return mail.  When matching a mail's subject: Capitalization is ignored, punctuation is ignored, and extra spaces are ignored.  Setting the 'Subject N' field to blank to disable that field.  MailLooter will either ignore or auto-return matching mails.",
+    },
+    {
+      type = "description",
+    },
+    {
+      type = "description",
+      title = "Examples:",
+    },
+    {
+      type = "description",
+      title = "Using another Addon for Mail Auto-Returning",
+      text = "Make sure 'Enable Mail Auto-Returning' is NOT checked.  Set the 6 'Subject N' fields to match the auto-return detection used by your other Addon.  MailLooter will ignore the detected auto-return mails so not to interfer with the other mail auto-return addon.",
+    },
+    {
+      type = "description",
+      title = "Using MailLooter for Mail Auto-Returning",
+      text = "Make sure 'Enable Mail Auto-Returning' is checked.  Set the 6 'Subject N' fields to the subjects that you want to have auto-returned.  MailLooter will now auto-return detected mails during the looting procedure.",
+    },
+    {
+      type = "description",
+      title = "Don't Do Any Mail Auto-Returning",
+      text = "Make sure 'Enable Mail Auto-Returning' is NOT checked.  Set the 6 'Subject N' fields to be blank.  MailLooter will not auto-return any mail, and no mail will be assumed to be for auto-returning.",
     },
     {
       type="editbox",
@@ -160,11 +182,6 @@ function ADDON.UI.InitSettings()
       getFunc = function() return ADDON.GetSetting_autoReturnSubject(6) end,
       setFunc = function(v) ADDON.SetSetting_autoReturnSubject(v, 6) end,
       isMultiline = false,
-    },
-    {
-      type = "description",
-      title = "MailLooter has Changed it's Mind",
-      text = "MailLooter now can auto-return mail!  Mostly because this change was very simple to add at this point.  But please be warned that MailLooter is a little flakey and may change it's mind again at any time..."
     },
     {
       type = "checkbox",
