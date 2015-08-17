@@ -554,7 +554,7 @@ local function LootMails()
 
     if CORE.skippedMails[id] then
       -- Already looked at and rejected this mail for looting...
-      DEBUG("skipping mail: " .. Id64ToString(id))
+      -- DEBUG("skipping mail: " .. Id64ToString(id))
     else
 
       local sdn, scn, subject, icon, unread, fromSystem, 
@@ -594,8 +594,7 @@ local function LootMails()
 
         -- Loot this Mail
         DEBUG( "found mail: " .. Id64ToString(id) .. " '" .. 
-               subject .. "' " .. numAttachments .. " " .. 
-               (secsSinceReceived/60))
+               subject .. "' numAtt=" .. numAttachments)
 
         StoreCurrentMail(
           id, sdn, scn, subject, fromSystem, numAttachments, 
@@ -778,6 +777,7 @@ local function Start(filter)
   CORE.skippedMails = {}
   CORE.nextLootNum = 1
 
+  CORE.state = STATE_LOOT
   CORE.callbacks.StatusUpdateCB(true, true, nil)
 
   LootMails()
@@ -819,7 +819,7 @@ local function DoTestLoot()
     AddItemsToHistory(testData.loot, step.items)
     AddMoneyToHistory(testData.loot, step.mail)
 
-    zo_callLater(DoTestLoot, 250)
+    zo_callLater(DoTestLoot, 50)
   else
     DEBUG ( "Test Done" )
     CORE.callbacks.ListUpdateCB(testData.loot, true, nil, false)
@@ -1192,6 +1192,7 @@ function CORE.CancelClean()
   DEBUG( "CancelClean state=" .. CORE.state )
 
   if mailLooterOpen and (CORE.state ~= STATE_IDLE) then
+    DEBUG( "----> Canceling")
     CORE.cancelClean = true
   end
 
@@ -1295,14 +1296,18 @@ function CORE.TestLoot()
     nextStep = 1,
 
     testSteps = {
-      { items={realItem[1],realItem[2],realItem[3]}, mail=Mail(3,25) },
-      { items={realItem[4]}, mail=Mail(3,25) },
-      { items={realItem[1],realItem[2],realItem[3]}, mail=Mail(3,25) },
-      { items={realItem[4]}, mail=Mail(3,25) },
-      { items={realItem[1],realItem[2],realItem[3]}, mail=Mail(3,25) },
-      { items={realItem[4]}, mail=Mail(3,25) },
-      { items={realItem[1],realItem[2],realItem[3]}, mail=Mail(3,25) },
-      { items={realItem[4]}, mail=Mail(3,25) },
+      { items={realItem[1],realItem[2],realItem[3]},
+        mail=Mail(MAILTYPE_HIRELING,25) },
+      { items={realItem[4]}, mail=Mail(MAILTYPE_HIRELING,25) },
+      { items={realItem[1],realItem[2],realItem[3]}, 
+        mail=Mail(MAILTYPE_HIRELING,25) },
+      { items={realItem[4]}, mail=Mail(MAILTYPE_HIRELING,25) },
+      { items={realItem[1],realItem[2],realItem[3]}, 
+        mail=Mail(MAILTYPE_HIRELING,25) },
+      { items={realItem[4]}, mail=Mail(MAILTYPE_HIRELING,25) },
+      { items={realItem[1],realItem[2],realItem[3]}, 
+        mail=Mail(MAILTYPE_HIRELING,25) },
+      { items={realItem[4]}, mail=Mail(MAILTYPE_HIRELING,25) },
     },
   }
 

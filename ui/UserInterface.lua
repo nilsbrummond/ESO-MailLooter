@@ -22,10 +22,18 @@ function UI.CoreListUpdateCB(loot, complete,
     DEBUG("Gold looted: " .. loot.moneyTotal)
 
     DEBUG("Items looted:")
-    for i1,v1 in pairs(loot.items) do
-      if #v1 > 0 then DEBUG("index: " .. i1) end
+    for i1,v1 in ipairs(loot.items) do
+      DEBUG("index: " .. i1)
+      -- some lists are arrays and some are link keyed.  Don't ipairs().
       for i2,v2 in pairs(loot.items[i1]) do
         DEBUG("  " .. GetItemLinkName(v2.link) .. " (" .. v2.stack .. ")" )
+      end
+    end
+
+    if loot.moneyTotal > 0 then
+      DEBUG("Moneys looted:")
+      for i1,v1 in ipairs(loot.moneys) do
+        DEBUG("  mt=" .. v1.mailType .. " money (" .. v1.money .. ")") 
       end
     end
   end 
@@ -33,7 +41,7 @@ function UI.CoreListUpdateCB(loot, complete,
   UI.lootFragment:UpdateMoney(loot.moneyTotal)
 
   if complete then
-    
+
     -- Done...
     UI.summaryFragment:UpdateSummarySimple("Done.")
     ADDON.SetSetting_SaveHistory(loot)
