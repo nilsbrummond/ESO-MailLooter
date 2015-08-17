@@ -219,7 +219,7 @@ end
 
 function ADDON.DebugMsg(msg)
   if ADDON.debug then
-    ADDON.debugMsgWin:AddText(msg, 1, 1, 0)
+    ADDON.debugMsgWin:AddText(GetTimeString() .. " " .. msg, 1, 1, 0)
   end
   return ADDON.debug
 end
