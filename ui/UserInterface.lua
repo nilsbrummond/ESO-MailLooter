@@ -5,11 +5,31 @@ ADDON.UI = ADDON.UI or {}
 local UI = ADDON.UI
 
 --
--- Functions
+-- Local functions
 --
 
 -- placeholder
 local function DEBUG(str) end
+
+local function QuickLaunchCmd()
+  DEBUG("QuickLaunchCmd cmd=" .. tostring(UI.queuedCommand))
+
+  local mode = UI.queuedCommand
+
+  if mode ~= nil then
+    UI.queuedCommand = nil
+
+    if mode == "all" then
+      ADDON.Core.ProcessMailAll()
+    elseif mode == "filtered" then
+      -- TODO: start filtered.
+    end
+  end
+end
+
+--
+-- Functions
+--
 
 function UI.CoreListUpdateCB(loot, complete, 
                              item, isNewItemType,
@@ -99,6 +119,8 @@ function UI.CoreScanUpdateCB(summary)
     GetBagSize(BAG_BACKPACK),
     ADDON.Core.GetSaveDeconSpace())
 
+  QuickLaunchCmd()
+
 end
 
 function UI.SceneStateChange(_, newState)
@@ -143,4 +165,21 @@ function UI.InitUserInterface(debugFunction)
 
 end
 
+-- Open MailLooter and optionally start a command.
+function UI.QuickLaunch(mode)
 
+  -- validate mode
+  if mode ~= nil then
+    if not ((mode == "all") or (mode == "filtered")) then
+      mode = nil
+    end
+  end
+
+  UI.queuedCommand = mode
+  if not SCENE_MANAGER:IsShowing("mailLooter") then
+    MAIN_MENU:ShowScene("mailLooter")
+  else
+    QuickLaunchCmd()
+  end
+
+end

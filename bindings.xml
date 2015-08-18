@@ -1,0 +1,17 @@
+<Bindings>
+  <Layer name="SI_KEYBINDINGS_CATEGORY_GENERAL">
+    <Category name="SI_MAIL_LOOTER">
+      <Action name="MAILLOOTER_OPEN">
+        <Down>MailLooter.QuickLaunchAll()</Down>
+      </Action>
+      <Action name="MAILLOOTER_QUICK_LOOT_ALL">
+        <Down>MailLooter.QuickLaunchAll()</Down>
+      </Action>
+<!--
+      <Action name="MAILLOOTER_QUICK_LOOT_FILTERED">
+        <Down>MailLooter.QuickLaunchFiltered()</Down>
+      </Action>
+-->
+    </Category>
+  </Layer>
+</Bindings>
