@@ -4,6 +4,8 @@ local ADDON = MailLooter
 ADDON.UI = ADDON.UI or {}
 local UI = ADDON.UI
 
+UI.currentLoot = false
+
 --
 -- Local functions
 --
@@ -36,6 +38,8 @@ function UI.CoreListUpdateCB(loot, complete,
                              moneyMail, isNewMoneyStack)
   local debugOn = DEBUG("ListUpdateCB")
 
+  UI.currentLoot = true
+
   if complete and debugOn then
 
     DEBUG("Mails looted: " .. loot.mailCount)
@@ -65,6 +69,11 @@ function UI.CoreListUpdateCB(loot, complete,
     -- Done...
     UI.summaryFragment:UpdateSummarySimple("Done.")
     ADDON.SetSetting_SaveHistory(loot)
+
+    if loot.mailCount == 0 then
+      -- Nothing looted: don't require the user to clear.
+      UI.ClearLoot()
+    end
 
   else
 
@@ -119,6 +128,8 @@ function UI.CoreScanUpdateCB(summary)
     GetBagSize(BAG_BACKPACK),
     ADDON.Core.GetSaveDeconSpace())
 
+  KEYBIND_STRIP:UpdateKeybindButtonGroup(UI.mailLooterButtonGroup)
+
   QuickLaunchCmd()
 
 end
@@ -128,7 +139,6 @@ function UI.SceneStateChange(_, newState)
 
   if newState == SCENE_SHOWING then
     KEYBIND_STRIP:AddKeybindButtonGroup(UI.mailLooterButtonGroup)
-    UI.lootFragment:Clear()
     ADDON.Core.OpenMailLooter()
 
     -- NOTE: HACK
@@ -139,12 +149,28 @@ function UI.SceneStateChange(_, newState)
     -- back again.
     ZO_SharedTitleLabel:SetText( GetString(SI_MAIN_MENU_MAIL) )
 
+  elseif newState == SCENE_SHOWN then
+    KEYBIND_STRIP:UpdateKeybindButtonGroup(UI.mailLooterButtonGroup)
   elseif newState == SCENE_HIDDEN then
     KEYBIND_STRIP:RemoveKeybindButtonGroup(UI.mailLooterButtonGroup)
     ADDON.Core.CloseMailLooter()
   end
 end
 
+function UI.IsLootShown()
+  return UI.currentLoot
+end
+
+function UI.ClearLoot()
+  UI.currentLoot = false
+  UI.lootFragment:Clear()
+
+  KEYBIND_STRIP:UpdateKeybindButtonGroup(UI.mailLooterButtonGroup)
+end
+
+--
+-- Public interface
+--
 
 function UI.InitUserInterface(debugFunction)
 
