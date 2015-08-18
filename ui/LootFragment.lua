@@ -253,11 +253,15 @@ local function Row_OnMouseExit(control, rowControl)
 end
 
 local function RowStatus_OnMouseEnter(control)
-  
-  local mailType = control:GetParent().data.mailType
-
+ 
   InitializeTooltip(InformationTooltip, control, TOPRIGHT, 0, 0, TOPLEFT)
-  SetTooltipText(InformationTooltip, typeTooltips[mailType])
+  if control:GetParent().data.id then
+
+  else
+    local mailType = control:GetParent().data.mailType
+
+    SetTooltipText(InformationTooltip, typeTooltips[mailType])
+  end
 end
 
 local function RowStatus_OnMouseExit(control)
@@ -305,9 +309,9 @@ local function SetupRowDataMoney(rowControl, data, scrollList)
   local extra = rowControl:GetNamedChild("_Extra")
   if data.mailType == ADDON.Core.MAILTYPE_RETURNED then
     extra:SetText(
-      "|cFF0000Returned|r from: " .. SenderString(data.text.sdn, data.text.scn))
+      "|cFF0000Returned|r from: " .. SenderString(data.sdn, data.scn))
   else
-    extra:SetText("From: " .. SenderString(data.text.sdn, data.text.scn))
+    extra:SetText("From: " .. SenderString(data.sdn, data.scn))
   end
 
   ZO_CurrencyControl_SetSimpleCurrency(
@@ -331,11 +335,11 @@ local function SetupRowDataItem(rowControl, data, scrollList)
   if data.mailType == ADDON.Core.MAILTYPE_RETURNED then
     local extra = rowControl:GetNamedChild("_Extra")
     extra:SetText(
-      "|cFF0000Returned|r from: " .. SenderString(data.text.sdn, data.text.scn))
+      "|cFF0000Returned|r from: " .. SenderString(data.sdn, data.scn))
   elseif data.mailType == ADDON.Core.MAILTYPE_SIMPLE then
     local extra = rowControl:GetNamedChild("_Extra")
     extra:SetText(
-      "From: " .. SenderString(data.text.sdn, data.text.scn))
+      "From: " .. SenderString(data.sdn, data.scn))
   end
 
   ZO_CurrencyControl_SetSimpleCurrency(
