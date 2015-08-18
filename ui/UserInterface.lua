@@ -8,7 +8,12 @@ local UI = ADDON.UI
 -- Local functions
 --
 
+-- placeholder
+local function DEBUG(str) end
+
 local function QuickLaunchCmd()
+  DEBUG("QuickLaunchCmd cmd=" .. tostring(UI.queuedCommand))
+
   local mode = UI.queuedCommand
 
   if mode ~= nil then
@@ -25,9 +30,6 @@ end
 --
 -- Functions
 --
-
--- placeholder
-local function DEBUG(str) end
 
 function UI.CoreListUpdateCB(loot, complete, 
                              item, isNewItemType,
