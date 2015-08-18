@@ -4,7 +4,7 @@ local ADDON = MailLooter
 ADDON.UI = ADDON.UI or {}
 local UI = ADDON.UI
 
-UI.currentLoot = nil
+UI.currentLoot = false
 
 --
 -- Functions
@@ -18,7 +18,7 @@ function UI.CoreListUpdateCB(loot, complete,
                              moneyMail, isNewMoneyStack)
   local debugOn = DEBUG("ListUpdateCB")
 
-  UI.currentLoot = loot
+  UI.currentLoot = true
 
   if complete and debugOn then
 
@@ -135,11 +135,11 @@ function UI.SceneStateChange(_, newState)
 end
 
 function UI.IsLootShown()
-  return UI.currentLoot ~= nil
+  return UI.currentLoot
 end
 
 function UI.ClearLoot()
-  UI.currentLoot = nil
+  UI.currentLoot = false
   UI.lootFragment:Clear()
 
   KEYBIND_STRIP:UpdateKeybindButtonGroup(UI.mailLooterButtonGroup)
