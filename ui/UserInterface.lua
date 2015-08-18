@@ -22,7 +22,12 @@ local function QuickLaunchCmd()
     UI.queuedCommand = nil
 
     if mode == "all" then
-      ADDON.Core.ProcessMailAll()
+
+      if ADDON.Core.IsIdle() then
+        UI.ClearLoot()
+        ADDON.Core.ProcessMailAll()
+      end
+
     elseif mode == "filtered" then
       -- TODO: start filtered.
     end
