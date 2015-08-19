@@ -389,14 +389,21 @@ function UI.LootFragmentClass:Initialize()
   fragment.win:SetHidden(true)
   fragment.win:SetMouseEnabled(true)
 
-  WINDOW_MANAGER:CreateControlFromVirtual(
-    "MAIL_LOOTER_LOOT_TITLE", fragment.win, "ZO_PanelTitle")
-  MAIL_LOOTER_LOOT_TITLE:SetAnchor(TOP, fragment.win, TOP, 0, 0)
-  MAIL_LOOTER_LOOT_TITLELabel:SetText("LOOTED")
-  MAIL_LOOTER_LOOT_TITLELabel:SetFont("ZoFontWinH2")
-  MAIL_LOOTER_LOOT_TITLELabel:SetAnchor(
-    CENTER, MAIL_LOOTER_LOOT_TITLEDivider, CENTER, 0, -15)
-  MAIL_LOOTER_LOOT_TITLEDivider:SetDimensions(900,2)
+  local topdiv = WINDOW_MANAGER:CreateControl(
+    nil, fragment.win, CT_TEXTURE)
+  topdiv:SetTexture("EsoUI/Art/Miscellaneous/centerscreen_topDivider.dds")
+  topdiv:SetHeight(2)
+  topdiv:SetWidth(650)
+  topdiv:SetAnchor(TOPRIGHT, fragment.win, BOTTOMRIGHT, 0, 15)
+
+--  WINDOW_MANAGER:CreateControlFromVirtual(
+--    "MAIL_LOOTER_LOOT_TITLE", fragment.win, "ZO_PanelTitle")
+--  MAIL_LOOTER_LOOT_TITLE:SetAnchor(TOP, fragment.win, TOP, 0, 0)
+--  MAIL_LOOTER_LOOT_TITLELabel:SetText("LOOTED")
+--  MAIL_LOOTER_LOOT_TITLELabel:SetFont("ZoFontWinH2")
+--  MAIL_LOOTER_LOOT_TITLELabel:SetAnchor(
+--    CENTER, MAIL_LOOTER_LOOT_TITLEDivider, CENTER, 0, -15)
+--  MAIL_LOOTER_LOOT_TITLEDivider:SetDimensions(900,2)
 
   --
   -- Scroll List headers
@@ -404,8 +411,7 @@ function UI.LootFragmentClass:Initialize()
 
   local headers = WINDOW_MANAGER:CreateControlFromVirtual(
     "MailLooterLootHeaders", fragment.win, "MailLooterLootListHeaders")
-  headers:SetAnchor(
-    TOP, MAIL_LOOTER_LOOT_TITLEDivider, BOTTOM, 0, 0)
+  headers:SetAnchor(TOP, topdiv, BOTTOM, 0, 0)
 
   fragment.sortHeaders = ZO_SortHeaderGroup:New(headers, true)
   fragment.sortHeaders:AddHeadersFromContainer()
@@ -425,7 +431,7 @@ function UI.LootFragmentClass:Initialize()
 
   local scrollList = WINDOW_MANAGER:CreateControlFromVirtual(
     "MailLooterLootList", fragment.win, "ZO_ScrollList")
-  scrollList:SetDimensions(750, 450)
+  scrollList:SetDimensions(650, 450)
   scrollList:SetAnchor(TOP, headers, BOTTOM, 0, 0)
 
   ZO_ScrollList_AddDataType(scrollList, ROW_TYPE_ID, 
@@ -463,7 +469,7 @@ function UI.LootFragmentClass:Initialize()
   div:SetTexture("EsoUI/Art/Miscellaneous/centerscreen_topDivider.dds")
   div:SetHeight(2)
   div:SetWidth(900)
-  div:SetAnchor(TOP, scrollList, BOTTOM, 0, 15)
+  div:SetAnchor(TOPRIGHT, scrollList, BOTTOMRIGHT, 0, 15)
 
   local invLabel = WINDOW_MANAGER:CreateControl(
     nil, fragment.win, CT_LABEL)
@@ -502,8 +508,6 @@ function UI.LootFragmentClass:Initialize()
   fragment.lootMoneyText = moneyValue
 
   fragment.FRAGMENT = ZO_FadeSceneFragment:New(fragment.win)
-
-  -- fragment.win:SetResizeToFitDescendents(true)
 
   self:UpdateMoney(0)
 end
