@@ -3,6 +3,8 @@ MailLooter = MailLooter or {}
 local ADDON = MailLooter
 ADDON.UI = ADDON.UI or {}
 local UI = ADDON.UI
+ADDON.Core = ADDON.Core or {}
+local CORE = ADDON.Core
 
 UI.OverviewFragmentClass = ZO_Object:Subclass()
 
@@ -13,15 +15,13 @@ function UI.OverviewFragmentClass:New()
 end
 
 local function MakeLabel(index, parent, icon, text)
-  local label = WINDOW_MANAGER:CreateControl(
-    "MailLooterOverviewLabel" .. index, parent, CT_LABEL)
   
   if icon ~= nil then
     local texture = WINDOW_MANAGER:CreateControl(
       "MailLooterOverviewTexture" .. index, parent, CT_TEXTURE)
     texture:SetTexture(icon)
-    texture:SetDimensions(26,26)
-    texture:SetAnchor(TOPLEFT, parent, TOPLEFT, 5, 170 + (index * 30))
+    texture:SetDimensions(32,32)
+    texture:SetAnchor(TOPLEFT, parent, TOPLEFT, 5, 170 + (index * 30) - 5)
   end
 
   if text ~= nil then
@@ -29,7 +29,7 @@ local function MakeLabel(index, parent, icon, text)
       "MailLooterOverviewLabel" .. index, parent, CT_LABEL)
     label:SetFont("ZoFontGameBold")
     label:SetText(text)
-    label:SetColor(1,1,1,1)
+    label:SetColor(ZO_NORMAL_TEXT:UnpackRGBA())
     label:SetHeight(label:GetFontHeight())
     label:SetHorizontalAlignment(TEXT_ALIGN_LEFT)
     label:SetAnchor(TOPLEFT, parent, TOPLEFT, 36, 170 + (index * 30))
@@ -42,7 +42,7 @@ local function MakeValue(index, parent)
 
   label:SetFont("ZoFontGame")
   label:SetText("0")
-  label:SetColor(ZO_NORMAL_TEXT:UnpackRGBA())
+  label:SetColor(1,1,1,1)
   label:SetHeight(label:GetFontHeight())
   label:SetHorizontalAlignment(TEXT_ALIGN_RIGHT)
   label:SetAnchor(TOPRIGHT, parent, TOPRIGHT, -5, 170 + (index * 30))
@@ -65,33 +65,56 @@ function UI.OverviewFragmentClass:Initialize()
   local label = WINDOW_MANAGER:CreateControl(
     "MailLooterOverviewTitle", self.win, CT_LABEL)
 
-  label:SetFont("ZoFontGameBold")
+  label:SetFont("ZoFontWinH2")
   label:SetText("OVERVIEW")
   label:SetHeight(label:GetFontHeight())
   label:SetHorizontalAlignment(TEXT_ALIGN_CENTER)
   label:SetAnchor(TOP, self.win, TOP, 0, 80)
 
   MakeLabel(1, self.win, nil, "Total Mails")
-  MakeLabel(2, self.win, nil, "Looted:")
-  MakeLabel(3, self.win, nil, "AvA:")
-  MakeLabel(4, self.win, nil, "Hireling:")
-  MakeLabel(5, self.win, nil, "Store:")
-  MakeLabel(6, self.win, nil, "COD:")
-  MakeLabel(7, self.win, nil, "Returned:")
-  MakeLabel(8, self.win, nil, "Simple:")
-  MakeLabel(9, self.win, nil, "COD Receipt:")
-  MakeLabel(10, self.win, nil, "Auto-Return:")
+  MakeLabel(2, self.win, 'esoui/art/inventory/inventory_tabicon_all_up.dds', "All Looted:")
+  MakeLabel(3, self.win, UI.typeIcons[CORE.MAILTYPE_AVA], "AvA:")
+  MakeLabel(4, self.win, UI.typeIcons[CORE.MAILTYPE_HIRELING], "Hireling:")
+  MakeLabel(5, self.win, UI.typeIcons[CORE.MAILTYPE_STORE], "Store:")
+  MakeLabel(6, self.win, UI.typeIcons[CORE.MAILTYPE_COD], "COD:")
+  MakeLabel(7, self.win, UI.typeIcons[CORE.MAILTYPE_RETURNED], "Returned:")
+  MakeLabel(8, self.win, UI.typeIcons[CORE.MAILTYPE_SIMPLE], "Simple:")
+  MakeLabel(9, self.win, '/esoui/art/mainmenu/menubar_inventory_up.dds', "COD Receipt:")
+  MakeLabel(10, self.win, '/esoui/art/vendor/vendor_tabicon_buyback_up.dds', "Auto-Returned:")
 
-  MakeValue(2, self.win)
-  MakeValue(3, self.win)
-  MakeValue(4, self.win)
-  MakeValue(5, self.win)
-  MakeValue(6, self.win)
-  MakeValue(7, self.win)
-  MakeValue(8, self.win)
-  MakeValue(9, self.win)
-  MakeValue(10, self.win)
+  self.countLabels = {}
+  self.countLabels.all = MakeValue(2, self.win)
+  self.countLabels[CORE.MAILTYPE_AVA] = MakeValue(3, self.win)
+  self.countLabels[CORE.MAILTYPE_HIRELING] = MakeValue(4, self.win)
+  self.countLabels[CORE.MAILTYPE_STORE] = MakeValue(5, self.win)
+  self.countLabels[CORE.MAILTYPE_COD] = MakeValue(6, self.win)
+  self.countLabels[CORE.MAILTYPE_RETURNED] = MakeValue(7, self.win)
+  self.countLabels[CORE.MAILTYPE_SIMPLE] = MakeValue(8, self.win)
+  self.countLabels[CORE.MAILTYPE_COD_RECEIPT] = MakeValue(9, self.win)
+  self.countLabels[CORE.MAILTYPE_BOUNCE] = MakeValue(10, self.win)
 
   self.FRAGMENT = ZO_FadeSceneFragment:New(self.win)
+
+end
+
+
+function UI.OverviewFragmentClass:Update(loot)
+
+  local function Set(x)
+    local val = loot.mailCount[x]
+    self.countLabels[x]:SetText(val)
+  end
+
+  self.countLabels.all:SetText(loot.mailCount.all)
+
+  Set(CORE.MAILTYPE_AVA)
+  Set(CORE.MAILTYPE_HIRELING)
+  Set(CORE.MAILTYPE_STORE)
+  Set(CORE.MAILTYPE_STORE)
+  Set(CORE.MAILTYPE_COD)
+  Set(CORE.MAILTYPE_RETURNED)
+  Set(CORE.MAILTYPE_SIMPLE)
+  Set(CORE.MAILTYPE_COD_RECEIPT)
+  Set(CORE.MAILTYPE_BOUNCE)
 
 end

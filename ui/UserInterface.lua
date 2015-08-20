@@ -47,7 +47,7 @@ function UI.CoreListUpdateCB(loot, complete,
 
   if complete and debugOn then
 
-    DEBUG("Mails looted: " .. loot.mailCount)
+    DEBUG("Mails looted: " .. loot.mailCount.all)
     DEBUG("Gold looted: " .. loot.moneyTotal)
 
     DEBUG("Items looted:")
@@ -75,7 +75,7 @@ function UI.CoreListUpdateCB(loot, complete,
     UI.summaryFragment:UpdateSummarySimple("Done.")
     ADDON.SetSetting_SaveHistory(loot)
 
-    if loot.mailCount == 0 then
+    if loot.mailCount.all == 0 then
       -- Nothing looted: don't require the user to clear.
       UI.ClearLoot()
     end
@@ -94,6 +94,8 @@ function UI.CoreListUpdateCB(loot, complete,
     if moneyMail ~= nil then
       UI.lootFragment:AddLootedMoney(moneyMail, isNewMoneyStack)
     end
+
+    UI.overviewFragment:Update(loot)
 
   end
 
