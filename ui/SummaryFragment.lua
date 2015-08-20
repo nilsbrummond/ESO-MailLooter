@@ -79,7 +79,7 @@ function UI.SummaryFragmentClass:Initialize()
   div:SetWidth(900)
   div:SetAnchor(TOP, wrapper, BOTTOM, 0, 15)
 
-  fragment.win:SetHeight((div:GetBottom() - fragment.win:GetTop()) + 2)
+  fragment.win:SetHeight( 15 + label:GetFontHeight() + 15 + 2 )
 
   fragment.FRAGMENT = ZO_FadeSceneFragment:New(fragment.win)
 

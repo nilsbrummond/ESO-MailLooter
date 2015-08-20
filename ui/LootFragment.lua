@@ -431,7 +431,7 @@ function UI.LootFragmentClass:Initialize()
 
   local scrollList = WINDOW_MANAGER:CreateControlFromVirtual(
     "MailLooterLootList", fragment.win, "ZO_ScrollList")
-  scrollList:SetDimensions(650, 450)
+  scrollList:SetDimensions(650, 500)
   scrollList:SetAnchor(TOP, headers, BOTTOM, 0, 0)
 
   ZO_ScrollList_AddDataType(scrollList, ROW_TYPE_ID, 

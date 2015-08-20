@@ -186,8 +186,9 @@ function UI.InitUserInterface(debugFunction)
 
   UI.InitSettings()
   UI.summaryFragment = UI.SummaryFragmentClass:New()
+  UI.overviewFragment = UI.OverviewFragmentClass:New()
   UI.lootFragment = UI.LootFragmentClass:New()
-  UI.CreateScene(UI.summaryFragment, UI.lootFragment)
+  UI.CreateScene(UI.summaryFragment, UI.overviewFragment, UI.lootFragment)
 
   ADDON.Core.NewCallbacks(
     UI.CoreListUpdateCB,
