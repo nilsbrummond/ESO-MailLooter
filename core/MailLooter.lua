@@ -567,7 +567,7 @@ local function LootMails()
 
   while id ~= nil do
 
-    if CORE.skippedMails[id] then
+    if CORE.skippedMails[zo_getSafeId64Key(id)] then
       -- Already looked at and rejected this mail for looting...
       -- DEBUG("skipping mail: " .. Id64ToString(id))
     else
@@ -586,7 +586,7 @@ local function LootMails()
       if fromCustomerService then
         -- NOOP - just skip it.
         -- Just being extra careful we don't mess with CS mail.
-        CORE.skippedMails[id] = true
+        CORE.skippedMails[zo_getSafeId64Key(id)] = true
 
       elseif mailType == MAILTYPE_BOUNCE then
 
@@ -602,7 +602,7 @@ local function LootMails()
           return
         else
           -- Skip it.
-          CORE.skippedMails[id] = true
+          CORE.skippedMails[zo_getSafeId64Key(id)] = true
         end
 
       elseif LootThisMail(mailType, codAmount) then
@@ -684,7 +684,7 @@ local function LootMails()
 
         -- This mail is not for looting.
         DEBUG("not-loot id=" .. Id64ToString(id))
-        CORE.skippedMails[id] = true
+        CORE.skippedMails[zo_getSafeId64Key(id)] = true
 
       end
     end
@@ -783,7 +783,7 @@ local function LootMailsCont()
     else
       -- Skip this mail...
       DEBUG("not simple id=" .. Id64ToString(CORE.currentMail.id))
-      CORE.skippedMails[CORE.currentMail.id] = true
+      CORE.skippedMails[zo_getSafeId64Key(CORE.currentMail.id)] = true
       CORE.currentMail = {}
       LootMails()
       return
@@ -847,7 +847,7 @@ local function LootMailsCont()
     CORE.loot.mails[CORE.currentMail.id] = nil
 
     -- skip it...
-    CORE.skippedMails[CORE.currentMail.id] = true
+    CORE.skippedMails[zo_getSafeId64Key(CORE.currentMail.id)] = true
     CORE.currentMail = {}
     LootMails()
   end
@@ -978,8 +978,9 @@ function CORE.MailReadableEvt( eventCode, mailId)
   DEBUG( "MailReadable state=" .. CORE.state .. " id=" .. Id64ToString(mailId) )
 
   if mailLooterOpen then
-    if (CORE.state == STATE_READ) and (CORE.currentMail.id == mailId) then
-        LootMailsCont()
+    if (CORE.state == STATE_READ) and 
+       AreId64sEqual(CORE.currentMail.id, mailId) then
+      LootMailsCont()
     end
   end
 
@@ -993,7 +994,7 @@ function CORE.MailRemovedEvt( eventCode, mailId )
 
     -- For our mail.
     if (CORE.currentMail ~= nil) and 
-       (CORE.currentMail.id == mailId) then
+       AreId64sEqual(CORE.currentMail.id, mailId) then
 
       -- normal case.
       if CORE.state == STATE_DELETE then
@@ -1025,7 +1026,7 @@ function CORE.TakeItemsEvt( eventCode, mailId )
   if mailLooterOpen then
     if CORE.state ~= STATE_ITEMS then return end
 
-    if CORE.currentMail.id == mailId then
+    if AreId64sEqual(CORE.currentMail.id, mailId) then
 
       if CORE.currentMail.codAmount > 0 then
         CORE.loot.codTotal = CORE.loot.codTotal + CORE.currentMail.codAmount
@@ -1053,7 +1054,7 @@ function CORE.TakeMoneyEvt( eventCode, mailId )
   if mailLooterOpen then
     if CORE.state ~= STATE_MONEY then return end
 
-    if (CORE.currentMail.id == mailId) then
+    if AreId64sEqual(CORE.currentMail.id, mailId) then
       AddMoneyToHistory(CORE.loot, CORE.currentMail)
 
       CORE.state = STATE_DELETE
