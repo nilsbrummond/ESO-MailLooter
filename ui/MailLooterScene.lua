@@ -4,7 +4,7 @@ local ADDON = MailLooter
 ADDON.UI = ADDON.UI or {}
 local UI = ADDON.UI
 
-function ADDON.UI.CreateScene(summaryFragment, lootFragment)
+function ADDON.UI.CreateScene(summaryFragment, filterFragment, lootFragment)
   MAIL_LOOTER_SCENE = ZO_Scene:New("mailLooter", SCENE_MANAGER)
   MAIL_LOOTER_SCENE:AddFragmentGroup(FRAGMENT_GROUP.MOUSE_DRIVEN_UI_WINDOW)
   MAIL_LOOTER_SCENE:AddFragmentGroup(
@@ -15,6 +15,7 @@ function ADDON.UI.CreateScene(summaryFragment, lootFragment)
   MAIL_LOOTER_SCENE:AddFragment(TITLE_FRAGMENT)
 
   MAIL_LOOTER_SCENE:AddFragment(summaryFragment.FRAGMENT)
+  MAIL_LOOTER_SCENE:AddFragment(filterFragment.FRAGMENT)
   MAIL_LOOTER_SCENE:AddFragment(lootFragment.FRAGMENT)
 
   local index = #MAIN_MENU.sceneGroupInfo.mailSceneGroup.menuBarIconData + 1
