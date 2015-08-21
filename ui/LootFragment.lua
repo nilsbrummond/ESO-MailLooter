@@ -16,10 +16,10 @@ local typeIcons = {
   [ADDON.Core.MAILTYPE_AVA] = "/esoui/art/mainmenu/menuBar_ava_up.dds",
   [ADDON.Core.MAILTYPE_HIRELING] = "/esoui/art/progression/progression_indexicon_tradeskills_up.dds",
   [ADDON.Core.MAILTYPE_STORE] = "/esoui/art/mainmenu/menuBar_guilds_up.dds",
-  [ADDON.Core.MAILTYPE_COD] = "/esoui/art/menubar/menubar_temp_up.dds",
-  [ADDON.Core.MAILTYPE_RETURNED] = "/esoui/art/mainmenu/menuBar_mail_up.dds",
+  [ADDON.Core.MAILTYPE_COD] = "/esoui/art/menubar/menubar_temp_over.dds",
+  [ADDON.Core.MAILTYPE_RETURNED] = "/esoui/art/vendor/vendor_tabicon_sell_up.dds",
   [ADDON.Core.MAILTYPE_SIMPLE] = "/esoui/art/mainmenu/menuBar_mail_up.dds",
-  [ADDON.Core.MAILTYPE_COD_RECEIPT] = "/esoui/art/mainmenu/menuBar_mail_up.dds",
+  [ADDON.Core.MAILTYPE_COD_RECEIPT] = "/esoui/art/mainmenu/menubar_inventory_up.dds",
 }
 
 UI.typeIcons = typeIcons

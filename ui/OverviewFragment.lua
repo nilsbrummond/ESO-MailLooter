@@ -6,6 +6,14 @@ local UI = ADDON.UI
 ADDON.Core = ADDON.Core or {}
 local CORE = ADDON.Core
 
+
+local currencyOptions = {
+  showTooltips = false,
+  useShortFormat = false,
+  font = "ZoFontGame",
+  iconSide = RIGHT,
+}
+
 UI.OverviewFragmentClass = ZO_Object:Subclass()
 
 function UI.OverviewFragmentClass:New()
@@ -69,7 +77,7 @@ function UI.OverviewFragmentClass:Initialize()
   label:SetText("OVERVIEW")
   label:SetHeight(label:GetFontHeight())
   label:SetHorizontalAlignment(TEXT_ALIGN_CENTER)
-  label:SetAnchor(TOP, self.win, TOP, 0, 80)
+  label:SetAnchor(TOP, self.win, TOP, 0, 100)
 
   MakeLabel(1, self.win, nil, "Total Mails")
   MakeLabel(2, self.win, 'esoui/art/inventory/inventory_tabicon_all_up.dds', "All Looted:")
@@ -79,7 +87,7 @@ function UI.OverviewFragmentClass:Initialize()
   MakeLabel(6, self.win, UI.typeIcons[CORE.MAILTYPE_COD], "COD:")
   MakeLabel(7, self.win, UI.typeIcons[CORE.MAILTYPE_RETURNED], "Returned:")
   MakeLabel(8, self.win, UI.typeIcons[CORE.MAILTYPE_SIMPLE], "Simple:")
-  MakeLabel(9, self.win, '/esoui/art/mainmenu/menubar_inventory_up.dds', "COD Receipt:")
+  MakeLabel(9, self.win, UI.typeIcons[CORE.MAILTYPE_COD_RECEIPT], "COD Receipts:")
   MakeLabel(10, self.win, '/esoui/art/vendor/vendor_tabicon_buyback_up.dds', "Auto-Returned:")
 
   self.countLabels = {}
@@ -92,6 +100,22 @@ function UI.OverviewFragmentClass:Initialize()
   self.countLabels[CORE.MAILTYPE_SIMPLE] = MakeValue(8, self.win)
   self.countLabels[CORE.MAILTYPE_COD_RECEIPT] = MakeValue(9, self.win)
   self.countLabels[CORE.MAILTYPE_BOUNCE] = MakeValue(10, self.win)
+
+
+  local div = WINDOW_MANAGER:CreateControl(
+    nil, self.win, CT_TEXTURE)
+  div:SetTexture("EsoUI/Art/Miscellaneous/centerscreen_topDivider.dds")
+  div:SetHeight(2)
+  div:SetWidth(self.win:GetWidth() * 0.8)
+  div:SetAnchor(TOP, self.win, TOP, 0, 170 + 11 * 30 + 14)
+
+  MakeLabel(12, self.win, UI.typeIcons[CORE.MAILTYPE_COD_RECEIPT], "COD Paid")
+  self.codPayments = MakeValue(12, self.win)
+
+  ZO_CurrencyControl_SetSimpleCurrency(
+    self.codPayments, CURRENCY_TYPE_MONEY, 0, 
+    currencyOptions, CURRENCY_SHOW_ALL, CURRENCY_HAS_ENOUGH)
+
 
   self.FRAGMENT = ZO_FadeSceneFragment:New(self.win)
 
@@ -116,5 +140,9 @@ function UI.OverviewFragmentClass:Update(loot)
   Set(CORE.MAILTYPE_SIMPLE)
   Set(CORE.MAILTYPE_COD_RECEIPT)
   Set(CORE.MAILTYPE_BOUNCE)
+
+  ZO_CurrencyControl_SetSimpleCurrency(
+    self.codPayments, CURRENCY_TYPE_MONEY, loot.codTotal, 
+    currencyOptions, CURRENCY_SHOW_ALL, CURRENCY_HAS_ENOUGH)
 
 end

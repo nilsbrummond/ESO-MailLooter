@@ -95,9 +95,9 @@ function UI.CoreListUpdateCB(loot, complete,
       UI.lootFragment:AddLootedMoney(moneyMail, isNewMoneyStack)
     end
 
-    UI.overviewFragment:Update(loot)
-
   end
+
+  UI.overviewFragment:Update(loot)
 
 end
 
