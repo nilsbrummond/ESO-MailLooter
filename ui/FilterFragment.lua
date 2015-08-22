@@ -5,20 +5,11 @@ ADDON.UI = ADDON.UI or {}
 local UI = ADDON.UI
 
 
-UI.MultiSelectMenuBar = {}
-
-
-function UI.MultiSelectMenuBar:New()
-  local obj = MenuBar.New(self)
-  obj:Initialize()
-  return obj
-end
-
 --
---
+-- FilterFragmentClass
 --
 
- UI.FilterFragmentClass = ZO_Object:Subclass()
+UI.FilterFragmentClass = ZO_Object:Subclass()
 
 function UI.FilterFragmentClass:New()
   local obj = ZO_Object.New(self)
@@ -35,10 +26,16 @@ function UI.FilterFragmentClass:Initialize()
   self.win:SetAnchor(TOPRIGHT, ZO_MailInbox, TOPRIGHT, -20, 100)
   self.win:SetHidden(true)
 
-  local menuBar = CreateControlFromVirtual("MailLooterFitlerMenuBar", self.win, "ZO_MenuBarTemplate")
-  ZO_MenuBar_SetData(menuBar, { initialButtonAnchorPoint = RIGHT, normalSize = 50, buttonPadding = -16, })
+  local filterBar = CreateControlFromVirtual(
+    "MailLooterFitlerMenuBar", self.win, "ZO_MenuBarTemplate")
 
-  menuBar:SetAnchor(TOPRIGHT, self.win, TOPRIGHT, 0, 0)
+  ZO_MenuBar_SetData(filterBar,
+    { initialButtonAnchorPoint = RIGHT,
+      normalSize = 50, 
+      buttonPadding = -16, 
+  })
+
+  filterBar:SetAnchor(TOPRIGHT, self.win, TOPRIGHT, 0, 0)
 
   local avaButton = {
     descriptor = "ava",
@@ -52,18 +49,48 @@ function UI.FilterFragmentClass:Initialize()
 
   local blacksmithButton= {
     descriptor = "smith",
+    normal = "EsoUI/Art/progression/progression_indexicon_tradeskills_up.dds",
+    pressed = "EsoUI/Art/progression/progression_indexicon_tradeskills_down.dds",
+    disabled = "EsoUI/Art/progression/progression_indexicon_tradeskills_disabled.dds",
+    highlight = "EsoUI/Art/progression/progression_indexicon_tradeskills_over.dds",
+    callback = function(button) end,
+    onInitializeCallback = function(button) end,
   }
   local clothingButton= {
     descriptor = "clothing",
+    normal = "EsoUI/Art/progression/progression_indexicon_tradeskills_up.dds",
+    pressed = "EsoUI/Art/progression/progression_indexicon_tradeskills_down.dds",
+    disabled = "EsoUI/Art/progression/progression_indexicon_tradeskills_disabled.dds",
+    highlight = "EsoUI/Art/progression/progression_indexicon_tradeskills_over.dds",
+    callback = function(button) end,
+    onInitializeCallback = function(button) end,
   }
   local enchantingButton= {
     descriptor = "enchanting",
+    normal = "EsoUI/Art/progression/progression_indexicon_tradeskills_up.dds",
+    pressed = "EsoUI/Art/progression/progression_indexicon_tradeskills_down.dds",
+    disabled = "EsoUI/Art/progression/progression_indexicon_tradeskills_disabled.dds",
+    highlight = "EsoUI/Art/progression/progression_indexicon_tradeskills_over.dds",
+    callback = function(button) end,
+    onInitializeCallback = function(button) end,
   }
   local provisioningButton= {
     descriptor = "provisioning",
+    normal = "EsoUI/Art/progression/progression_indexicon_tradeskills_up.dds",
+    pressed = "EsoUI/Art/progression/progression_indexicon_tradeskills_down.dds",
+    disabled = "EsoUI/Art/progression/progression_indexicon_tradeskills_disabled.dds",
+    highlight = "EsoUI/Art/progression/progression_indexicon_tradeskills_over.dds",
+    callback = function(button) end,
+    onInitializeCallback = function(button) end,
   }
   local woodworkingButton= {
     descriptor = "woodworking",
+    normal = "EsoUI/Art/progression/progression_indexicon_tradeskills_up.dds",
+    pressed = "EsoUI/Art/progression/progression_indexicon_tradeskills_down.dds",
+    disabled = "EsoUI/Art/progression/progression_indexicon_tradeskills_disabled.dds",
+    highlight = "EsoUI/Art/progression/progression_indexicon_tradeskills_over.dds",
+    callback = function(button) end,
+    onInitializeCallback = function(button) end,
   }
 
 
@@ -101,7 +128,7 @@ function UI.FilterFragmentClass:Initialize()
   }
 
   local returnedButton = {
-    descriptor = "cod",
+    descriptor = "returned",
     normal = "EsoUI/Art/Inventory/inventory_tabIcon_all_up.dds",
     pressed = "EsoUI/Art/Inventory/inventory_tabIcon_all_down.dds",
     disabled = "EsoUI/Art/Inventory/inventory_tabIcon_all_disabled.dds",
@@ -111,17 +138,17 @@ function UI.FilterFragmentClass:Initialize()
   }
 
   local simpleButton = {
-    descriptor = "cod",
-    normal = "EsoUI/Art/Inventory/inventory_tabIcon_all_up.dds",
-    pressed = "EsoUI/Art/Inventory/inventory_tabIcon_all_down.dds",
+    descriptor = "simple",
+    normal = "/esoui/art/mainmenu/menubar_mail_up.dds",
+    pressed = "/esoui/art/mainmenu/menubar_mail_down.dds",
     disabled = "EsoUI/Art/Inventory/inventory_tabIcon_all_disabled.dds",
-    highlight = "EsoUI/Art/Inventory/inventory_tabIcon_all_over.dds",
+    highlight = "/esoui/art/mainmenu/menubar_mail_over.dds",
     callback = function(button) end,
     onInitializeCallback = function(button) end,
   }
 
   local codReceiptButton = {
-    descriptor = "cod",
+    descriptor = "codReceipt",
     normal = "EsoUI/Art/Inventory/inventory_tabIcon_all_up.dds",
     pressed = "EsoUI/Art/Inventory/inventory_tabIcon_all_down.dds",
     disabled = "EsoUI/Art/Inventory/inventory_tabIcon_all_disabled.dds",
@@ -145,16 +172,27 @@ function UI.FilterFragmentClass:Initialize()
   }
 
 
---  local newControl = ZO_MenuBar_AddButton(menuBar, codReceiptButton)
---  local newControl = ZO_MenuBar_AddButton(menuBar, simpleButton)
---  local newControl = ZO_MenuBar_AddButton(menuBar, returnedButton)
---  local newControl = ZO_MenuBar_AddButton(menuBar, codButton)
---  local newControl = ZO_MenuBar_AddButton(menuBar, storeButton)
---  local newControl = ZO_MenuBar_AddButton(menuBar, hirelingButton)
---  local newControl = ZO_MenuBar_AddButton(menuBar, avaButton)
-  local newControl = ZO_MenuBar_AddButton(menuBar, allButton)
+  local newControl = ZO_MenuBar_AddButton(filterBar, codReceiptButton)
+  local newControl = ZO_MenuBar_AddButton(filterBar, simpleButton)
+  local newControl = ZO_MenuBar_AddButton(filterBar, returnedButton)
+  local newControl = ZO_MenuBar_AddButton(filterBar, codButton)
+  local newControl = ZO_MenuBar_AddButton(filterBar, storeButton)
+  local newControl = ZO_MenuBar_AddButton(filterBar, hirelingButton)
+  local newControl = ZO_MenuBar_AddButton(filterBar, avaButton)
+  local newControl = ZO_MenuBar_AddButton(filterBar, allButton)
 
-  self.menuBar = menuBar
+  ZO_MenuBar_SetAllButtonsEnabled(filterBar, true, true)
+
+  self.filterBar = filterBar
+
+
+  local label = CreateControl(
+    "MailLooterFitlerLabel", self.win, CT_LABEL)
+  
+  label:SetFont("ZoFontWinH3")
+  label:SetFont("ALL")
+  label:SetAnchor(RIGHT, filterBar, LEFT, -10, 0)
+
 
   self.FRAGMENT = ZO_FadeSceneFragment:New(self.win)
 
