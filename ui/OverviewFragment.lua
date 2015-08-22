@@ -22,6 +22,10 @@ function UI.OverviewFragmentClass:New()
   return obj
 end
 
+local function VertPosition(index)
+  return 170 + (index * 30)
+end
+
 local function MakeLabel(index, parent, icon, text)
   
   if icon ~= nil then
@@ -29,7 +33,7 @@ local function MakeLabel(index, parent, icon, text)
       "MailLooterOverviewTexture" .. index, parent, CT_TEXTURE)
     texture:SetTexture(icon)
     texture:SetDimensions(32,32)
-    texture:SetAnchor(TOPLEFT, parent, TOPLEFT, 5, 170 + (index * 30) - 5)
+    texture:SetAnchor(TOPLEFT, parent, TOPLEFT, 5, VertPosition(index) - 5)
   end
 
   if text ~= nil then
@@ -40,7 +44,7 @@ local function MakeLabel(index, parent, icon, text)
     label:SetColor(ZO_NORMAL_TEXT:UnpackRGBA())
     label:SetHeight(label:GetFontHeight())
     label:SetHorizontalAlignment(TEXT_ALIGN_LEFT)
-    label:SetAnchor(TOPLEFT, parent, TOPLEFT, 36, 170 + (index * 30))
+    label:SetAnchor(TOPLEFT, parent, TOPLEFT, 36, VertPosition(index))
   end
 end
 
@@ -53,7 +57,7 @@ local function MakeValue(index, parent)
   label:SetColor(1,1,1,1)
   label:SetHeight(label:GetFontHeight())
   label:SetHorizontalAlignment(TEXT_ALIGN_RIGHT)
-  label:SetAnchor(TOPRIGHT, parent, TOPRIGHT, -5, 170 + (index * 30))
+  label:SetAnchor(TOPRIGHT, parent, TOPRIGHT, -5, VertPosition(index))
 
   return label
 end
@@ -70,8 +74,12 @@ function UI.OverviewFragmentClass:Initialize()
   self.win:SetMouseEnabled(true)
   self.win:SetResizeToFitDescendents(false)
 
+  --
+  -- Heading
+  --
+
   local label = WINDOW_MANAGER:CreateControl(
-    "MailLooterOverviewTitle", self.win, CT_LABEL)
+    "MailLooterOverviewTitle1", self.win, CT_LABEL)
 
   label:SetFont("ZoFontWinH2")
   label:SetText("OVERVIEW")
@@ -79,16 +87,34 @@ function UI.OverviewFragmentClass:Initialize()
   label:SetHorizontalAlignment(TEXT_ALIGN_CENTER)
   label:SetAnchor(TOP, self.win, TOP, 0, 100)
 
-  MakeLabel(1, self.win, nil, "Total Mails")
-  MakeLabel(2, self.win, 'esoui/art/inventory/inventory_tabicon_all_up.dds', "All Looted:")
-  MakeLabel(3, self.win, UI.typeIcons[CORE.MAILTYPE_AVA], "AvA:")
-  MakeLabel(4, self.win, UI.typeIcons[CORE.MAILTYPE_HIRELING], "Hireling:")
-  MakeLabel(5, self.win, UI.typeIcons[CORE.MAILTYPE_STORE], "Store:")
-  MakeLabel(6, self.win, UI.typeIcons[CORE.MAILTYPE_COD], "COD:")
-  MakeLabel(7, self.win, UI.typeIcons[CORE.MAILTYPE_RETURNED], "Returned:")
-  MakeLabel(8, self.win, UI.typeIcons[CORE.MAILTYPE_SIMPLE], "Simple:")
-  MakeLabel(9, self.win, UI.typeIcons[CORE.MAILTYPE_COD_RECEIPT], "COD Receipts:")
-  MakeLabel(10, self.win, '/esoui/art/vendor/vendor_tabicon_buyback_up.dds', "Auto-Returned:")
+
+  -- /esoui/art/crafting/white_burst.dds
+
+  -- Mail -> Bag
+
+  --
+  -- Total Mails
+  --
+
+  local mclabel = WINDOW_MANAGER:CreateControl(
+    "MailLooterOverviewTotal2", self.win, CT_LABEL)
+
+  mclabel:SetFont("ZoFontGameBold")
+  mclabel:SetText("Total Mails")
+  mclabel:SetHeight(mclabel:GetFontHeight())
+  mclabel:SetHorizontalAlignment(TEXT_ALIGN_CENTER)
+  mclabel:SetAnchor(TOP, self.win, TOP, 0, VertPosition(1))
+
+  -- MakeLabel(1, self.win, nil, "Total Mails")
+  MakeLabel(2, self.win, UI.GetIcon("all"), "All Looted:")
+  MakeLabel(3, self.win, UI.GetIcon(CORE.MAILTYPE_AVA), "AvA:")
+  MakeLabel(4, self.win, UI.GetIcon(CORE.MAILTYPE_HIRELING), "Hireling:")
+  MakeLabel(5, self.win, UI.GetIcon(CORE.MAILTYPE_STORE), "Store:")
+  MakeLabel(6, self.win, UI.GetIcon(CORE.MAILTYPE_COD), "COD:")
+  MakeLabel(7, self.win, UI.GetIcon(CORE.MAILTYPE_RETURNED), "Returned:")
+  MakeLabel(8, self.win, UI.GetIcon(CORE.MAILTYPE_SIMPLE), "Simple:")
+  MakeLabel(9, self.win, UI.GetIcon(CORE.MAILTYPE_COD_RECEIPT), "COD Receipts:")
+  MakeLabel(10, self.win, UI.GetIcon(CORE.MAILTYPE_BOUNCE), "Auto-Returned:")
 
   self.countLabels = {}
   self.countLabels.all = MakeValue(2, self.win)
@@ -101,15 +127,18 @@ function UI.OverviewFragmentClass:Initialize()
   self.countLabels[CORE.MAILTYPE_COD_RECEIPT] = MakeValue(9, self.win)
   self.countLabels[CORE.MAILTYPE_BOUNCE] = MakeValue(10, self.win)
 
+  --
+  -- Moneys
+  --
 
   local div = WINDOW_MANAGER:CreateControl(
     nil, self.win, CT_TEXTURE)
   div:SetTexture("EsoUI/Art/Miscellaneous/centerscreen_topDivider.dds")
   div:SetHeight(2)
   div:SetWidth(self.win:GetWidth() * 0.8)
-  div:SetAnchor(TOP, self.win, TOP, 0, 170 + 11 * 30 + 14)
+  div:SetAnchor(TOP, self.win, TOP, 0, VertPosition(11) + 14)
 
-  MakeLabel(12, self.win, UI.typeIcons[CORE.MAILTYPE_COD_RECEIPT], "COD Paid")
+  MakeLabel(12, self.win, UI.GetIcon(CORE.MAILTYPE_COD_RECEIPT), "COD Paid")
   self.codPayments = MakeValue(12, self.win)
 
   ZO_CurrencyControl_SetSimpleCurrency(
