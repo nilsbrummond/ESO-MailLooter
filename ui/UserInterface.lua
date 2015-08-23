@@ -178,6 +178,7 @@ end
 function UI.ClearLoot()
   UI.currentLoot = false
   UI.lootFragment:Clear()
+  UI.overviewFragment:Clear()
 
   KEYBIND_STRIP:UpdateKeybindButtonGroup(UI.mailLooterButtonGroup)
 end

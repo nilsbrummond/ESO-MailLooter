@@ -296,3 +296,28 @@ function UI.OverviewFragmentClass:Showing()
   self.thing:GetNamedChild("TexC3"):SetAlpha(0)
   self.thing:GetNamedChild("Tex4"):SetAlpha(0.2)
 end
+
+function UI.OverviewFragmentClass:Clear()
+
+ local function Clear(x)
+    self.countLabels[x]:SetText("0")
+  end
+
+  self.countLabels.all:SetText("0")
+
+  Clear(CORE.MAILTYPE_AVA)
+  Clear(CORE.MAILTYPE_HIRELING)
+  Clear(CORE.MAILTYPE_STORE)
+  Clear(CORE.MAILTYPE_STORE)
+  Clear(CORE.MAILTYPE_COD)
+  Clear(CORE.MAILTYPE_RETURNED)
+  Clear(CORE.MAILTYPE_SIMPLE)
+  Clear(CORE.MAILTYPE_COD_RECEIPT)
+  Clear(CORE.MAILTYPE_BOUNCE)
+
+  ZO_CurrencyControl_SetSimpleCurrency(
+    self.codPayments, CURRENCY_TYPE_MONEY, 0, 
+    currencyOptions, CURRENCY_SHOW_ALL, CURRENCY_HAS_ENOUGH)
+
+end
+
