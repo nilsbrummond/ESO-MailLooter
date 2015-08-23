@@ -47,7 +47,7 @@ function UI.CoreListUpdateCB(loot, complete,
 
   if complete and debugOn then
 
-    DEBUG("Mails looted: " .. loot.mailCount)
+    DEBUG("Mails looted: " .. loot.mailCount.all)
     DEBUG("Gold looted: " .. loot.moneyTotal)
 
     DEBUG("Items looted:")
@@ -75,7 +75,7 @@ function UI.CoreListUpdateCB(loot, complete,
     UI.summaryFragment:UpdateSummarySimple("Done.")
     ADDON.SetSetting_SaveHistory(loot)
 
-    if loot.mailCount == 0 then
+    if loot.mailCount.all == 0 then
       -- Nothing looted: don't require the user to clear.
       UI.ClearLoot()
     end
@@ -97,6 +97,8 @@ function UI.CoreListUpdateCB(loot, complete,
 
   end
 
+  UI.overviewFragment:Update(loot)
+
 end
 
 function UI.CoreStatusUpdateCB(inProgress, success, msg)
@@ -107,6 +109,8 @@ function UI.CoreStatusUpdateCB(inProgress, success, msg)
   if inProgress then
     UI.summaryFragment:UpdateSummarySimple("Looting...")
   end
+
+  UI.overviewFragment:SetLooting(inProgress)
 
 end
 
@@ -145,6 +149,7 @@ function UI.SceneStateChange(_, newState)
   if newState == SCENE_SHOWING then
     KEYBIND_STRIP:AddKeybindButtonGroup(UI.mailLooterButtonGroup)
     ADDON.Core.OpenMailLooter()
+    UI.overviewFragment:Showing()
 
     -- NOTE: HACK
     -- Pretty sure there is a better way this is supposed to be handled.
@@ -186,8 +191,9 @@ function UI.InitUserInterface(debugFunction)
 
   UI.InitSettings()
   UI.summaryFragment = UI.SummaryFragmentClass:New()
+  UI.overviewFragment = UI.OverviewFragmentClass:New()
   UI.lootFragment = UI.LootFragmentClass:New()
-  UI.CreateScene(UI.summaryFragment, UI.lootFragment)
+  UI.CreateScene(UI.summaryFragment, UI.overviewFragment, UI.lootFragment)
 
   ADDON.Core.NewCallbacks(
     UI.CoreListUpdateCB,
