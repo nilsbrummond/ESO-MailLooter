@@ -18,6 +18,7 @@ local MAILTYPE_COD_RECEIPT  = 8
 local MAILTYPE_BOUNCE       = 9
 local MAILTYPE_SIMPLE_PRE   = 10 -- Need to read body to classify...
 
+
 -- exported
 CORE.MAILTYPE_UNKNOWN     = MAILTYPE_UNKNOWN
 CORE.MAILTYPE_AVA         = MAILTYPE_AVA
@@ -174,14 +175,31 @@ local function IsDeleteSimpleAfter() return false end
 local function LootThisMailCOD(codAmount, codTotal) return false end
 local function IsBounceEnabled() return false end
 
+local function MailCount(mailType)
+  CORE.loot.mailCount[mailType] = CORE.loot.mailCount[mailType] + 1
+  CORE.loot.mailCount.all = CORE.loot.mailCount.all + 1
+end
+
 local function NewLootStruct()
   local l = {
-    items={}, moneys={},
-    moneyTotal=0, mailCount=0, codTotal=0, autoReturnCount=0,
+    items={}, moneys={}, moneyTotal=0, codTotal=0,
+
+    mailCount = {},
 
     -- mails keyed by mail-id
     mails={}
   }
+
+  l.mailCount[MAILTYPE_UNKNOWN    ] = 0
+  l.mailCount[MAILTYPE_AVA        ] = 0
+  l.mailCount[MAILTYPE_HIRELING   ] = 0
+  l.mailCount[MAILTYPE_STORE      ] = 0
+  l.mailCount[MAILTYPE_COD        ] = 0
+  l.mailCount[MAILTYPE_RETURNED   ] = 0
+  l.mailCount[MAILTYPE_SIMPLE     ] = 0
+  l.mailCount[MAILTYPE_COD_RECEIPT] = 0
+  l.mailCount[MAILTYPE_BOUNCE     ] = 0
+  l.mailCount.all = 0
 
   l.items[MAILTYPE_UNKNOWN] = {}
   l.items[MAILTYPE_AVA] = {}
@@ -378,7 +396,7 @@ local function AddMoneyToHistory(loot, mail)
      (mail.mailType == MAILTYPE_SIMPLE) or
      (mail.mailType == MAILTYPE_COD_RECEIPT) then
 
-    local mailId = CORE.currentMail.includeMail and CORE.curentMail.id or nil
+    local mailId = mail.includeMail and mail.id or nil
 
     local moneyMail = {
       mailType = mail.mailType, 
@@ -595,7 +613,8 @@ local function LootMails()
 
         if IsBounceEnabled() then
           DEBUG("bounce id=" .. Id64ToString(id))
-          CORE.loot.autoReturnCount = CORE.loot.autoReturnCount + 1
+          -- CORE.loot.autoReturnCount = CORE.loot.autoReturnCount + 1
+          increment(CORE.loot, "autoReturnCount")
           CORE.state = STATE_DELETE
           CORE.currentMail = {id=id}
           ReturnMail(id)
@@ -664,7 +683,8 @@ local function LootMails()
 
         elseif attachedMoney > 0 then
           DEBUG("money id=" .. Id64ToString(id))
-          CORE.loot.mailCount = CORE.loot.mailCount + 1
+          -- CORE.loot.mailCount = CORE.loot.mailCount + 1
+          MailCount(mailType)
           CORE.state = STATE_MONEY
           TakeMailAttachedMoney(id)
           return
@@ -672,7 +692,8 @@ local function LootMails()
           -- DELETE
           -- player may have manually looted and not deleted it.
           DEBUG("delete id=" .. Id64ToString(id))
-          CORE.loot.mailCount = CORE.loot.mailCount + 1
+          -- CORE.loot.mailCount = CORE.loot.mailCount + 1
+          MailCount(mailType)
           CORE.state = STATE_DELETE
           DeleteMail(id, true)
           return
@@ -767,14 +788,16 @@ local function LootMailsCont()
       elseif CORE.currentMail.money > 0 then
         -- loot money
         DEBUG("money id=" .. Id64ToString(CORE.currentMail.id))
-        CORE.loot.mailCount = CORE.loot.mailCount + 1
+        -- CORE.loot.mailCount = CORE.loot.mailCount + 1
+        MailCount(MAILTYPE_SIMPLE)
         CORE.state = STATE_MONEY
         TakeMailAttachedMoney(CORE.currentMail.id)
         return
       else
         -- delete
         DEBUG("delete id=" .. Id64ToString(CORE.currentMail.id))
-        CORE.loot.mailCount = CORE.loot.mailCount + 1
+        -- CORE.loot.mailCount = CORE.loot.mailCount + 1
+        MailCount(MAILTYPE_SIMPLE)
         CORE.state = STATE_DELETE
         DeleteMail(CORE.currentMail.id, true)
         return
@@ -796,7 +819,8 @@ local function LootMailsCont()
     -- Loot Item....
     --
 
-    CORE.loot.mailCount = CORE.loot.mailCount + 1
+    -- CORE.loot.mailCount = CORE.loot.mailCount + 1
+    MailCount(CORE.currentMail.mailType)
 
     -- Reading the attached items works better after reading the mail.
     CORE.currentItems = {}
@@ -902,7 +926,9 @@ local function DoTestLoot()
     testData.nextStep = testData.nextStep + 1
     step = ZO_DeepTableCopy(step)
 
-    testData.loot.mailCount = testData.loot.mailCount + 1
+    testData.loot.mailCount[step.mail.mailType] = 
+      testData.loot.mailCount[step.mail.mailType] + 1
+    testData.loot.mailCount.all = testData.loot.mailCount.all + 1
 
     for ind,item in ipairs(step.items) do
       item.mailType = step.mail.mailType

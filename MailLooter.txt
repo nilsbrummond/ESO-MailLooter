@@ -42,7 +42,9 @@ ui/UserInterface.lua
 ui/Settings.lua
 ui/KeybindStrip.lua
 ui/MailLooterScene.lua
+ui/Icons.lua
 ui/SummaryFragment.lua
+ui/OverviewFragment.lua
 ui/FilterFragment.lua
 ui/LootFragment.lua
 ui/LootFragment.xml

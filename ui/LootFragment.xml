@@ -2,7 +2,7 @@
   <Controls>
 
     <Control name="MailLooterLootListHeaders" virtual="true">
-      <Dimensions x="750" y="32" />
+      <Dimensions x="650" y="32" />
       <Controls>
 
         <Control name="$(parent)Type" inherits="ZO_SortHeader">
@@ -50,7 +50,7 @@
     </Control>
 
     <Control name="MailLooterLootListRow" mouseEnabled="true" virtual="true">
-      <Dimensions x="750" y="52" />
+      <Dimensions x="650" y="52" />
 
       <Controls>
         <Texture name="$(parent)_BG" textureFile="/esoui/art/miscellaneous/listitem_backdrop.dds" layer="BACKGROUND" alpha="0.8" pixelRoundingEnabled="true" >
@@ -85,7 +85,7 @@
     </Control>
 
     <Control name="MailLooterLootListRowExtra" mouseEnabled="true" virtual="true">
-      <Dimensions x="750" y="52" />
+      <Dimensions x="650" y="52" />
 
       <Controls>
         <Texture name="$(parent)_BG" textureFile="/esoui/art/miscellaneous/listitem_backdrop.dds" layer="BACKGROUND" alpha="0.8" pixelRoundingEnabled="true" >
@@ -125,7 +125,7 @@
 
 
     <Control name="MailLooterLootListRowMoney" mouseEnabled="true" virtual="true">
-      <Dimensions x="750" y="52" />
+      <Dimensions x="650" y="52" />
 
       <Controls>
         <Texture name="$(parent)_BG" textureFile="/esoui/art/miscellaneous/listitem_backdrop.dds" layer="BACKGROUND" alpha="0.8" pixelRoundingEnabled="true" >
