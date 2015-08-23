@@ -106,11 +106,15 @@ function UI.CoreStatusUpdateCB(inProgress, success, msg)
 
   KEYBIND_STRIP:UpdateKeybindButtonGroup(UI.mailLooterButtonGroup)
 
+  UI.overviewFragment:SetLooting(inProgress)
+
   if inProgress then
     UI.summaryFragment:UpdateSummarySimple("Looting...")
+  else
+    if msg == "Inventory Full" then
+      ZO_AlertEvent(EVENT_INVENTORY_IS_FULL, 1, 0)
+    end
   end
-
-  UI.overviewFragment:SetLooting(inProgress)
 
 end
 
