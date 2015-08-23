@@ -4,7 +4,6 @@ local ADDON = MailLooter
 ADDON.UI = ADDON.UI or {}
 local UI = ADDON.UI
 
-
 --
 -- FilterFragmentClass
 --
@@ -23,7 +22,7 @@ function UI.FilterFragmentClass:Initialize()
                    "MailLooterFilterFragment")
  
   self.win:SetWidth(ZO_MailInbox:GetWidth() - 20)
-  self.win:SetAnchor(TOPRIGHT, ZO_MailInbox, TOPRIGHT, -20, 100)
+  self.win:SetAnchor(TOPRIGHT, ZO_MailInbox, TOPRIGHT, -40, 70)
   self.win:SetHidden(true)
 
   local filterBar = CreateControlFromVirtual(
@@ -32,17 +31,17 @@ function UI.FilterFragmentClass:Initialize()
   ZO_MenuBar_SetData(filterBar,
     { initialButtonAnchorPoint = RIGHT,
       normalSize = 50, 
-      buttonPadding = -16, 
+      buttonPadding = -20, 
   })
 
   filterBar:SetAnchor(TOPRIGHT, self.win, TOPRIGHT, 0, 0)
 
   local avaButton = {
     descriptor = "ava",
-    normal = "EsoUI/Art/mainmenu/menubar_ava_up.dds",
-    pressed = "EsoUI/Art/mainmenu/menubar_ava_down.dds",
-    disabled = "EsoUI/Art/mainmenu/menubar_ava_disabled.dds",
-    highlight = "EsoUI/Art/mainmenu/menubar_ava_over.dds",
+    normal = UI.GetIcon(ADDON.Core.MAILTYPE_AVA, 'normal'),
+    pressed = UI.GetIcon(ADDON.Core.MAILTYPE_AVA, 'pressed'),
+    disabled = UI.GetIcon(ADDON.Core.MAILTYPE_AVA, 'disabled'),
+    highlight = UI.GetIcon(ADDON.Core.MAILTYPE_AVA, 'highlight'),
     callback = function(button) end,
     onInitializeCallback = function(button) end,
   }
@@ -96,10 +95,10 @@ function UI.FilterFragmentClass:Initialize()
 
   local hirelingButton = {
     descriptor = "hireling",
-    normal = "EsoUI/Art/progression/progression_indexicon_tradeskills_up.dds",
-    pressed = "EsoUI/Art/progression/progression_indexicon_tradeskills_down.dds",
-    disabled = "EsoUI/Art/progression/progression_indexicon_tradeskills_disabled.dds",
-    highlight = "EsoUI/Art/progression/progression_indexicon_tradeskills_over.dds",
+    normal = UI.GetIcon(ADDON.Core.MAILTYPE_HIRELING, 'normal'),
+    pressed = UI.GetIcon(ADDON.Core.MAILTYPE_HIRELING, 'pressed'),
+    disabled = UI.GetIcon(ADDON.Core.MAILTYPE_HIRELING, 'disabled'),
+    highlight = UI.GetIcon(ADDON.Core.MAILTYPE_HIRELING, 'highlight'),
     callback = function(button) end,
     onInitializeCallback = function(button) end,
 
@@ -109,17 +108,17 @@ function UI.FilterFragmentClass:Initialize()
 
   local storeButton = {
     descriptor = "store",
-    normal = "EsoUI/Art/mainmenu/menubar_guilds_up.dds",
-    pressed = "EsoUI/Art/mainmenu/menubar_guilds_down.dds",
-    disabled = "EsoUI/Art/mainmenu/menubar_guilds_disabled.dds",
-    highlight = "EsoUI/Art/mainmenu/menubar_guilds_over.dds",
+    normal = UI.GetIcon(ADDON.Core.MAILTYPE_STORE, 'normal'),
+    pressed = UI.GetIcon(ADDON.Core.MAILTYPE_STORE, 'pressed'),
+    disabled = UI.GetIcon(ADDON.Core.MAILTYPE_STORE, 'disabled'),
+    highlight = UI.GetIcon(ADDON.Core.MAILTYPE_STORE, 'highlight'),
     callback = function(button) end,
     onInitializeCallback = function(button) end,
   }
 
   local codButton = {
     descriptor = "cod",
-    normal = "EsoUI/Art/Inventory/inventory_tabIcon_all_up.dds",
+    normal = UI.GetIcon(ADDON.Core.MAILTYPE_COD),
     pressed = "EsoUI/Art/Inventory/inventory_tabIcon_all_down.dds",
     disabled = "EsoUI/Art/Inventory/inventory_tabIcon_all_disabled.dds",
     highlight = "EsoUI/Art/Inventory/inventory_tabIcon_all_over.dds",
@@ -129,40 +128,40 @@ function UI.FilterFragmentClass:Initialize()
 
   local returnedButton = {
     descriptor = "returned",
-    normal = "EsoUI/Art/Inventory/inventory_tabIcon_all_up.dds",
-    pressed = "EsoUI/Art/Inventory/inventory_tabIcon_all_down.dds",
-    disabled = "EsoUI/Art/Inventory/inventory_tabIcon_all_disabled.dds",
-    highlight = "EsoUI/Art/Inventory/inventory_tabIcon_all_over.dds",
+    normal = UI.GetIcon(ADDON.Core.MAILTYPE_RETURNED, 'normal'),
+    pressed = UI.GetIcon(ADDON.Core.MAILTYPE_RETURNED, 'pressed'),
+    disabled = UI.GetIcon(ADDON.Core.MAILTYPE_RETURNED, 'disabled'),
+    highlight = UI.GetIcon(ADDON.Core.MAILTYPE_RETURNED, 'highlight'),
     callback = function(button) end,
     onInitializeCallback = function(button) end,
   }
 
   local simpleButton = {
     descriptor = "simple",
-    normal = "/esoui/art/mainmenu/menubar_mail_up.dds",
-    pressed = "/esoui/art/mainmenu/menubar_mail_down.dds",
-    disabled = "EsoUI/Art/Inventory/inventory_tabIcon_all_disabled.dds",
-    highlight = "/esoui/art/mainmenu/menubar_mail_over.dds",
+    normal = UI.GetIcon(ADDON.Core.MAILTYPE_SIMPLE, 'normal'),
+    pressed = UI.GetIcon(ADDON.Core.MAILTYPE_SIMPLE, 'pressed'),
+    disabled = UI.GetIcon(ADDON.Core.MAILTYPE_SIMPLE, 'disabled'),
+    highlight = UI.GetIcon(ADDON.Core.MAILTYPE_SIMPLE, 'highlight'),
     callback = function(button) end,
     onInitializeCallback = function(button) end,
   }
 
   local codReceiptButton = {
     descriptor = "codReceipt",
-    normal = "EsoUI/Art/Inventory/inventory_tabIcon_all_up.dds",
-    pressed = "EsoUI/Art/Inventory/inventory_tabIcon_all_down.dds",
-    disabled = "EsoUI/Art/Inventory/inventory_tabIcon_all_disabled.dds",
-    highlight = "EsoUI/Art/Inventory/inventory_tabIcon_all_over.dds",
+    normal = UI.GetIcon(ADDON.Core.MAILTYPE_COD_RECEIPT, 'normal'),
+    pressed = UI.GetIcon(ADDON.Core.MAILTYPE_COD_RECEIPT, 'pressed'),
+    disabled = UI.GetIcon(ADDON.Core.MAILTYPE_COD_RECEIPT, 'disabled'),
+    highlight = UI.GetIcon(ADDON.Core.MAILTYPE_COD_RECEIPT, 'highlight'),
     callback = function(button) end,
     onInitializeCallback = function(button) end,
   }
 
   local allButton = {
     descriptor = "all",
-    normal = "EsoUI/Art/Inventory/inventory_tabIcon_all_up.dds",
-    pressed = "EsoUI/Art/Inventory/inventory_tabIcon_all_down.dds",
-    disabled = "EsoUI/Art/Inventory/inventory_tabIcon_all_disabled.dds",
-    highlight = "EsoUI/Art/Inventory/inventory_tabIcon_all_over.dds",
+    normal = UI.GetIcon('all', 'normal'),
+    pressed = UI.GetIcon('all', 'pressed'),
+    disabled = UI.GetIcon('all', 'disabled'),
+    highlight = UI.GetIcon('all', 'highlight'),
     callback = function(button) end,
     onInitializeCallback = function(button) end,
 
@@ -190,9 +189,11 @@ function UI.FilterFragmentClass:Initialize()
     "MailLooterFitlerLabel", self.win, CT_LABEL)
   
   label:SetFont("ZoFontWinH3")
-  label:SetFont("ALL")
+  label:SetText("ALL")
+  label:SetHeight(label:GetFontHeight())
   label:SetAnchor(RIGHT, filterBar, LEFT, -10, 0)
 
+  self.label = label
 
   self.FRAGMENT = ZO_FadeSceneFragment:New(self.win)
 
