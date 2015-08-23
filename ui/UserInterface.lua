@@ -110,6 +110,8 @@ function UI.CoreStatusUpdateCB(inProgress, success, msg)
     UI.summaryFragment:UpdateSummarySimple("Looting...")
   end
 
+  UI.overviewFragment:SetLooting(inProgress)
+
 end
 
 function UI.CoreScanUpdateCB(summary)
@@ -147,6 +149,7 @@ function UI.SceneStateChange(_, newState)
   if newState == SCENE_SHOWING then
     KEYBIND_STRIP:AddKeybindButtonGroup(UI.mailLooterButtonGroup)
     ADDON.Core.OpenMailLooter()
+    UI.overviewFragment:Showing()
 
     -- NOTE: HACK
     -- Pretty sure there is a better way this is supposed to be handled.

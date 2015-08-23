@@ -79,25 +79,64 @@ function UI.OverviewFragmentClass:Initialize()
   --
 
   local label = WINDOW_MANAGER:CreateControl(
-    "MailLooterOverviewTitle1", self.win, CT_LABEL)
+    "MailLooterOverviewTitle", self.win, CT_LABEL)
 
   label:SetFont("ZoFontWinH2")
   label:SetText("OVERVIEW")
   label:SetHeight(label:GetFontHeight())
   label:SetHorizontalAlignment(TEXT_ALIGN_CENTER)
-  label:SetAnchor(TOP, self.win, TOP, 0, 100)
+  label:SetAnchor(TOP, self.win, TOP, 0, 70)
 
 
-  -- /esoui/art/crafting/white_burst.dds
+  local thing = WINDOW_MANAGER:CreateControl(
+    "MailLooterOverviewThing", self.win, CT_CONTROL)
+  thing:SetAnchor(TOP, label, BOTTOM, 0, 50)
 
-  -- Mail -> Bag
+  local tex4 = WINDOW_MANAGER:CreateControl(
+    "MailLooterOverviewThingTex4", thing, CT_TEXTURE)
+  tex4:SetTexture('/esoui/art/crafting/white_burst.dds')
+  tex4:SetAnchor(CENTER, thing, CENTER, 0, 0)
+  tex4:SetDimensions(150,150)
+  tex4:SetAlpha(0.5)
+
+  local texc1 = WINDOW_MANAGER:CreateControl(
+    "MailLooterOverviewThingTexC1", thing, CT_TEXTURE)
+  texc1:SetTexture('/esoui/art/buttons/tree_closed_up.dds')
+  texc1:SetAnchor(CENTER, thing, CENTER, 0, 0)
+  texc1:SetDimensions(40,40)
+
+  local texc2 = WINDOW_MANAGER:CreateControl(
+    "MailLooterOverviewThingTexC2", thing, CT_TEXTURE)
+  texc2:SetTexture('/esoui/art/buttons/tree_closed_up.dds')
+  texc2:SetAnchor(RIGHT, texc1, LEFT, 25, 0)
+  texc2:SetDimensions(40,40)
+
+  local texc3 = WINDOW_MANAGER:CreateControl(
+    "MailLooterOverviewThingTexC3", thing, CT_TEXTURE)
+  texc3:SetTexture('/esoui/art/buttons/tree_closed_up.dds')
+  texc3:SetAnchor(LEFT, texc1, RIGHT, -25, 0)
+  texc3:SetDimensions(40,40)
+
+  local tex1 = WINDOW_MANAGER:CreateControl(
+    "MailLooterOverviewTex1", self.win, CT_TEXTURE)
+  tex1:SetTexture(UI.GetIcon(CORE.MAILTYPE_SIMPLE))
+  tex1:SetAnchor(RIGHT, texc1, LEFT, -10, 0)
+  tex1:SetDimensions(50,50)
+
+  local tex3 = WINDOW_MANAGER:CreateControl(
+    "MailLooterOverviewTex3", thing, CT_TEXTURE)
+  tex3:SetTexture(UI.GetIcon(CORE.MAILTYPE_COD_RECEIPT))
+  tex3:SetAnchor(LEFT, texc1, RIGHT, 10, 0)
+  tex3:SetDimensions(50,50)
+
+  self.thing = thing
 
   --
   -- Total Mails
   --
 
   local mclabel = WINDOW_MANAGER:CreateControl(
-    "MailLooterOverviewTotal2", self.win, CT_LABEL)
+    "MailLooterOverviewTotal", self.win, CT_LABEL)
 
   mclabel:SetFont("ZoFontGameBold")
   mclabel:SetText("Total Mails")
@@ -174,4 +213,86 @@ function UI.OverviewFragmentClass:Update(loot)
     self.codPayments, CURRENCY_TYPE_MONEY, loot.codTotal, 
     currencyOptions, CURRENCY_SHOW_ALL, CURRENCY_HAS_ENOUGH)
 
+end
+
+local function MakeArrowAnimation(arrow1, arrow2, arrow3)
+  local timeline = ANIMATION_MANAGER:CreateTimeline()
+
+  local a1i = timeline:InsertAnimation(ANIMATION_ALPHA, arrow1, 0)
+  local a1o = timeline:InsertAnimation(ANIMATION_ALPHA, arrow1, 333)
+  local a2i = timeline:InsertAnimation(ANIMATION_ALPHA, arrow2, 333)
+  local a2o = timeline:InsertAnimation(ANIMATION_ALPHA, arrow2, 666)
+  local a3i = timeline:InsertAnimation(ANIMATION_ALPHA, arrow3, 666)
+  local a3o = timeline:InsertAnimation(ANIMATION_ALPHA, arrow3, 999)
+
+
+  a1i:SetDuration(333)
+  a1i:SetAlphaValues(0, 0.8)
+  a1o:SetDuration(333)
+  a1o:SetAlphaValues(0.8, 0)
+
+  a2i:SetDuration(333)
+  a2i:SetAlphaValues(0, 0.8)
+  a2o:SetDuration(333)
+  a2o:SetAlphaValues(0.8, 0)
+
+  a3i:SetDuration(333)
+  a3i:SetAlphaValues(0, 0.8)
+  a3o:SetDuration(333)
+  a3o:SetAlphaValues(0.8, 0)
+
+  timeline:SetPlaybackType(ANIMATION_PLAYBACK_LOOP, 100)
+
+  return timeline
+end
+
+local function MakeBGAnimation(bg)
+  local timeline = ANIMATION_MANAGER:CreateTimeline()
+
+  local a4i = timeline:InsertAnimation(ANIMATION_ALPHA, bg, 0)
+  local a4o = timeline:InsertAnimation(ANIMATION_ALPHA, bg, 1332)
+  
+  a4i:SetDuration(1332)
+  a4i:SetAlphaValues(0.2, 0.8)
+  a4o:SetDuration(1332)
+  a4o:SetAlphaValues(0.8, 0.2)
+
+  timeline:SetPlaybackType(ANIMATION_PLAYBACK_LOOP, 50)
+
+  return timeline
+end
+
+function UI.OverviewFragmentClass:SetLooting(isLooting)
+
+  if not self.thing.animArrow then
+
+    self.thing.animArrow = MakeArrowAnimation(
+      self.thing:GetNamedChild("TexC2"),
+      self.thing:GetNamedChild("TexC1"),
+      self.thing:GetNamedChild("TexC3"))
+
+    self.thing.animBG = MakeBGAnimation(
+      self.thing:GetNamedChild("Tex4"))
+
+  end
+
+  if isLooting then
+    self.thing.animArrow:PlayForward()
+    self.thing.animBG:PlayForward()
+  else
+    self.thing.animArrow:Stop()
+    self.thing.animBG:Stop()
+
+    self.thing:GetNamedChild("TexC2"):SetAlpha(0)
+    self.thing:GetNamedChild("TexC1"):SetAlpha(0)
+    self.thing:GetNamedChild("TexC3"):SetAlpha(0)
+    self.thing:GetNamedChild("Tex4"):SetAlpha(0.2)
+  end
+end
+
+function UI.OverviewFragmentClass:Showing()
+  self.thing:GetNamedChild("TexC2"):SetAlpha(0)
+  self.thing:GetNamedChild("TexC1"):SetAlpha(0)
+  self.thing:GetNamedChild("TexC3"):SetAlpha(0)
+  self.thing:GetNamedChild("Tex4"):SetAlpha(0.2)
 end

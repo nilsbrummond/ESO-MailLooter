@@ -71,7 +71,7 @@ UI.standardIcons = {
     [ADDON.Core.MAILTYPE_RETURNED] = {
       normal = "/esoui/art/vendor/vendor_tabicon_sell_up.dds",
       pressed = "/esoui/art/vendor/vendor_tabicon_sell_down.dds",
-      disabled = "",
+      disabled = "/esoui/art/vendor/vendor_tabicon_sell_disabled.dds",
       highlight = "/esoui/art/vendor/vendor_tabicon_sell_over.dds",
     },
 
@@ -89,16 +89,15 @@ UI.standardIcons = {
       highlight = "/esoui/art/mainmenu/menubar_inventory_over.dds",
     },
 
-
     [ADDON.Core.MAILTYPE_BOUNCE] = {
       normal = '/esoui/art/vendor/vendor_tabicon_buyback_up.dds',
     },
 
     ["all"] = {
       normal = 'esoui/art/inventory/inventory_tabicon_all_up.dds',
-      pressed = "",
-      disabled = "",
-      highlight = "",
+      pressed = "esoui/art/inventory/inventory_tabicon_all_down.dds",
+      disabled = "esoui/art/inventory/inventory_tabicon_all_disabled.dds",
+      highlight = "esoui/art/inventory/inventory_tabicon_all_over.dds",
     },
 
 }
