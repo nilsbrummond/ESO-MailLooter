@@ -396,7 +396,7 @@ local function AddMoneyToHistory(loot, mail)
      (mail.mailType == MAILTYPE_SIMPLE) or
      (mail.mailType == MAILTYPE_COD_RECEIPT) then
 
-    local mailId = CORE.currentMail.includeMail and CORE.curentMail.id or nil
+    local mailId = mail.includeMail and mail.id or nil
 
     local moneyMail = {
       mailType = mail.mailType, 
