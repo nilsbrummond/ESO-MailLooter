@@ -14,6 +14,7 @@ function ADDON.UI.CreateScene(summaryFragment, overviewFragment, lootFragment)
 
   -- MAIL_LOOTER_SCENE:AddFragment(DISPLAY_NAME_FRAGMENT)
   MAIL_LOOTER_SCENE:AddFragment(TITLE_FRAGMENT)
+  MAIL_LOOTER_SCENE:AddFragment(MAIL_TITLE_FRAGMENT)
 
   MAIL_LOOTER_SCENE:AddFragment(summaryFragment.FRAGMENT)
   MAIL_LOOTER_SCENE:AddFragment(overviewFragment.FRAGMENT)

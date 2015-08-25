@@ -155,19 +155,13 @@ function UI.SceneStateChange(_, newState)
     ADDON.Core.OpenMailLooter()
     UI.overviewFragment:Showing()
 
-    -- NOTE: HACK
-    -- Pretty sure there is a better way this is supposed to be handled.
-    -- But there is not enough documentation on this stuff...
-    -- This is only an issue if you have MailLooter open then switch to 
-    -- another non-mail UI screen (notifications, skills, etc) and 
-    -- back again.
-    ZO_SharedTitleLabel:SetText( GetString(SI_MAIN_MENU_MAIL) )
-
   elseif newState == SCENE_SHOWN then
     KEYBIND_STRIP:UpdateKeybindButtonGroup(UI.mailLooterButtonGroup)
+
   elseif newState == SCENE_HIDDEN then
     KEYBIND_STRIP:RemoveKeybindButtonGroup(UI.mailLooterButtonGroup)
     ADDON.Core.CloseMailLooter()
+
   end
 end
 
