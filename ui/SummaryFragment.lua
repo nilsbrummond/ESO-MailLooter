@@ -37,7 +37,7 @@ function UI.SummaryFragmentClass:Initialize()
                    "MailLooterSummaryFragment")
  
   fragment.win:SetWidth(ZO_MailInbox:GetWidth() - 20)
-  fragment.win:SetAnchor(TOP, ZO_MailInbox, TOP, -20, 0)
+  fragment.win:SetAnchor(TOP, ZO_MailInbox, TOP, 0, 0)
   fragment.win:SetHidden(true)
   fragment.win:SetMouseEnabled(true)
   fragment.win:SetResizeToFitDescendents(false)

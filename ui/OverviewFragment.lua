@@ -23,7 +23,7 @@ function UI.OverviewFragmentClass:New()
 end
 
 local function VertPosition(index)
-  return 170 + (index * 30)
+  return 200 + (index * 30)
 end
 
 local function MakeLabel(index, parent, icon, text)
@@ -85,7 +85,7 @@ function UI.OverviewFragmentClass:Initialize()
   label:SetText("OVERVIEW")
   label:SetHeight(label:GetFontHeight())
   label:SetHorizontalAlignment(TEXT_ALIGN_CENTER)
-  label:SetAnchor(TOP, self.win, TOP, 0, 70)
+  label:SetAnchor(TOP, self.win, TOP, 0, 100)
 
 
   local thing = WINDOW_MANAGER:CreateControl(
@@ -177,7 +177,7 @@ function UI.OverviewFragmentClass:Initialize()
   div:SetWidth(self.win:GetWidth() * 0.8)
   div:SetAnchor(TOP, self.win, TOP, 0, VertPosition(11) + 14)
 
-  MakeLabel(12, self.win, UI.GetIcon(CORE.MAILTYPE_COD_RECEIPT), "COD Paid")
+  MakeLabel(12, self.win, UI.GetIcon(CORE.MAILTYPE_COD_RECEIPT), "COD Paid:")
   self.codPayments = MakeValue(12, self.win)
 
   ZO_CurrencyControl_SetSimpleCurrency(

@@ -1,0 +1,22 @@
+<GuiXml>
+  <Controls>
+
+    <Control name="Lodur_MultiSelectBarTemplate" resizeToFitDescendents="true" mouseEnabled="true" virtual="true">
+    </Control>
+
+    <Texture name="Lodur_MultiSelectBarSepartorTemplate" textureFile="/esoui/art/interaction/conversation_verticalborder.dds" virtual="true">
+    </Texture>
+
+    <Control name="Lodur_MultiSelectBarButtonTemplate" mouseEnabled="true" virtual="true">
+      <Controls>
+        <Texture name="$(parent)Image">
+          <AnchorFill />
+        </Texture>
+        <Texture name="$(parent)ImageHighlight">
+          <AnchorFill />
+        </Texture>
+      </Controls>
+    </Control>
+
+  </Controls>
+</GuiXml>

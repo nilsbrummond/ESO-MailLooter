@@ -19,23 +19,23 @@ UI.standardIcons = {
 
     [ADDON.Core.MAILTYPE_HIRELING] = {
       normal = "/esoui/art/progression/progression_indexicon_tradeskills_up.dds",
-      pressed = "",
-      disabled = "",
-      highlight = "",
+      pressed = "EsoUI/Art/progression/progression_indexicon_tradeskills_down.dds",
+      disabled = "EsoUI/Art/progression/progression_indexicon_tradeskills_disabled.dds",
+      highlight = "EsoUI/Art/progression/progression_indexicon_tradeskills_over.dds",
 
       ------------------------
 
       blacksmithing = {
-        normal = "/esoui/art/progression/progression_indexicon_tradeskills_up.dds",
-        pressed = "",
-        disabled = "",
-        highlight = "",
+        normal = '/esoui/art/crafting/smithing_tabicon_refine_up.dds',
+        pressed = '/esoui/art/crafting/smithing_tabicon_refine_down.dds',
+        disabled = '/esoui/art/crafting/smithing_tabicon_refine_disabled.dds',
+        highlight = '/esoui/art/crafting/smithing_tabicon_refine_over.dds',
       },
       clothing = {
-        normal = "/esoui/art/progression/progression_indexicon_tradeskills_up.dds",
-        pressed = "",
+        normal = "MailLooter/assets/clothier_up.dds",
+        pressed = "MailLooter/assets/clothier_down.dds",
         disabled = "",
-        highlight = "",
+        highlight = "MailLooter/assets/clothier_over.dds",
       },
       enchanting = {
         normal = "/esoui/art/crafting/enchantment_tabicon_potency_up.dds",
@@ -50,10 +50,10 @@ UI.standardIcons = {
         highlight = "/esoui/art/crafting/provisioner_indexicon_meat_over.dds",
       },
       woodworking = {
-        normal = "/esoui/art/progression/progression_indexicon_tradeskills_up.dds",
-        pressed = "",
+        normal = "MailLooter/assets/woodworking_up.dds",
+        pressed = "MailLooter/assets/woodworking_down.dds",
         disabled = "",
-        highlight = "",
+        highlight = "MailLooter/assets/woodworking_over.dds",
       },
     },
 
@@ -66,6 +66,9 @@ UI.standardIcons = {
 
     [ADDON.Core.MAILTYPE_COD] = {
       normal = "/esoui/art/menubar/menubar_temp_over.dds",
+      pressed = "/esoui/art/menubar/menubar_temp_over.dds",
+      disabled = "/esoui/art/menubar/menubar_temp_over.dds",
+      highlight = "/esoui/art/menubar/menubar_temp_over.dds",
     },
 
     [ADDON.Core.MAILTYPE_RETURNED] = {

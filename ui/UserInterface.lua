@@ -110,6 +110,7 @@ function UI.CoreStatusUpdateCB(inProgress, success, msg)
 
   if inProgress then
     UI.summaryFragment:UpdateSummarySimple("Looting...")
+    UI.filterFragment:SetLocked(true)
   else
     if msg == "Inventory Full" then
       ZO_AlertEvent(EVENT_INVENTORY_IS_FULL, 1, 0)
@@ -179,6 +180,7 @@ function UI.ClearLoot()
   UI.currentLoot = false
   UI.lootFragment:Clear()
   UI.overviewFragment:Clear()
+  UI.filterFragment:SetLocked(false)
 
   KEYBIND_STRIP:UpdateKeybindButtonGroup(UI.mailLooterButtonGroup)
 end
