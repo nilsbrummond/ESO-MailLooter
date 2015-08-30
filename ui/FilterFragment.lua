@@ -24,26 +24,26 @@ function UI.FilterFragmentClass:Initialize()
  
   self.win:SetWidth(ZO_MailInbox:GetWidth() - 20)
   self.win:SetAnchor(TOP, ZO_MailInbox, TOP, 0, 64)
+  self.win:SetMouseEnabled(true)
   self.win:SetHidden(true)
 
   local filterBar = CreateControlFromVirtual(
     "MailLooterFitlerBar", self.win, "Lodur_MultiSelectBarTemplate")
   filterBar:SetAnchor(TOPRIGHT, self.win, TOPRIGHT, 0, 0)
 
-  Lodur_MultiSelectBar_OnInitialized(filterBar)
-
   Lodur_MultiSelectBar_SetData(filterBar,
     { initialButtonAnchorPoint = LEFT,
       normalSize = {50, 50, 32},
       downSize = {64, 50, 32},
       buttonPadding = {15, 10, 0 }, 
-      buttonTemplate = "ZO_MenuBarButtonTemplateWithTooltip",
+      separator = { false, true},
   })
 
   filterBar:SetAnchor(TOP, self.win, TOP, 58, 0)
 
   local avaButton = {
     descriptor = "ava",
+    tooltip = SI_MAILLOOTER_FILTER_AVA,
     normal = UI.GetIcon(ADDON.Core.MAILTYPE_AVA, 'normal'),
     pressed = UI.GetIcon(ADDON.Core.MAILTYPE_AVA, 'pressed'),
     disabled = UI.GetIcon(ADDON.Core.MAILTYPE_AVA, 'disabled'),
@@ -54,6 +54,7 @@ function UI.FilterFragmentClass:Initialize()
 
   local blacksmithButton= {
     descriptor = "smith",
+    tooltip = SI_MAILLOOTER_FILTER_HIRELING_SMITH,
     normal = UI.GetIcon(ADDON.Core.MAILTYPE_HIRELING, 'blacksmithing', 'normal'),
     pressed = UI.GetIcon(ADDON.Core.MAILTYPE_HIRELING, 'blacksmithing', 'pressed'),
     disabled = UI.GetIcon(ADDON.Core.MAILTYPE_HIRELING, 'blacksmithing', 'disabled'),
@@ -63,6 +64,7 @@ function UI.FilterFragmentClass:Initialize()
   }
   local clothingButton= {
     descriptor = "clothing",
+    tooltip = SI_MAILLOOTER_FILTER_HIRELING_CLOTH,
     normal = UI.GetIcon(ADDON.Core.MAILTYPE_HIRELING, 'clothing', 'normal'),
     pressed = UI.GetIcon(ADDON.Core.MAILTYPE_HIRELING, 'clothing', 'pressed'),
     disabled = UI.GetIcon(ADDON.Core.MAILTYPE_HIRELING, 'clothing', 'disabled'),
@@ -72,6 +74,7 @@ function UI.FilterFragmentClass:Initialize()
   }
   local enchantingButton= {
     descriptor = "enchanting",
+    tooltip = SI_MAILLOOTER_FILTER_HIRELING_ENCHANT,
     normal = UI.GetIcon(ADDON.Core.MAILTYPE_HIRELING, 'enchanting', 'normal'),
     pressed = UI.GetIcon(ADDON.Core.MAILTYPE_HIRELING, 'enchanting', 'pressed'),
     disabled = UI.GetIcon(ADDON.Core.MAILTYPE_HIRELING, 'enchanting', 'disabled'),
@@ -81,6 +84,7 @@ function UI.FilterFragmentClass:Initialize()
   }
   local provisioningButton= {
     descriptor = "provisioning",
+    tooltip = SI_MAILLOOTER_FILTER_HIRELING_PROVISION,
     normal = UI.GetIcon(ADDON.Core.MAILTYPE_HIRELING, 'provisioning', 'normal'),
     pressed = UI.GetIcon(ADDON.Core.MAILTYPE_HIRELING, 'provisioning', 'pressed'),
     disabled = UI.GetIcon(ADDON.Core.MAILTYPE_HIRELING, 'provisioning', 'disabled'),
@@ -90,6 +94,7 @@ function UI.FilterFragmentClass:Initialize()
   }
   local woodworkingButton= {
     descriptor = "woodworking",
+    tooltip = SI_MAILLOOTER_FILTER_HIRELING_WOOD,
     normal = UI.GetIcon(ADDON.Core.MAILTYPE_HIRELING, 'woodworking', 'normal'),
     pressed = UI.GetIcon(ADDON.Core.MAILTYPE_HIRELING, 'woodworking', 'pressed'),
     disabled = UI.GetIcon(ADDON.Core.MAILTYPE_HIRELING, 'woodworking', 'disabled'),
@@ -101,6 +106,7 @@ function UI.FilterFragmentClass:Initialize()
 
   local hirelingButton = {
     descriptor = "hireling",
+    tooltip = SI_MAILLOOTER_FILTER_HIRELING,
     normal = UI.GetIcon(ADDON.Core.MAILTYPE_HIRELING, 'normal'),
     pressed = UI.GetIcon(ADDON.Core.MAILTYPE_HIRELING, 'pressed'),
     disabled = UI.GetIcon(ADDON.Core.MAILTYPE_HIRELING, 'disabled'),
@@ -114,6 +120,7 @@ function UI.FilterFragmentClass:Initialize()
 
   local storeButton = {
     descriptor = "store",
+    tooltip = SI_MAILLOOTER_FILTER_STORE,
     normal = UI.GetIcon(ADDON.Core.MAILTYPE_STORE, 'normal'),
     pressed = UI.GetIcon(ADDON.Core.MAILTYPE_STORE, 'pressed'),
     disabled = UI.GetIcon(ADDON.Core.MAILTYPE_STORE, 'disabled'),
@@ -124,6 +131,7 @@ function UI.FilterFragmentClass:Initialize()
 
   local codButton = {
     descriptor = "cod",
+    tooltip = SI_MAILLOOTER_FILTER_COD,
     normal = UI.GetIcon(ADDON.Core.MAILTYPE_COD),
     pressed = UI.GetIcon(ADDON.Core.MAILTYPE_COD, 'pressed'),
     disabled = UI.GetIcon(ADDON.Core.MAILTYPE_COD, 'disabled'),
@@ -134,6 +142,7 @@ function UI.FilterFragmentClass:Initialize()
 
   local returnedButton = {
     descriptor = "returned",
+    tooltip = SI_MAILLOOTER_FILTER_RETURNED,
     normal = UI.GetIcon(ADDON.Core.MAILTYPE_RETURNED, 'normal'),
     pressed = UI.GetIcon(ADDON.Core.MAILTYPE_RETURNED, 'pressed'),
     disabled = UI.GetIcon(ADDON.Core.MAILTYPE_RETURNED, 'disabled'),
@@ -144,6 +153,7 @@ function UI.FilterFragmentClass:Initialize()
 
   local simpleButton = {
     descriptor = "simple",
+    tooltip = SI_MAILLOOTER_FILTER_SIMPLE,
     normal = UI.GetIcon(ADDON.Core.MAILTYPE_SIMPLE, 'normal'),
     pressed = UI.GetIcon(ADDON.Core.MAILTYPE_SIMPLE, 'pressed'),
     disabled = UI.GetIcon(ADDON.Core.MAILTYPE_SIMPLE, 'disabled'),
@@ -154,6 +164,7 @@ function UI.FilterFragmentClass:Initialize()
 
   local codReceiptButton = {
     descriptor = "codReceipt",
+    tooltip = SI_MAILLOOTER_FILTER_COD_RECEIPT,
     normal = UI.GetIcon(ADDON.Core.MAILTYPE_COD_RECEIPT, 'normal'),
     pressed = UI.GetIcon(ADDON.Core.MAILTYPE_COD_RECEIPT, 'pressed'),
     disabled = UI.GetIcon(ADDON.Core.MAILTYPE_COD_RECEIPT, 'disabled'),
@@ -164,7 +175,7 @@ function UI.FilterFragmentClass:Initialize()
 
   local allButton = {
     descriptor = "all",
-    toolTip = "ALL",
+    tooltip = SI_MAILLOOTER_FILTER_ALL,
     normal = UI.GetIcon('all', 'normal'),
     pressed = UI.GetIcon('all', 'pressed'),
     disabled = UI.GetIcon('all', 'disabled'),
@@ -179,12 +190,9 @@ function UI.FilterFragmentClass:Initialize()
 
   Lodur_MultiSelectBar_AddButtons(filterBar, allButton)
 
-  local fn = function() self:UpdateFilterLabel() end
-  filterBar:SetHandler("OnValueChanged", fn)
+  Lodur_MultiSelectBar_SetOnChanged(
+    filterBar, function() self:UpdateFilterLabel() end)
 
-  --local fn_out = filterBar:GetHandler("OnValueChanged") 
-  --assert(fn_out ~= nil)
-  --assert(fn == fn_out)
 
   self.filterBar = filterBar
 
@@ -192,7 +200,7 @@ function UI.FilterFragmentClass:Initialize()
     "MailLooterFitlerLabel", self.win, CT_LABEL)
   
   label:SetFont("ZoFontWinH3")
-  label:SetText("Filter Coming Soon")
+  label:SetText("Filtering Coming Soon:")
   label:SetHeight(label:GetFontHeight())
   label:SetAnchor(RIGHT, filterBar, LEFT, -20, 0)
 
@@ -206,18 +214,65 @@ function UI.FilterFragmentClass:Initialize()
   div:SetWidth(900)
   div:SetAnchor(TOP, self.win, TOP, 0, 42)
 
+  Lodur_MultiSelectBar_SelectDescriptor(filterBar, 'all', true)
 
   self.FRAGMENT = ZO_FadeSceneFragment:New(self.win)
 
 end
 
-function UI.FilterFragmentClass:UpdateFilterLabel()
+local filterTerms = {
+  ['all'] = SI_MAILLOOTER_FILTER_LABEL_ALL,
+  ['ava'] = SI_MAILLOOTER_FILTER_LABEL_AVA,
+  ['hireling'] = SI_MAILLOOTER_FILTER_LABEL_HIRELING,
+  ['smith'] = SI_MAILLOOTER_FILTER_LABEL_SMITH,
+  ['clothing'] = SI_MAILLOOTER_FILTER_LABEL_CLOTH,
+  ['enchanting'] = SI_MAILLOOTER_FILTER_LABEL_ENCHANT,
+  ['provisioning'] = SI_MAILLOOTER_FILTER_LABEL_PROVISION,
+  ['woodworking'] = SI_MAILLOOTER_FILTER_LABEL_WOOD,
+  ['store'] = SI_MAILLOOTER_FILTER_LABEL_STORE,
+  ['cod'] = SI_MAILLOOTER_FILTER_LABEL_COD,
+  ['returned'] = SI_MAILLOOTER_FILTER_LABEL_RETURNED,
+  ['simple'] = SI_MAILLOOTER_FILTER_LABEL_SIMPLE,
+  ['codReceipt'] = SI_MAILLOOTER_FILTER_LABEL_COD_RECEIPT,
+}
+
+function UI.FilterFragmentClass:UpdateFilterLabel(control)
   UI.DEBUG("UpdateFilterLabel")
 
-  local selected = Lodur_MultiSelectBar_GetSelected(self.filterBar)
+  local selections = Lodur_MultiSelectBar_GetSelected(self.filterBar)
+  local selected = selections.selected
+  local unselected = selections.unselected
+
+  local font = "ZoFontWinH3"
+  local msg
+
+  if #selected == 0 then
+    msg = GetString(SI_MAILLOOTER_FILTER_LABEL_NOTHING)
+  elseif #selected == 1 then
+    msg = GetString(filterTerms[selected[1]])
+  elseif #selected == 2 then
+    -- TODO: Need a translate method for '&'
+    font = "ZoFontWinH5"
+    msg = GetString(filterTerms[selected[1]]) .. " & " ..
+          GetString(filterTerms[selected[2]])
+
+  elseif #unselected == 1 then
+    msg = "|cFF0000NO|r " .. GetString(filterTerms[unselected[1]])
+  elseif #unselected == 2 then
+    font = "ZoFontWinH5"
+    msg = "|cFF0000NO|r " .. 
+          GetString(filterTerms[unselected[1]]) .. " & " ..
+          GetString(filterTerms[unselected[2]])
+  else
+    msg = GetString(SI_MAILLOOTER_FILTER_LABEL_COMPLEX)
+  end
+  
+  self.label:SetFont(font)
+  self.label:SetText(msg)
+
 end
 
 function UI.FilterFragmentClass:SetLocked(locked)
-  Lodur_MultiSelectBar_SetEnabled(self.filterBar, not locked)
+  Lodur_MultiSelectBar_SetLocked(self.filterBar, locked)
 end
 

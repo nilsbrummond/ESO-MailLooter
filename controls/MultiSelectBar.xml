@@ -2,20 +2,43 @@
   <Controls>
 
     <Control name="Lodur_MultiSelectBarTemplate" resizeToFitDescendents="true" mouseEnabled="true" virtual="true">
+      <OnInitialized>
+        Lodur_MultiSelectBar_OnInitialized(self)
+      </OnInitialized>
     </Control>
 
-    <Texture name="Lodur_MultiSelectBarSepartorTemplate" textureFile="/esoui/art/interaction/conversation_verticalborder.dds" virtual="true">
+    <Texture name="Lodur_MultiSelectBarSeparatorTemplate" textureFile="/esoui/art/interaction/conversation_verticalborder.dds" virtual="true">
+      <Dimensions x="2" />
     </Texture>
 
-    <Control name="Lodur_MultiSelectBarButtonTemplate" mouseEnabled="true" virtual="true">
+    <Control name="Lodur_MultiSelectBarButtonTemplate" resizeToFitDescendents="false" mouseEnabled="true" virtual="true">
+      <Dimensions x="32" y="32" />
       <Controls>
         <Texture name="$(parent)Image">
-          <AnchorFill />
-        </Texture>
-        <Texture name="$(parent)ImageHighlight">
-          <AnchorFill />
+          <Anchor point="CENTER" relativePoint="CENTER" relativeTo="$(parent)" />
+          <Controls>
+            <Texture name="$(parent)Highlight">
+              <AnchorFill />
+            </Texture>
+          </Controls>
         </Texture>
       </Controls>
+
+      <OnInitialized>
+        Lodur_MultiSelectBarButton_OnInitialized(self)
+      </OnInitialized>
+      <OnMouseEnter>
+        Lodur_MultiSelectBarButton_OnMouseEnter(self)
+      </OnMouseEnter>
+      <OnMouseExit>
+        Lodur_MultiSelectBarButton_OnMouseExit(self)
+      </OnMouseExit>
+      <OnMouseDown>
+        Lodur_MultiSelectBarButton_OnMouseDown(self, button)
+      </OnMouseDown>
+      <OnMouseUp>
+        Lodur_MultiSelectBarButton_OnMouseUp(self, button, upInside)
+      </OnMouseUp>
     </Control>
 
   </Controls>

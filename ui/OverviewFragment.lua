@@ -71,7 +71,7 @@ function UI.OverviewFragmentClass:Initialize()
   self.win:SetHeight(600)
   self.win:SetAnchor(TOP, ZO_SharedTreeUnderlay, TOP, 0, 150)
   self.win:SetHidden(true)
-  self.win:SetMouseEnabled(true)
+  -- self.win:SetMouseEnabled(true)
   self.win:SetResizeToFitDescendents(false)
 
   --
@@ -82,7 +82,8 @@ function UI.OverviewFragmentClass:Initialize()
     "MailLooterOverviewTitle", self.win, CT_LABEL)
 
   label:SetFont("ZoFontWinH2")
-  label:SetText("OVERVIEW")
+  label:SetText(GetString(SI_MAILLOOTER_OVERVIEW))
+  label:SetModifyTextType(MODIFY_TEXT_TYPE_UPPERCASE)
   label:SetHeight(label:GetFontHeight())
   label:SetHorizontalAlignment(TEXT_ALIGN_CENTER)
   label:SetAnchor(TOP, self.win, TOP, 0, 100)
