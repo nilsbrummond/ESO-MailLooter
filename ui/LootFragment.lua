@@ -305,7 +305,7 @@ local function SetupRowDataMoney(rowControl, data, scrollList)
 
   ZO_CurrencyControl_SetSimpleCurrency(
     rowControl:GetNamedChild("_Value"),
-    CURRENCY_TYPE_MONEY,
+    CURT_MONEY,
     data.money, 
     currencyOptions, CURRENCY_SHOW_ALL, CURRENCY_HAS_ENOUGH)
 end
@@ -333,7 +333,7 @@ local function SetupRowDataItem(rowControl, data, scrollList)
 
   ZO_CurrencyControl_SetSimpleCurrency(
     rowControl:GetNamedChild("_Value"),
-    CURRENCY_TYPE_MONEY,
+    CURT_MONEY,
     GetItemLinkValue(data.link, true) * data.stack, 
     currencyOptions, CURRENCY_SHOW_ALL, CURRENCY_HAS_ENOUGH)
 
@@ -554,7 +554,7 @@ end
 function UI.LootFragmentClass:UpdateMoney(gold)
  
   ZO_CurrencyControl_SetSimpleCurrency(
-    self.lootMoneyText, CURRENCY_TYPE_MONEY, gold, 
+    self.lootMoneyText, CURT_MONEY, gold, 
     currencyOptions, CURRENCY_SHOW_ALL, CURRENCY_HAS_ENOUGH)
 
 end
