@@ -7,11 +7,9 @@
       <Action name="MAILLOOTER_QUICK_LOOT_ALL">
         <Down>MailLooter.QuickLaunchAll()</Down>
       </Action>
-<!--
       <Action name="MAILLOOTER_QUICK_LOOT_FILTERED">
         <Down>MailLooter.QuickLaunchFiltered()</Down>
       </Action>
--->
     </Category>
   </Layer>
 </Bindings>
