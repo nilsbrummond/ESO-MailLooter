@@ -18,6 +18,11 @@ function ADDON.UI.InitSettings()
 
   local optionsData = {
     {
+      type = "description",
+      title = "Account Wide Options",
+      text = "All options on this page are stored account wide and will be the same for all of your characters.  Only the loot filter on MailLooter (Not on this page) is stored per character.",
+    },
+    {
       type = "header",
       name = "General Options"
     },
