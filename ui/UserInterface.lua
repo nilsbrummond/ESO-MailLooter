@@ -4,21 +4,50 @@ local ADDON = MailLooter
 ADDON.UI = ADDON.UI or {}
 local UI = ADDON.UI
 
+UI.currentLoot = false
+
 --
--- Functions
+-- Local functions
 --
 
 -- placeholder
 local function DEBUG(str) end
+
+local function QuickLaunchCmd()
+  DEBUG("QuickLaunchCmd cmd=" .. tostring(UI.queuedCommand))
+
+  local mode = UI.queuedCommand
+
+  if mode ~= nil then
+    UI.queuedCommand = nil
+
+    if mode == "all" then
+
+      if ADDON.Core.IsIdle() then
+        UI.ClearLoot()
+        ADDON.Core.ProcessMailAll()
+      end
+
+    elseif mode == "filtered" then
+      -- TODO: start filtered.
+    end
+  end
+end
+
+--
+-- Functions
+--
 
 function UI.CoreListUpdateCB(loot, complete, 
                              item, isNewItemType,
                              moneyMail, isNewMoneyStack)
   local debugOn = DEBUG("ListUpdateCB")
 
+  UI.currentLoot = true
+
   if complete and debugOn then
 
-    DEBUG("Mails looted: " .. loot.mailCount)
+    DEBUG("Mails looted: " .. loot.mailCount.all)
     DEBUG("Gold looted: " .. loot.moneyTotal)
 
     DEBUG("Items looted:")
@@ -46,6 +75,11 @@ function UI.CoreListUpdateCB(loot, complete,
     UI.summaryFragment:UpdateSummarySimple("Done.")
     ADDON.SetSetting_SaveHistory(loot)
 
+    if loot.mailCount.all == 0 then
+      -- Nothing looted: don't require the user to clear.
+      UI.ClearLoot()
+    end
+
   else
 
     if item ~= nil then
@@ -63,6 +97,8 @@ function UI.CoreListUpdateCB(loot, complete,
 
   end
 
+  UI.overviewFragment:Update(loot)
+
 end
 
 function UI.CoreStatusUpdateCB(inProgress, success, msg)
@@ -70,8 +106,14 @@ function UI.CoreStatusUpdateCB(inProgress, success, msg)
 
   KEYBIND_STRIP:UpdateKeybindButtonGroup(UI.mailLooterButtonGroup)
 
+  UI.overviewFragment:SetLooting(inProgress)
+
   if inProgress then
     UI.summaryFragment:UpdateSummarySimple("Looting...")
+  else
+    if msg == "Inventory Full" then
+      ZO_AlertEvent(EVENT_INVENTORY_IS_FULL, 1, 0)
+    end
   end
 
 end
@@ -99,6 +141,10 @@ function UI.CoreScanUpdateCB(summary)
     GetBagSize(BAG_BACKPACK),
     ADDON.Core.GetSaveDeconSpace())
 
+  KEYBIND_STRIP:UpdateKeybindButtonGroup(UI.mailLooterButtonGroup)
+
+  QuickLaunchCmd()
+
 end
 
 function UI.SceneStateChange(_, newState)
@@ -106,23 +152,34 @@ function UI.SceneStateChange(_, newState)
 
   if newState == SCENE_SHOWING then
     KEYBIND_STRIP:AddKeybindButtonGroup(UI.mailLooterButtonGroup)
-    UI.lootFragment:Clear()
     ADDON.Core.OpenMailLooter()
+    UI.overviewFragment:Showing()
 
-    -- NOTE: HACK
-    -- Pretty sure there is a better way this is supposed to be handled.
-    -- But there is not enough documentation on this stuff...
-    -- This is only an issue if you have MailLooter open then switch to 
-    -- another non-mail UI screen (notifications, skills, etc) and 
-    -- back again.
-    ZO_SharedTitleLabel:SetText( GetString(SI_MAIN_MENU_MAIL) )
+  elseif newState == SCENE_SHOWN then
+    KEYBIND_STRIP:UpdateKeybindButtonGroup(UI.mailLooterButtonGroup)
 
   elseif newState == SCENE_HIDDEN then
     KEYBIND_STRIP:RemoveKeybindButtonGroup(UI.mailLooterButtonGroup)
     ADDON.Core.CloseMailLooter()
+
   end
 end
 
+function UI.IsLootShown()
+  return UI.currentLoot
+end
+
+function UI.ClearLoot()
+  UI.currentLoot = false
+  UI.lootFragment:Clear()
+  UI.overviewFragment:Clear()
+
+  KEYBIND_STRIP:UpdateKeybindButtonGroup(UI.mailLooterButtonGroup)
+end
+
+--
+-- Public interface
+--
 
 function UI.InitUserInterface(debugFunction)
 
@@ -133,8 +190,9 @@ function UI.InitUserInterface(debugFunction)
 
   UI.InitSettings()
   UI.summaryFragment = UI.SummaryFragmentClass:New()
+  UI.overviewFragment = UI.OverviewFragmentClass:New()
   UI.lootFragment = UI.LootFragmentClass:New()
-  UI.CreateScene(UI.summaryFragment, UI.lootFragment)
+  UI.CreateScene(UI.summaryFragment, UI.overviewFragment, UI.lootFragment)
 
   ADDON.Core.NewCallbacks(
     UI.CoreListUpdateCB,
@@ -143,4 +201,21 @@ function UI.InitUserInterface(debugFunction)
 
 end
 
+-- Open MailLooter and optionally start a command.
+function UI.QuickLaunch(mode)
 
+  -- validate mode
+  if mode ~= nil then
+    if not ((mode == "all") or (mode == "filtered")) then
+      mode = nil
+    end
+  end
+
+  UI.queuedCommand = mode
+  if not SCENE_MANAGER:IsShowing("mailLooter") then
+    MAIN_MENU:ShowScene("mailLooter")
+  else
+    QuickLaunchCmd()
+  end
+
+end

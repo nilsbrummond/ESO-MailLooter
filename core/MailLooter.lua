@@ -18,6 +18,7 @@ local MAILTYPE_COD_RECEIPT  = 8
 local MAILTYPE_BOUNCE       = 9
 local MAILTYPE_SIMPLE_PRE   = 10 -- Need to read body to classify...
 
+
 -- exported
 CORE.MAILTYPE_UNKNOWN     = MAILTYPE_UNKNOWN
 CORE.MAILTYPE_AVA         = MAILTYPE_AVA
@@ -174,11 +175,31 @@ local function IsDeleteSimpleAfter() return false end
 local function LootThisMailCOD(codAmount, codTotal) return false end
 local function IsBounceEnabled() return false end
 
+local function MailCount(mailType)
+  CORE.loot.mailCount[mailType] = CORE.loot.mailCount[mailType] + 1
+  CORE.loot.mailCount.all = CORE.loot.mailCount.all + 1
+end
+
 local function NewLootStruct()
   local l = {
-    items={}, moneys={},
-    moneyTotal=0, mailCount=0, codTotal=0, autoReturnCount=0
+    items={}, moneys={}, moneyTotal=0, codTotal=0,
+
+    mailCount = {},
+
+    -- mails keyed by mail-id
+    mails={}
   }
+
+  l.mailCount[MAILTYPE_UNKNOWN    ] = 0
+  l.mailCount[MAILTYPE_AVA        ] = 0
+  l.mailCount[MAILTYPE_HIRELING   ] = 0
+  l.mailCount[MAILTYPE_STORE      ] = 0
+  l.mailCount[MAILTYPE_COD        ] = 0
+  l.mailCount[MAILTYPE_RETURNED   ] = 0
+  l.mailCount[MAILTYPE_SIMPLE     ] = 0
+  l.mailCount[MAILTYPE_COD_RECEIPT] = 0
+  l.mailCount[MAILTYPE_BOUNCE     ] = 0
+  l.mailCount.all = 0
 
   l.items[MAILTYPE_UNKNOWN] = {}
   l.items[MAILTYPE_AVA] = {}
@@ -375,12 +396,22 @@ local function AddMoneyToHistory(loot, mail)
      (mail.mailType == MAILTYPE_SIMPLE) or
      (mail.mailType == MAILTYPE_COD_RECEIPT) then
 
-    mail.lootNum = CORE.nextLootNum
+    local mailId = mail.includeMail and mail.id or nil
+
+    local moneyMail = {
+      mailType = mail.mailType, 
+      money = mail.money,
+      id = mailId,
+      lootNum = CORE.nextLootNum,
+      sdn = mail.sdn,
+      scn = mail.scn,
+    }
+
     CORE.nextLootNum = CORE.nextLootNum + 1
 
-    table.insert(loot.moneys, mail)
+    table.insert(loot.moneys, moneyMail)
 
-    CORE.callbacks.ListUpdateCB(loot, false, nil, false, mail, true)
+    CORE.callbacks.ListUpdateCB(loot, false, nil, false, moneyMail, true)
   end
 end
 
@@ -519,7 +550,9 @@ local function StoreCurrentMail(
 
   -- Might care who it is from for non-system mail...
   if not fromSystem then
-    CORE.currentMail.text = { subject=subject, sdn=sdn, scn=scn }
+    CORE.currentMail.includeMail = true
+    CORE.currentMail.sdn = sdn
+    CORE.currentMail.scn = scn
   end
 
 end
@@ -552,7 +585,7 @@ local function LootMails()
 
   while id ~= nil do
 
-    if CORE.skippedMails[id] then
+    if CORE.skippedMails[zo_getSafeId64Key(id)] then
       -- Already looked at and rejected this mail for looting...
       -- DEBUG("skipping mail: " .. Id64ToString(id))
     else
@@ -571,7 +604,7 @@ local function LootMails()
       if fromCustomerService then
         -- NOOP - just skip it.
         -- Just being extra careful we don't mess with CS mail.
-        CORE.skippedMails[id] = true
+        CORE.skippedMails[zo_getSafeId64Key(id)] = true
 
       elseif mailType == MAILTYPE_BOUNCE then
 
@@ -580,14 +613,15 @@ local function LootMails()
 
         if IsBounceEnabled() then
           DEBUG("bounce id=" .. Id64ToString(id))
-          CORE.loot.autoReturnCount = CORE.loot.autoReturnCount + 1
+          -- CORE.loot.autoReturnCount = CORE.loot.autoReturnCount + 1
+          increment(CORE.loot, "autoReturnCount")
           CORE.state = STATE_DELETE
           CORE.currentMail = {id=id}
           ReturnMail(id)
           return
         else
           -- Skip it.
-          CORE.skippedMails[id] = true
+          CORE.skippedMails[zo_getSafeId64Key(id)] = true
         end
 
       elseif LootThisMail(mailType, codAmount) then
@@ -629,7 +663,6 @@ local function LootMails()
           return
 
         elseif doItemLoot then
-          CORE.loot.mailCount = CORE.loot.mailCount + 1
 
           -- NOTE: Seems reading the mail help with getting items more reliably.
           -- Setup currentItems moved from here to after read event.
@@ -638,9 +671,20 @@ local function LootMails()
           CORE.state = STATE_READ
           RequestReadMail(id)
           return
+
+        elseif not fromSystem then
+
+          -- Read all player mail to store it for tooltip
+
+          DEBUG("player-mail id=" .. Id64ToString(id))
+          CORE.state = STATE_READ
+          RequestReadMail(id)
+          return
+
         elseif attachedMoney > 0 then
           DEBUG("money id=" .. Id64ToString(id))
-          CORE.loot.mailCount = CORE.loot.mailCount + 1
+          -- CORE.loot.mailCount = CORE.loot.mailCount + 1
+          MailCount(mailType)
           CORE.state = STATE_MONEY
           TakeMailAttachedMoney(id)
           return
@@ -648,7 +692,8 @@ local function LootMails()
           -- DELETE
           -- player may have manually looted and not deleted it.
           DEBUG("delete id=" .. Id64ToString(id))
-          CORE.loot.mailCount = CORE.loot.mailCount + 1
+          -- CORE.loot.mailCount = CORE.loot.mailCount + 1
+          MailCount(mailType)
           CORE.state = STATE_DELETE
           DeleteMail(id, true)
           return
@@ -660,7 +705,7 @@ local function LootMails()
 
         -- This mail is not for looting.
         DEBUG("not-loot id=" .. Id64ToString(id))
-        CORE.skippedMails[id] = true
+        CORE.skippedMails[zo_getSafeId64Key(id)] = true
 
       end
     end
@@ -687,14 +732,49 @@ local function LootMails()
   end
 end
 
+local function AddPlayerMailToHistory(id, body)
+
+  local mail = {body = body}
+
+  local sdn, scn, subject, icon, unread, fromSystem, 
+        fromCustomerService, returned, numAttachments, 
+        attachedMoney, codAmount, expiresInDays, secsSinceReceived 
+    = GetMailItemInfo(id)
+
+  main.sdn = sdn
+  main.scn = scn
+  main.subject = subject
+  main.icon = icon 
+  main.fromSystem = fromSystem 
+  main.returned = returned 
+  main.numAtt = numAttachments 
+  main.money = attachedMoney 
+  main.codAmount = codAmount 
+  main.expiresInDays = expiresInDays 
+  main.secsSinceReceived = secsSinceReceived 
+
+  main.items = {}
+  for i=1,numAttachments do
+    local icon, stack, creator = GetAttachedItemInfo(id, i)
+    local link = GetAttachedItemLink(id, i, LINK_STYLE_DEFAULT)
+
+    table.insert(
+      main.items,
+      { icon=icon, stack=stack, creator=creator, link=link, }
+    )
+  end
+
+  CORE.loot.mails[id] = mail
+end
+
 local function LootMailsCont()
   DEBUG( "LootMailsCont" )
 
   local body = false
 
-  if CORE.currentMail.text then
+  if CORE.currentMail.includeMail then
     body = ReadMail(CORE.currentMail.id)
-    CORE.currentMail.text.body = body
+    AddPlayerMailToHistory(CORE.currentMail.id, body)
   end
 
   if CORE.currentMail.mailType == MAILTYPE_SIMPLE_PRE then
@@ -702,19 +782,22 @@ local function LootMailsCont()
     if IsSimplePost(body) then
 
       CORE.currentMail.mailType = MAILTYPE_SIMPLE
-      CORE.loot.mailCount = CORE.loot.mailCount + 1
 
       if (CORE.currentMail.att > 0) then
         -- Fall through to loot items...
       elseif CORE.currentMail.money > 0 then
         -- loot money
         DEBUG("money id=" .. Id64ToString(CORE.currentMail.id))
+        -- CORE.loot.mailCount = CORE.loot.mailCount + 1
+        MailCount(MAILTYPE_SIMPLE)
         CORE.state = STATE_MONEY
         TakeMailAttachedMoney(CORE.currentMail.id)
         return
       else
         -- delete
         DEBUG("delete id=" .. Id64ToString(CORE.currentMail.id))
+        -- CORE.loot.mailCount = CORE.loot.mailCount + 1
+        MailCount(MAILTYPE_SIMPLE)
         CORE.state = STATE_DELETE
         DeleteMail(CORE.currentMail.id, true)
         return
@@ -723,41 +806,75 @@ local function LootMailsCont()
     else
       -- Skip this mail...
       DEBUG("not simple id=" .. Id64ToString(CORE.currentMail.id))
-      CORE.skippedMails[CORE.currentMail.id] = true
+      CORE.skippedMails[zo_getSafeId64Key(CORE.currentMail.id)] = true
       CORE.currentMail = {}
       LootMails()
       return
     end
   end
 
-  --
-  -- Loot Item....
-  --
 
-  -- Reading the attached items works better after reading the mail.
-  CORE.currentItems = {}
+  if CORE.currentMail.att > 0 then
+    --
+    -- Loot Item....
+    --
 
-  for i=1,CORE.currentMail.att do
-    local icon, stack, creator = GetAttachedItemInfo(
-      CORE.currentMail.id, i)
-    local link = GetAttachedItemLink(
-      CORE.currentMail.id, i, LINK_STYLE_DEFAULT)
+    -- CORE.loot.mailCount = CORE.loot.mailCount + 1
+    MailCount(CORE.currentMail.mailType)
 
-    DEBUG("  item: " .. link .. " icon: " .. icon)
+    -- Reading the attached items works better after reading the mail.
+    CORE.currentItems = {}
 
-    table.insert(
-      CORE.currentItems,
-      { icon=icon, stack=stack, link=link, 
-        mailType=CORE.currentMail.mailType,
-        text=CORE.currentMail.text,
-      }
-    )
+    for i=1,CORE.currentMail.att do
+      local icon, stack, creator = GetAttachedItemInfo(
+        CORE.currentMail.id, i)
+      local link = GetAttachedItemLink(
+        CORE.currentMail.id, i, LINK_STYLE_DEFAULT)
+
+      DEBUG("  item: " .. link .. " icon: " .. icon)
+
+      local mailId = CORE.currentMail.includeMail and CORE.curentMail.id or nil
+
+      table.insert(
+        CORE.currentItems,
+        { icon=icon, stack=stack, link=link, 
+          mailType=CORE.currentMail.mailType,
+          id = mailId,
+          sdn=CORE.currentMail.sdn,
+          scn=CORE.currentMail.scn,
+        }
+      )
+    end
+
+    CORE.state = STATE_ITEMS
+
+    -- BUG: Why does this sometimes fail??? (FIXED)
+    -- Work around: load the mail to be read first.
+    TakeMailAttachedItems(CORE.currentMail.id)
+
+  elseif CORE.currentMail.money > 0 then
+    --
+    -- Loot Money
+    --
+
+    DEBUG("money id=" .. Id64ToString(CORE.currentMail.id))
+    CORE.loot.mailCount = CORE.loot.mailCount + 1
+    CORE.state = STATE_MONEY
+    TakeMailAttachedMoney(CORE.currentMail.id)
+
+  else
+
+    -- Don't delete player mail with no loot.
+    -- Is that the only way to get here?
+
+    -- Unstore this mail
+    CORE.loot.mails[CORE.currentMail.id] = nil
+
+    -- skip it...
+    CORE.skippedMails[zo_getSafeId64Key(CORE.currentMail.id)] = true
+    CORE.currentMail = {}
+    LootMails()
   end
-
-  CORE.state = STATE_ITEMS
-  -- BUG: Why does this sometimes fail???
-  -- Work around: load the mail to be read first.
-  TakeMailAttachedItems(CORE.currentMail.id)
 
 end
 
@@ -809,11 +926,14 @@ local function DoTestLoot()
     testData.nextStep = testData.nextStep + 1
     step = ZO_DeepTableCopy(step)
 
-    testData.loot.mailCount = testData.loot.mailCount + 1
+    testData.loot.mailCount[step.mail.mailType] = 
+      testData.loot.mailCount[step.mail.mailType] + 1
+    testData.loot.mailCount.all = testData.loot.mailCount.all + 1
 
     for ind,item in ipairs(step.items) do
       item.mailType = step.mail.mailType
-      item.text = step.mail.text
+      item.sdn = step.mail.sdn
+      item.scn = step.mail.scn
     end
 
     AddItemsToHistory(testData.loot, step.items)
@@ -884,8 +1004,9 @@ function CORE.MailReadableEvt( eventCode, mailId)
   DEBUG( "MailReadable state=" .. CORE.state .. " id=" .. Id64ToString(mailId) )
 
   if mailLooterOpen then
-    if (CORE.state == STATE_READ) and (CORE.currentMail.id == mailId) then
-        LootMailsCont()
+    if (CORE.state == STATE_READ) and 
+       AreId64sEqual(CORE.currentMail.id, mailId) then
+      LootMailsCont()
     end
   end
 
@@ -899,7 +1020,7 @@ function CORE.MailRemovedEvt( eventCode, mailId )
 
     -- For our mail.
     if (CORE.currentMail ~= nil) and 
-       (CORE.currentMail.id == mailId) then
+       AreId64sEqual(CORE.currentMail.id, mailId) then
 
       -- normal case.
       if CORE.state == STATE_DELETE then
@@ -931,7 +1052,7 @@ function CORE.TakeItemsEvt( eventCode, mailId )
   if mailLooterOpen then
     if CORE.state ~= STATE_ITEMS then return end
 
-    if CORE.currentMail.id == mailId then
+    if AreId64sEqual(CORE.currentMail.id, mailId) then
 
       if CORE.currentMail.codAmount > 0 then
         CORE.loot.codTotal = CORE.loot.codTotal + CORE.currentMail.codAmount
@@ -959,7 +1080,7 @@ function CORE.TakeMoneyEvt( eventCode, mailId )
   if mailLooterOpen then
     if CORE.state ~= STATE_MONEY then return end
 
-    if (CORE.currentMail.id == mailId) then
+    if AreId64sEqual(CORE.currentMail.id, mailId) then
       AddMoneyToHistory(CORE.loot, CORE.currentMail)
 
       CORE.state = STATE_DELETE
@@ -1281,12 +1402,7 @@ function CORE.TestLoot()
   end
 
   local function Mail(mailType, money, sdn, scn, subject, body)
-    local mail = { mailType=mailType, money=money }
-
-    if (sdn ~= nil) or (scn ~= nil) then
-      mail.text={ sdn=sdn, scn=scn, subject=subject, body=body }
-    end
-
+    local mail = { mailType=mailType, money=money, sdn=sdn, scn=scn }
     return mail
   end
 
