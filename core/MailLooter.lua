@@ -71,24 +71,24 @@ local TitlesAvA = {
 local TitlesHirelings = {
   -- English
   ["Raw Blacksmith Materials"]  = { true, CRAFTING_TYPE_BLACKSMITHING},
-  ["Raw Woodworker Materials"]  = { true, CRAFTING_TYPE_CLOTHIER},
-  ["Raw Clothier Materials"]    = { true, CRAFTING_TYPE_ENCHANTING},
-  ["Raw Enchanter Materials"]   = { true, CRAFTING_TYPE_PROVISIONING},
-  ["Raw Provisioner Materials"] = { true, CRAFTING_TYPE_WOODWORKING},
+  ["Raw Woodworker Materials"]  = { true, CRAFTING_TYPE_WOODWORKING},
+  ["Raw Clothier Materials"]    = { true, CRAFTING_TYPE_CLOTHIER},
+  ["Raw Enchanter Materials"]   = { true, CRAFTING_TYPE_ENCHANTING},
+  ["Raw Provisioner Materials"] = { true, CRAFTING_TYPE_PROVISIONING},
 
   -- German
   ["Schmiedematerial"]    = { true, CRAFTING_TYPE_BLACKSMITHING},
-  ["Schreinermaterial"]   = { true, CRAFTING_TYPE_CLOTHIER},
-  ["Schneidermaterial"]   = { true, CRAFTING_TYPE_ENCHANTING},
-  ["Verzauberermaterial"] = { true, CRAFTING_TYPE_PROVISIONING},
-  ["Versorgerzutaten"]    = { true, CRAFTING_TYPE_WOODWORKING},
+  ["Schreinermaterial"]   = { true, CRAFTING_TYPE_WOODWORKING},
+  ["Schneidermaterial"]   = { true, CRAFTING_TYPE_CLOTHIER},
+  ["Verzauberermaterial"] = { true, CRAFTING_TYPE_ENCHANTING},
+  ["Versorgerzutaten"]    = { true, CRAFTING_TYPE_PROVISIONING},
 
   -- French
   ["Matériaux bruts de forge"]           = { true, CRAFTING_TYPE_BLACKSMITHING},
-  ["Matériaux bruts de travail du bois"] = { true, CRAFTING_TYPE_CLOTHIER},
-  ["Matériaux bruts de couture"]         = { true, CRAFTING_TYPE_ENCHANTING},
-  ["Matériaux bruts d'enchantement"]     = { true, CRAFTING_TYPE_PROVISIONING},
-  ["Matériaux bruts de cuisine"]         = { true, CRAFTING_TYPE_WOODWORKING},
+  ["Matériaux bruts de travail du bois"] = { true, CRAFTING_TYPE_WOODWORKING},
+  ["Matériaux bruts de couture"]         = { true, CRAFTING_TYPE_CLOTHIER},
+  ["Matériaux bruts d'enchantement"]     = { true, CRAFTING_TYPE_ENCHANTING},
+  ["Matériaux bruts de cuisine"]         = { true, CRAFTING_TYPE_PROVISIONING},
 }
 
 local TitlesStores = {
@@ -265,7 +265,7 @@ local function GetMailType(subject, fromSystem, codAmount, returned, attachments
     else
       local hdata = TitlesHirelings[subject]
       if hdata and hdata[1] then
-        return MAIL_HIRELING, hdata[2]
+        return MAILTYPE_HIRELING, hdata[2]
       end
     end
   else
@@ -317,8 +317,10 @@ local function LootThisMail(mailType, codAmount, hirelingType)
   elseif mailType == MAILTYPE_HIRELING then
 
     if CORE.filters.hirelings and CORE.filters[hirelingType] then
+      DEBUG("LootThisMail mt=_HIRELING ht=" .. hirelingType .. " - true")
       return true
     else
+      DEBUG("LootThisMail mt=_HIRELING ht=" .. hirelingType .. " - false")
       return false
     end
 

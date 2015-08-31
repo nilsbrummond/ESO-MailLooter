@@ -44,6 +44,7 @@ local function ConvertFilter(filter)
   coreFilter[ADDON.Core.MAILTYPE_COD] = false
 
   for i,k in ipairs(filter) do
+
     if k == 'all' then
       coreFilter[ADDON.Core.MAILTYPE_AVA] = true
       coreFilter[ADDON.Core.MAILTYPE_HIRELING] = true
@@ -89,7 +90,7 @@ local function QuickLaunchCmd()
 
     elseif mode == "filtered" then
         UI.ClearLoot()
-        UI.StartLooting()
+        UI.StartLooting(true)
     end
   end
 
@@ -130,6 +131,21 @@ function UI.CoreListUpdateCB(loot, complete,
 
   UI.lootFragment:UpdateMoney(loot.moneyTotal)
 
+
+  if item ~= nil then
+    UI.lootFragment:AddLooted(item, isNewItemType)
+
+    UI.lootFragment:UpdateInv(
+      GetNumBagUsedSlots(BAG_BACKPACK),
+      GetBagSize(BAG_BACKPACK),
+      ADDON.Core.GetSaveDeconSpace())
+  end
+
+  if moneyMail ~= nil then
+    UI.lootFragment:AddLootedMoney(moneyMail, isNewMoneyStack)
+  end
+
+
   if complete then
 
     -- Done...
@@ -141,22 +157,8 @@ function UI.CoreListUpdateCB(loot, complete,
       UI.ClearLoot()
     end
 
-  else
-
-    if item ~= nil then
-      UI.lootFragment:AddLooted(item, isNewItemType)
-
-      UI.lootFragment:UpdateInv(
-        GetNumBagUsedSlots(BAG_BACKPACK),
-        GetBagSize(BAG_BACKPACK),
-        ADDON.Core.GetSaveDeconSpace())
-    end
-
-    if moneyMail ~= nil then
-      UI.lootFragment:AddLootedMoney(moneyMail, isNewMoneyStack)
-    end
-
   end
+
 
   UI.overviewFragment:Update(loot)
 
@@ -302,7 +304,15 @@ function UI.QuickLaunch(mode)
 
 end
 
-function UI.StartLooting()
-  ADDON.Core.ProcessMail(ConvertFilter(
-    UI.filterFragment:GetFilter()))
+function UI.StartLooting(quickLaunch)
+  UI.DEBUG("StartLooting")
+
+  local filter = UI.filterFragment:GetFilter()
+
+  if not quickLaunch then 
+    ADDON.SetSetting_filter(filter)
+  end
+
+  ADDON.Core.ProcessMail(ConvertFilter(filter.selected))
 end
+

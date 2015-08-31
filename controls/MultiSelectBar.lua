@@ -1,7 +1,11 @@
 
 --
 -- This code is based on the ZOS ESO file:  zo_menubar.lua
--- 
+--
+-- Originally attempted to use the MenuBarButton class directly
+-- and place a replacement for MenuBar on top.  This didn't work
+-- out.  So this now has it's own Button and Bar objects with 
+-- multi selecting and tree behavior for sub-categories.
 --
 
 
@@ -528,6 +532,15 @@ function MultiSelectBar:UpdateLowerButtons(buttonObject, skipAnimation)
 
 end
 
+local function IsAllChildenLatched(buttonObject)
+  
+  for i, k in ipairs(buttonObject.m_subtree) do
+    if not k.m_latched then return false end
+  end
+
+  return true
+end
+
 function MultiSelectBar:UpdateHigherButtons(buttonObject, skipAnimation)
 
   if (buttonObject.m_level <= 1) then return end
@@ -535,8 +548,15 @@ function MultiSelectBar:UpdateHigherButtons(buttonObject, skipAnimation)
   local parent = buttonObject.m_parent
 
   if parent.m_latched then
+
     parent:UnLatch(skipAnimation)
+
   else
+    if IsAllChildenLatched(parent) then
+      parent:Latch(skipAnimation)
+      self:UpdateLowerButtons(parent, skipAnimation)
+    end
+
     self:UpdateHigherButtons(parent, skipAnimation)
   end
 
