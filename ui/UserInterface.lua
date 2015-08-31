@@ -6,9 +6,66 @@ local UI = ADDON.UI
 
 UI.currentLoot = false
 
+local filterConvertion = {
+  ['ava']         = {1, ADDON.Core.MAILTYPE_AVA},
+  ['hireling']    = {1, ADDON.Core.MAILTYPE_HIRELING},
+  ['store']       = {1, ADDON.Core.MAILTYPE_STORE},
+  ['cod']         = {1, ADDON.Core.MAILTYPE_COD},
+  ['returned']    = {1, ADDON.Core.MAILTYPE_RETURNED},
+  ['simple']      = {1, ADDON.Core.MAILTYPE_SIMPLE},
+  ['codReceipt']  = {1, ADDON.Core.MAILTYPE_COD_RECEIPT},
+  
+  ['smith']         = {2, CRAFTING_TYPE_BLACKSMITHING},
+  ['clothing']      = {2, CRAFTING_TYPE_CLOTHIER},
+  ['enchanting']    = {2, CRAFTING_TYPE_ENCHANTING},
+  ['provisioning']  = {2, CRAFTING_TYPE_PROVISIONING},
+  ['woodworking']   = {2, CRAFTING_TYPE_WOODWORKING},
+}
+
 --
 -- Local functions
 --
+
+local function ConvertFilter(filter)
+  local coreFilter = {}
+  local coreFilterHirelings = {}
+
+  -- Unused placeholders...
+  coreFilter[ADDON.Core.MAILTYPE_UNKNOWN] = false
+  coreFilter[ADDON.Core.MAILTYPE_BOUNCE] = false
+
+  -- Default to false
+  coreFilter[ADDON.Core.MAILTYPE_AVA] = false
+  coreFilter[ADDON.Core.MAILTYPE_HIRELING] = false
+  coreFilter[ADDON.Core.MAILTYPE_STORE] = false
+  coreFilter[ADDON.Core.MAILTYPE_RETURNED] = false
+  coreFilter[ADDON.Core.MAILTYPE_SIMPLE] = false 
+  coreFilter[ADDON.Core.MAILTYPE_COD_RECEIPT] = false 
+  coreFilter[ADDON.Core.MAILTYPE_COD] = false
+
+  for i,k in ipairs(filter) do
+    if k == 'all' then
+      coreFilter[ADDON.Core.MAILTYPE_AVA] = true
+      coreFilter[ADDON.Core.MAILTYPE_HIRELING] = true
+      coreFilter[ADDON.Core.MAILTYPE_STORE] = true
+      coreFilter[ADDON.Core.MAILTYPE_RETURNED] = true
+      coreFilter[ADDON.Core.MAILTYPE_SIMPLE] = true 
+      coreFilter[ADDON.Core.MAILTYPE_COD_RECEIPT] = true 
+      coreFilter[ADDON.Core.MAILTYPE_COD] = true
+    else
+      local con = filterConvertion[k]
+      if con[1] == 1 then
+        coreFilter[con[2]] = true
+      elseif con[1] == 2 then
+        coreFilterHirelings[con[2]] = true
+      end
+    end
+  end
+
+  coreFilter.hirelings = coreFilterHirelings
+
+  return coreFilter
+end
 
 -- placeholder
 local function DEBUG(str) end
@@ -25,13 +82,17 @@ local function QuickLaunchCmd()
 
       if ADDON.Core.IsIdle() then
         UI.ClearLoot()
+        UI.filterFragment:SetFilter({'all'}, false)
+        UI.filterOverride = true
         ADDON.Core.ProcessMailAll()
       end
 
     elseif mode == "filtered" then
-      -- TODO: start filtered.
+        UI.ClearLoot()
+        UI.StartLooting()
     end
   end
+
 end
 
 --
@@ -156,6 +217,11 @@ function UI.SceneStateChange(_, newState)
     ADDON.Core.OpenMailLooter()
     UI.overviewFragment:Showing()
 
+    if not UI.currentLoot then
+      -- Initialize filter to saved.
+      UI.filterFragment:SetFilter(ADDON.GetSetting_filter(), true)
+    end
+
     -- NOTE: HACK
     -- Pretty sure there is a better way this is supposed to be handled.
     -- But there is not enough documentation on this stuff...
@@ -181,6 +247,11 @@ function UI.ClearLoot()
   UI.lootFragment:Clear()
   UI.overviewFragment:Clear()
   UI.filterFragment:SetLocked(false)
+
+  if UI.filterOverride then
+    UI.filterOverride = false
+    UI.filterFragment:SetFilter(ADDON.GetSetting_filter(), false)
+  end
 
   KEYBIND_STRIP:UpdateKeybindButtonGroup(UI.mailLooterButtonGroup)
 end
@@ -229,4 +300,9 @@ function UI.QuickLaunch(mode)
     QuickLaunchCmd()
   end
 
+end
+
+function UI.StartLooting()
+  ADDON.Core.ProcessMail(ConvertFilter(
+    UI.filterFragment:GetFilter()))
 end

@@ -11,10 +11,7 @@ UI.mailLooterButtonGroup = {
         visible = function() 
             return ADDON.Core.IsActionReady() and 
             (not UI.IsLootShown()) end,
-        callback = function() 
-            UI.lootFragment:Clear()
-            ADDON.Core.ProcessMailAll()
-          end,
+        callback = function() UI.StartLooting() end,
     },
     {
         name = "Cancel",

@@ -3,6 +3,8 @@ MailLooter = MailLooter or {}
 local ADDON = MailLooter
 ADDON.initialized = false
 
+local MAILLOOTER_SAVED_VARS_VERSION = 1
+
 ADDON.settingsDefaults = {
   ["saveDeconSpace"]      = true,
   ["lootCODMails"]        = false,
@@ -21,6 +23,10 @@ ADDON.settingsDefaults = {
   ["scan"]                = {},
 }
 
+ADDON.charSettingsDefaults = {
+  ["filter"]              = { 'all' }
+}
+
 ADDON.debug = false
 ADDON.debugMsgWin = false
 
@@ -34,7 +40,7 @@ local function Initialize( eventCode, addOnName )
 
   ADDON.settings = ZO_SavedVars:NewAccountWide(
     "MailLooter_Settings", 
-    math.floor((ADDON.VERSION * 100)),
+    MAILLOOTER_SAVED_VARS_VERSION,
     "general", 
     ADDON.settingsDefaults)
 
@@ -43,6 +49,13 @@ local function Initialize( eventCode, addOnName )
   -- Clear the history table.
   ADDON.settings.history = {}
   ADDON.settings.scan = {}
+
+  ADDON.charSettings = ZO_SavedVars:New(
+    "MailLooter_Settings",
+    MAILLOOTER_SAVED_VARS_VERSION,
+    "filtering",
+    ADDON.charSettingsDefaults)
+
 
   local function DoCODTest(codAmount, codTotal)
     if not ADDON.settings.lootCODMails then 
@@ -196,7 +209,13 @@ function ADDON.SetSetting_enableBounce(val)
   ADDON.settings.enableBounce = val
 end
 
+function ADDON.GetSetting_filter()
+  return ADDON.charSettings.filter
+end
 
+function ADDON.SetSetting_filter(val)
+  ADDON.charSettings.filter = val
+end
 
 function ADDON.SetDebug(on)
   ADDON.debug = on

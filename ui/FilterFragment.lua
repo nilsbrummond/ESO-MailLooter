@@ -23,23 +23,23 @@ function UI.FilterFragmentClass:Initialize()
                    "MailLooterFilterFragment")
  
   self.win:SetWidth(ZO_MailInbox:GetWidth() - 20)
-  self.win:SetAnchor(TOP, ZO_MailInbox, TOP, 0, 64)
+  self.win:SetAnchor(TOP, ZO_MailInbox, TOP, 0, 53)
   self.win:SetMouseEnabled(true)
+  self.win:SetHeight(50)
   self.win:SetHidden(true)
 
   local filterBar = CreateControlFromVirtual(
     "MailLooterFitlerBar", self.win, "Lodur_MultiSelectBarTemplate")
-  filterBar:SetAnchor(TOPRIGHT, self.win, TOPRIGHT, 0, 0)
+  filterBar:SetAnchor(CENTER, self.win, CENTER, 58, 0)
 
   Lodur_MultiSelectBar_SetData(filterBar,
     { initialButtonAnchorPoint = LEFT,
       normalSize = {50, 50, 32},
-      downSize = {64, 50, 32},
+      downSize = {50, 50, 32},
       buttonPadding = {15, 10, 0 }, 
       separator = { false, true},
   })
 
-  filterBar:SetAnchor(TOP, self.win, TOP, 58, 0)
 
   local avaButton = {
     descriptor = "ava",
@@ -212,7 +212,7 @@ function UI.FilterFragmentClass:Initialize()
   div:SetTexture("EsoUI/Art/Miscellaneous/centerscreen_topDivider.dds")
   div:SetHeight(2)
   div:SetWidth(900)
-  div:SetAnchor(TOP, self.win, TOP, 0, 42)
+  div:SetAnchor(TOP, self.win, TOP, 0, 50)
 
   Lodur_MultiSelectBar_SelectDescriptor(filterBar, 'all', true)
 
@@ -260,6 +260,7 @@ function UI.FilterFragmentClass:UpdateFilterLabel(control)
     msg = "|cFF0000NO|r " .. GetString(filterTerms[unselected[1]])
   elseif #unselected == 2 then
     font = "ZoFontWinH5"
+    -- TODO: Need a translate method for '&'
     msg = "|cFF0000NO|r " .. 
           GetString(filterTerms[unselected[1]]) .. " & " ..
           GetString(filterTerms[unselected[2]])
@@ -274,5 +275,18 @@ end
 
 function UI.FilterFragmentClass:SetLocked(locked)
   Lodur_MultiSelectBar_SetLocked(self.filterBar, locked)
+end
+
+
+function UI.FilterFragmentClass:SetFilter(filter, skipAnimation)
+  
+  for i,k in ipairs(filter) do
+    Lodur_MultiSelectBar_SelectDescriptor(self.filterBar, k, skipAnimation)
+  end
+
+end
+
+function UI.FilterFragmentClass:GetFilter()
+  return Lodur_MultiSelectBar_GetSelected(self.filterBar)
 end
 
