@@ -111,3 +111,11 @@ ZO_CreateStringId(
 ZO_CreateStringId(
   "SI_MAILLOOTER_OVERVIEW", 
   "Overview")
+
+-- Alerts
+
+
+ZO_CreateStringId(
+  "SI_MAILLOOTER_NOTHING_TO_LOOT",
+  "Mail Looter Found No Loot")
+

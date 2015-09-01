@@ -678,12 +678,23 @@ function MultiSelectBar:ButtonObjectForDescriptor(descriptor)
   end
 end
 
+function MultiSelectBar:ClearSelection()
+  for _, data in ipairs(self.m_buttons) do
+    if (data[INDEX_BUTTON].m_object.m_latched) then
+      data[INDEX_BUTTON].m_object:UnLatch(true)
+    end
+  end
+end
+
 function MultiSelectBar:SelectDescriptor( descriptor, skipAnimation )
 
   local buttonObject = self:ButtonObjectForDescriptor(descriptor)
 
   if buttonObject then
-    self:SetClickedButton(buttonObject, skipAnimation)
+    if (not buttonObject.m_latched) then
+      self:SetClickedButton(buttonObject, skipAnimation)
+    end
+
     return true
   end
 
@@ -752,5 +763,10 @@ function Lodur_MultiSelectBar_SetOnChanged(self, func)
 end
 
 function Lodur_MultiSelectBar_SelectDescriptor(self, descriptor, skipAnimation)
-  self.m_object:SelectDescriptor( descriptor, skipAnimation )
+  return self.m_object:SelectDescriptor( descriptor, skipAnimation )
 end
+
+function Lodur_MultiSelectBar_ClearSelection(self)
+  self.m_object:ClearSelection()
+end
+

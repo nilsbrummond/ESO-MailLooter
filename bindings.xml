@@ -2,7 +2,7 @@
   <Layer name="SI_KEYBINDINGS_CATEGORY_GENERAL">
     <Category name="SI_MAIL_LOOTER">
       <Action name="MAILLOOTER_OPEN">
-        <Down>MailLooter.QuickLaunchAll()</Down>
+        <Down>MailLooter.QuickLaunch()</Down>
       </Action>
       <Action name="MAILLOOTER_QUICK_LOOT_ALL">
         <Down>MailLooter.QuickLaunchAll()</Down>

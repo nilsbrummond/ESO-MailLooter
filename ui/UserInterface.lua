@@ -155,6 +155,10 @@ function UI.CoreListUpdateCB(loot, complete,
     if loot.mailCount.all == 0 then
       -- Nothing looted: don't require the user to clear.
       UI.ClearLoot()
+      
+      ZO_Alert(UI_ALERT_CATEGAORY_ALERT, SOUNDS.NEGATIVE_CLICK, 
+        GetString(SI_MAILLOOTER_NOTHING_TO_LOOT))
+
     end
 
   end
@@ -304,7 +308,7 @@ function UI.StartLooting(quickLaunch)
   local filter = UI.filterFragment:GetFilter()
 
   if not quickLaunch then 
-    ADDON.SetSetting_filter(filter)
+    ADDON.SetSetting_filter(filter.selected)
   end
 
   ADDON.Core.ProcessMail(ConvertFilter(filter.selected))

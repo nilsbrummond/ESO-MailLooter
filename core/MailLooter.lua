@@ -317,10 +317,10 @@ local function LootThisMail(mailType, codAmount, hirelingType)
   elseif mailType == MAILTYPE_HIRELING then
 
     if CORE.filters.hirelings and CORE.filters.hirelings[hirelingType] then
-      DEBUG("LootThisMail mt=_HIRELING ht=" .. hirelingType .. " - true")
+--      DEBUG("LootThisMail mt=_HIRELING ht=" .. hirelingType .. " - true")
       return true
     else
-      DEBUG("LootThisMail mt=_HIRELING ht=" .. hirelingType .. " - false")
+--      DEBUG("LootThisMail mt=_HIRELING ht=" .. hirelingType .. " - false")
       return false
     end
 

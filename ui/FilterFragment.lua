@@ -267,7 +267,7 @@ function UI.FilterFragmentClass:UpdateFilterLabel(control)
   else
     msg = GetString(SI_MAILLOOTER_FILTER_LABEL_COMPLEX)
   end
-  
+
   self.label:SetFont(font)
   self.label:SetText(msg)
 
@@ -279,9 +279,16 @@ end
 
 
 function UI.FilterFragmentClass:SetFilter(filter, skipAnimation)
-  
+
+  UI.DEBUG("FilterFragmentClass:SetFilter:")
+
+  Lodur_MultiSelectBar_ClearSelection(self.filterBar)
+
   for i,k in ipairs(filter) do
-    Lodur_MultiSelectBar_SelectDescriptor(self.filterBar, k, skipAnimation)
+    UI.DEBUG("  " .. k)
+    if not Lodur_MultiSelectBar_SelectDescriptor(self.filterBar, k, skipAnimation) then
+      UI.DEBUG("SelectDescriptor failed")
+    end
   end
 
 end
