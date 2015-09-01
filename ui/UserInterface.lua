@@ -6,9 +6,67 @@ local UI = ADDON.UI
 
 UI.currentLoot = false
 
+local filterConvertion = {
+  ['ava']         = {1, ADDON.Core.MAILTYPE_AVA},
+  ['hireling']    = {1, ADDON.Core.MAILTYPE_HIRELING},
+  ['store']       = {1, ADDON.Core.MAILTYPE_STORE},
+  ['cod']         = {1, ADDON.Core.MAILTYPE_COD},
+  ['returned']    = {1, ADDON.Core.MAILTYPE_RETURNED},
+  ['simple']      = {1, ADDON.Core.MAILTYPE_SIMPLE},
+  ['codReceipt']  = {1, ADDON.Core.MAILTYPE_COD_RECEIPT},
+  
+  ['smith']         = {2, CRAFTING_TYPE_BLACKSMITHING},
+  ['clothing']      = {2, CRAFTING_TYPE_CLOTHIER},
+  ['enchanting']    = {2, CRAFTING_TYPE_ENCHANTING},
+  ['provisioning']  = {2, CRAFTING_TYPE_PROVISIONING},
+  ['woodworking']   = {2, CRAFTING_TYPE_WOODWORKING},
+}
+
 --
 -- Local functions
 --
+
+local function ConvertFilter(filter)
+  local coreFilter = {}
+  local coreFilterHirelings = {}
+
+  -- Unused placeholders...
+  coreFilter[ADDON.Core.MAILTYPE_UNKNOWN] = false
+  coreFilter[ADDON.Core.MAILTYPE_BOUNCE] = false
+
+  -- Default to false
+  coreFilter[ADDON.Core.MAILTYPE_AVA] = false
+  coreFilter[ADDON.Core.MAILTYPE_HIRELING] = false
+  coreFilter[ADDON.Core.MAILTYPE_STORE] = false
+  coreFilter[ADDON.Core.MAILTYPE_RETURNED] = false
+  coreFilter[ADDON.Core.MAILTYPE_SIMPLE] = false 
+  coreFilter[ADDON.Core.MAILTYPE_COD_RECEIPT] = false 
+  coreFilter[ADDON.Core.MAILTYPE_COD] = false
+
+  for i,k in ipairs(filter) do
+
+    if k == 'all' then
+      coreFilter[ADDON.Core.MAILTYPE_AVA] = true
+      coreFilter[ADDON.Core.MAILTYPE_HIRELING] = true
+      coreFilter[ADDON.Core.MAILTYPE_STORE] = true
+      coreFilter[ADDON.Core.MAILTYPE_RETURNED] = true
+      coreFilter[ADDON.Core.MAILTYPE_SIMPLE] = true 
+      coreFilter[ADDON.Core.MAILTYPE_COD_RECEIPT] = true 
+      coreFilter[ADDON.Core.MAILTYPE_COD] = true
+    else
+      local con = filterConvertion[k]
+      if con[1] == 1 then
+        coreFilter[con[2]] = true
+      elseif con[1] == 2 then
+        coreFilterHirelings[con[2]] = true
+      end
+    end
+  end
+
+  coreFilter.hirelings = coreFilterHirelings
+
+  return coreFilter
+end
 
 -- placeholder
 local function DEBUG(str) end
@@ -25,13 +83,17 @@ local function QuickLaunchCmd()
 
       if ADDON.Core.IsIdle() then
         UI.ClearLoot()
+        UI.filterFragment:SetFilter({'all'}, false)
+        UI.filterOverride = true
         ADDON.Core.ProcessMailAll()
       end
 
     elseif mode == "filtered" then
-      -- TODO: start filtered.
+        UI.ClearLoot()
+        UI.StartLooting(true)
     end
   end
+
 end
 
 --
@@ -69,6 +131,21 @@ function UI.CoreListUpdateCB(loot, complete,
 
   UI.lootFragment:UpdateMoney(loot.moneyTotal)
 
+
+  if item ~= nil then
+    UI.lootFragment:AddLooted(item, isNewItemType)
+
+    UI.lootFragment:UpdateInv(
+      GetNumBagUsedSlots(BAG_BACKPACK),
+      GetBagSize(BAG_BACKPACK),
+      ADDON.Core.GetSaveDeconSpace())
+  end
+
+  if moneyMail ~= nil then
+    UI.lootFragment:AddLootedMoney(moneyMail, isNewMoneyStack)
+  end
+
+
   if complete then
 
     -- Done...
@@ -78,24 +155,14 @@ function UI.CoreListUpdateCB(loot, complete,
     if loot.mailCount.all == 0 then
       -- Nothing looted: don't require the user to clear.
       UI.ClearLoot()
-    end
+      
+      ZO_Alert(UI_ALERT_CATEGAORY_ALERT, SOUNDS.NEGATIVE_CLICK, 
+        GetString(SI_MAILLOOTER_NOTHING_TO_LOOT))
 
-  else
-
-    if item ~= nil then
-      UI.lootFragment:AddLooted(item, isNewItemType)
-
-      UI.lootFragment:UpdateInv(
-        GetNumBagUsedSlots(BAG_BACKPACK),
-        GetBagSize(BAG_BACKPACK),
-        ADDON.Core.GetSaveDeconSpace())
-    end
-
-    if moneyMail ~= nil then
-      UI.lootFragment:AddLootedMoney(moneyMail, isNewMoneyStack)
     end
 
   end
+
 
   UI.overviewFragment:Update(loot)
 
@@ -110,6 +177,7 @@ function UI.CoreStatusUpdateCB(inProgress, success, msg)
 
   if inProgress then
     UI.summaryFragment:UpdateSummarySimple("Looting...")
+    UI.filterFragment:SetLocked(true)
   else
     if msg == "Inventory Full" then
       ZO_AlertEvent(EVENT_INVENTORY_IS_FULL, 1, 0)
@@ -155,6 +223,11 @@ function UI.SceneStateChange(_, newState)
     ADDON.Core.OpenMailLooter()
     UI.overviewFragment:Showing()
 
+    if not UI.currentLoot then
+      -- Initialize filter to saved.
+      UI.filterFragment:SetFilter(ADDON.GetSetting_filter(), true)
+    end
+
   elseif newState == SCENE_SHOWN then
     KEYBIND_STRIP:UpdateKeybindButtonGroup(UI.mailLooterButtonGroup)
 
@@ -173,6 +246,12 @@ function UI.ClearLoot()
   UI.currentLoot = false
   UI.lootFragment:Clear()
   UI.overviewFragment:Clear()
+  UI.filterFragment:SetLocked(false)
+
+  if UI.filterOverride then
+    UI.filterOverride = false
+    UI.filterFragment:SetFilter(ADDON.GetSetting_filter(), false)
+  end
 
   KEYBIND_STRIP:UpdateKeybindButtonGroup(UI.mailLooterButtonGroup)
 end
@@ -191,8 +270,11 @@ function UI.InitUserInterface(debugFunction)
   UI.InitSettings()
   UI.summaryFragment = UI.SummaryFragmentClass:New()
   UI.overviewFragment = UI.OverviewFragmentClass:New()
+  UI.filterFragment = UI.FilterFragmentClass:New()
   UI.lootFragment = UI.LootFragmentClass:New()
-  UI.CreateScene(UI.summaryFragment, UI.overviewFragment, UI.lootFragment)
+  UI.CreateScene(
+    UI.summaryFragment, UI.overviewFragment, 
+    UI.filterFragment, UI.lootFragment)
 
   ADDON.Core.NewCallbacks(
     UI.CoreListUpdateCB,
@@ -219,3 +301,16 @@ function UI.QuickLaunch(mode)
   end
 
 end
+
+function UI.StartLooting(quickLaunch)
+  UI.DEBUG("StartLooting")
+
+  local filter = UI.filterFragment:GetFilter()
+
+  if not quickLaunch then 
+    ADDON.SetSetting_filter(filter.selected)
+  end
+
+  ADDON.Core.ProcessMail(ConvertFilter(filter.selected))
+end
+

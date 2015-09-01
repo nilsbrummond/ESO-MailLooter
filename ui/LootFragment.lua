@@ -373,17 +373,16 @@ function UI.LootFragmentClass:Initialize()
   fragment.win = WINDOW_MANAGER:CreateTopLevelWindow(
                    "MailLooterLootFragment")
  
-  fragment.win:SetWidth(ZO_MailInbox:GetWidth())
-  fragment.win:SetAnchor(TOP, ZO_MailInbox, TOP, -20, 100)
+  fragment.win:SetAnchor(TOPRIGHT, ZO_MailInbox, TOPRIGHT, -20, 108)
   fragment.win:SetHidden(true)
   fragment.win:SetMouseEnabled(true)
 
-  local topdiv = WINDOW_MANAGER:CreateControl(
-    nil, fragment.win, CT_TEXTURE)
-  topdiv:SetTexture("EsoUI/Art/Miscellaneous/centerscreen_topDivider.dds")
-  topdiv:SetHeight(2)
-  topdiv:SetWidth(650)
-  topdiv:SetAnchor(TOPRIGHT, fragment.win, BOTTOMRIGHT, 0, 15)
+--  local topdiv = WINDOW_MANAGER:CreateControl(
+--    nil, fragment.win, CT_TEXTURE)
+--  topdiv:SetTexture("EsoUI/Art/Miscellaneous/centerscreen_topDivider.dds")
+--  topdiv:SetHeight(2)
+--  topdiv:SetWidth(650)
+--  topdiv:SetAnchor(TOPRIGHT, fragment.win, BOTTOMRIGHT, 0, 15)
 
 --  WINDOW_MANAGER:CreateControlFromVirtual(
 --    "MAIL_LOOTER_LOOT_TITLE", fragment.win, "ZO_PanelTitle")
@@ -400,7 +399,7 @@ function UI.LootFragmentClass:Initialize()
 
   local headers = WINDOW_MANAGER:CreateControlFromVirtual(
     "MailLooterLootHeaders", fragment.win, "MailLooterLootListHeaders")
-  headers:SetAnchor(TOP, topdiv, BOTTOM, 0, 0)
+  headers:SetAnchor(TOPRIGHT, fragment.win, TOPRIGHT, 0, 0)
 
   fragment.sortHeaders = ZO_SortHeaderGroup:New(headers, true)
   fragment.sortHeaders:AddHeadersFromContainer()

@@ -70,25 +70,25 @@ local TitlesAvA = {
 
 local TitlesHirelings = {
   -- English
-  ["Raw Blacksmith Materials"] = true, 
-  ["Raw Woodworker Materials"] = true, 
-  ["Raw Clothier Materials"] = true, 
-  ["Raw Enchanter Materials"] = true, 
-  ["Raw Provisioner Materials"] = true,
+  ["Raw Blacksmith Materials"]  = { true, CRAFTING_TYPE_BLACKSMITHING},
+  ["Raw Woodworker Materials"]  = { true, CRAFTING_TYPE_WOODWORKING},
+  ["Raw Clothier Materials"]    = { true, CRAFTING_TYPE_CLOTHIER},
+  ["Raw Enchanter Materials"]   = { true, CRAFTING_TYPE_ENCHANTING},
+  ["Raw Provisioner Materials"] = { true, CRAFTING_TYPE_PROVISIONING},
 
   -- German
-  ["Schmiedematerial"] = true,
-  ["Schreinermaterial"] = true,
-  ["Schneidermaterial"] = true,
-  ["Verzauberermaterial"] = true,
-  ["Versorgerzutaten"] = true,
+  ["Schmiedematerial"]    = { true, CRAFTING_TYPE_BLACKSMITHING},
+  ["Schreinermaterial"]   = { true, CRAFTING_TYPE_WOODWORKING},
+  ["Schneidermaterial"]   = { true, CRAFTING_TYPE_CLOTHIER},
+  ["Verzauberermaterial"] = { true, CRAFTING_TYPE_ENCHANTING},
+  ["Versorgerzutaten"]    = { true, CRAFTING_TYPE_PROVISIONING},
 
   -- French
-  ["Matériaux bruts de forge"] = true,
-  ["Matériaux bruts de travail du bois"] = true,
-  ["Matériaux bruts de couture"] = true,
-  ["Matériaux bruts d'enchantement"] = true,
-  ["Matériaux bruts de cuisine"] = true,
+  ["Matériaux bruts de forge"]           = { true, CRAFTING_TYPE_BLACKSMITHING},
+  ["Matériaux bruts de travail du bois"] = { true, CRAFTING_TYPE_WOODWORKING},
+  ["Matériaux bruts de couture"]         = { true, CRAFTING_TYPE_CLOTHIER},
+  ["Matériaux bruts d'enchantement"]     = { true, CRAFTING_TYPE_ENCHANTING},
+  ["Matériaux bruts de cuisine"]         = { true, CRAFTING_TYPE_PROVISIONING},
 }
 
 local TitlesStores = {
@@ -156,12 +156,14 @@ CORE.filters[MAILTYPE_UNKNOWN] = true
 CORE.filters[MAILTYPE_AVA] = true
 CORE.filters[MAILTYPE_HIRELING] = true
 CORE.filters[MAILTYPE_STORE] = true
-CORE.filters[MAILTYPE_COD] = false 
+CORE.filters[MAILTYPE_COD] = true 
 CORE.filters[MAILTYPE_RETURNED] = true 
 CORE.filters[MAILTYPE_SIMPLE_PRE] = true 
 CORE.filters[MAILTYPE_SIMPLE] = true 
-CORE.filters[MAILTYPE_BOUNCE] = false 
+CORE.filters[MAILTYPE_BOUNCE] = true -- Ignored
 CORE.filters[MAILTYPE_COD_RECEIPT] = true 
+
+CORE.lootAllFilters = CORE.filters
 
 --
 -- Local Functions
@@ -258,10 +260,13 @@ local function GetMailType(subject, fromSystem, codAmount, returned, attachments
   if fromSystem then
     if TitlesAvA[subject] then
       return MAILTYPE_AVA
-    elseif TitlesHirelings[subject] then
-      return MAILTYPE_HIRELING
     elseif TitlesStores[subject] then
       return MAILTYPE_STORE
+    else
+      local hdata = TitlesHirelings[subject]
+      if hdata and hdata[1] then
+        return MAILTYPE_HIRELING, hdata[2]
+      end
     end
   else
     if returned then return MAILTYPE_RETURNED end
@@ -291,7 +296,7 @@ local function GetMailType(subject, fromSystem, codAmount, returned, attachments
 end
 
 -- Return based on mailType and type filter.
-local function LootThisMail(mailType, codAmount)
+local function LootThisMail(mailType, codAmount, hirelingType)
 
   -- filter
   if CORE.filters[mailType] then
@@ -307,6 +312,18 @@ local function LootThisMail(mailType, codAmount)
     end
 
     return true
+
+  -- Handle hireling sub-filtering...
+  elseif mailType == MAILTYPE_HIRELING then
+
+    if CORE.filters.hirelings and CORE.filters.hirelings[hirelingType] then
+--      DEBUG("LootThisMail mt=_HIRELING ht=" .. hirelingType .. " - true")
+      return true
+    else
+--      DEBUG("LootThisMail mt=_HIRELING ht=" .. hirelingType .. " - false")
+      return false
+    end
+
   else
     return false
   end
@@ -598,7 +615,7 @@ local function LootMails()
       numAttachments = numAttachments or 0
       attachedMoney = attachedMoney or 0
 
-      local mailType = GetMailType(
+      local mailType, hirelingType = GetMailType(
         subject, fromSystem, codAmount, returned, numAttachments, attachedMoney)
 
       if fromCustomerService then
@@ -624,7 +641,7 @@ local function LootMails()
           CORE.skippedMails[zo_getSafeId64Key(id)] = true
         end
 
-      elseif LootThisMail(mailType, codAmount) then
+      elseif LootThisMail(mailType, codAmount, hirelingType) then
 
         -- Loot this Mail
         DEBUG( "found mail: " .. Id64ToString(id) .. " '" .. 
@@ -741,25 +758,25 @@ local function AddPlayerMailToHistory(id, body)
         attachedMoney, codAmount, expiresInDays, secsSinceReceived 
     = GetMailItemInfo(id)
 
-  main.sdn = sdn
-  main.scn = scn
-  main.subject = subject
-  main.icon = icon 
-  main.fromSystem = fromSystem 
-  main.returned = returned 
-  main.numAtt = numAttachments 
-  main.money = attachedMoney 
-  main.codAmount = codAmount 
-  main.expiresInDays = expiresInDays 
-  main.secsSinceReceived = secsSinceReceived 
+  mail.sdn = sdn
+  mail.scn = scn
+  mail.subject = subject
+  mail.icon = icon 
+  mail.fromSystem = fromSystem 
+  mail.returned = returned 
+  mail.numAtt = numAttachments 
+  mail.money = attachedMoney 
+  mail.codAmount = codAmount 
+  mail.expiresInDays = expiresInDays 
+  mail.secsSinceReceived = secsSinceReceived 
 
-  main.items = {}
+  mail.items = {}
   for i=1,numAttachments do
     local icon, stack, creator = GetAttachedItemInfo(id, i)
     local link = GetAttachedItemLink(id, i, LINK_STYLE_DEFAULT)
 
     table.insert(
-      main.items,
+      mail.items,
       { icon=icon, stack=stack, creator=creator, link=link, }
     )
   end
@@ -833,7 +850,7 @@ local function LootMailsCont()
 
       DEBUG("  item: " .. link .. " icon: " .. icon)
 
-      local mailId = CORE.currentMail.includeMail and CORE.curentMail.id or nil
+      local mailId = CORE.currentMail.includeMail and CORE.currentMail.id or nil
 
       table.insert(
         CORE.currentItems,
@@ -1283,22 +1300,8 @@ function CORE.ProcessMailAll()
     return
   end
  
-  local filter = {}
-  filter[MAILTYPE_UNKNOWN] = false
-  filter[MAILTYPE_AVA] = true
-  filter[MAILTYPE_HIRELING] = true
-  filter[MAILTYPE_STORE] = true
-  filter[MAILTYPE_RETURNED] = true
-  filter[MAILTYPE_SIMPLE] = true 
-  filter[MAILTYPE_BOUNCE] = false 
-  filter[MAILTYPE_COD_RECEIPT] = true 
-
-  -- Don't auto loot COD.  So one can troll you for
-  -- lots of money if your not watching..
-  filter[MAILTYPE_COD] = true
-
   DEBUG( "MailLooter starting all loot" )
-  Start(filter)
+  Start( CORE.lootAllFilters )
 
 end
 
@@ -1306,6 +1309,14 @@ end
 -- Start looting the mailbox.
 -- Allows filtering on mail type.
 function CORE.ProcessMail(filter)
+
+  if CORE.state ~= STATE_IDLE then 
+    DEBUG( "MailLooter is currently running" )
+    return
+  end
+ 
+  DEBUG( "MailLooter starting filtered loot" )
+  Start(filter)
 end
 
 -- Stop the looting process after completing the current mail.

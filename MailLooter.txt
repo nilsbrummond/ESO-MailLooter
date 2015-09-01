@@ -32,6 +32,9 @@ lib/LAM/controls/texture.lua
 lib/LAM/controls/iconpicker.lua
 lib/LibMsgWin-1.0/LibMsgWin-1.0.lua
 
+controls/MultiSelectBar.lua
+controls/MultiSelectBar.xml
+
 MailLooterPre.lua
 
 lang/en.lua
@@ -46,6 +49,7 @@ ui/MailLooterScene.lua
 ui/Icons.lua
 ui/SummaryFragment.lua
 ui/OverviewFragment.lua
+ui/FilterFragment.lua
 ui/LootFragment.lua
 ui/LootFragment.xml
 
