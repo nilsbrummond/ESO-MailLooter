@@ -316,7 +316,7 @@ local function LootThisMail(mailType, codAmount, hirelingType)
   -- Handle hireling sub-filtering...
   elseif mailType == MAILTYPE_HIRELING then
 
-    if CORE.filters.hirelings and CORE.filters[hirelingType] then
+    if CORE.filters.hirelings and CORE.filters.hirelings[hirelingType] then
       DEBUG("LootThisMail mt=_HIRELING ht=" .. hirelingType .. " - true")
       return true
     else
@@ -758,25 +758,25 @@ local function AddPlayerMailToHistory(id, body)
         attachedMoney, codAmount, expiresInDays, secsSinceReceived 
     = GetMailItemInfo(id)
 
-  main.sdn = sdn
-  main.scn = scn
-  main.subject = subject
-  main.icon = icon 
-  main.fromSystem = fromSystem 
-  main.returned = returned 
-  main.numAtt = numAttachments 
-  main.money = attachedMoney 
-  main.codAmount = codAmount 
-  main.expiresInDays = expiresInDays 
-  main.secsSinceReceived = secsSinceReceived 
+  mail.sdn = sdn
+  mail.scn = scn
+  mail.subject = subject
+  mail.icon = icon 
+  mail.fromSystem = fromSystem 
+  mail.returned = returned 
+  mail.numAtt = numAttachments 
+  mail.money = attachedMoney 
+  mail.codAmount = codAmount 
+  mail.expiresInDays = expiresInDays 
+  mail.secsSinceReceived = secsSinceReceived 
 
-  main.items = {}
+  mail.items = {}
   for i=1,numAttachments do
     local icon, stack, creator = GetAttachedItemInfo(id, i)
     local link = GetAttachedItemLink(id, i, LINK_STYLE_DEFAULT)
 
     table.insert(
-      main.items,
+      mail.items,
       { icon=icon, stack=stack, creator=creator, link=link, }
     )
   end
