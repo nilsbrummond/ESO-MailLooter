@@ -244,7 +244,7 @@ function MultiSelectBarButton:MouseUp(upInside, skipAnimation, playerDriven)
     -- Pop up if the button did not latch.
     if not self.m_latched and self.m_down then
       self.m_down = false
-      self:SetState(adjustSizeInstant)
+      self:SetState(skipAnimation)
     end
 
   else

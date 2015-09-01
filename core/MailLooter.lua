@@ -631,7 +631,8 @@ local function LootMails()
         if IsBounceEnabled() then
           DEBUG("bounce id=" .. Id64ToString(id))
           -- CORE.loot.autoReturnCount = CORE.loot.autoReturnCount + 1
-          increment(CORE.loot, "autoReturnCount")
+          -- increment(CORE.loot, "autoReturnCount")
+          MailCount(MAILTYPE_BOUNCE)
           CORE.state = STATE_DELETE
           CORE.currentMail = {id=id}
           ReturnMail(id)
