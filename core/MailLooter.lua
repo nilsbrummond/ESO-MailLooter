@@ -850,7 +850,7 @@ local function LootMailsCont()
 
       DEBUG("  item: " .. link .. " icon: " .. icon)
 
-      local mailId = CORE.currentMail.includeMail and CORE.curentMail.id or nil
+      local mailId = CORE.currentMail.includeMail and CORE.currentMail.id or nil
 
       table.insert(
         CORE.currentItems,
