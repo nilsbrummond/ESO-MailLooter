@@ -2,6 +2,9 @@
   <Controls>
 
     <Control name="Lodur_MultiSelectBarTemplate" resizeToFitDescendents="true" mouseEnabled="true" virtual="true">
+
+      <Dimensions y="32" />
+
       <OnInitialized>
         Lodur_MultiSelectBar_OnInitialized(self)
       </OnInitialized>
@@ -14,10 +17,10 @@
     <Control name="Lodur_MultiSelectBarButtonTemplate" resizeToFitDescendents="false" mouseEnabled="true" virtual="true">
       <Dimensions x="32" y="32" />
       <Controls>
-        <Texture name="$(parent)Image">
-          <Anchor point="CENTER" relativePoint="CENTER" relativeTo="$(parent)" />
+        <Texture name="$(parent)Image" level="1" excludeFromResizeToFitExtents="true">
+          <Anchor point="CENTER" />
           <Controls>
-            <Texture name="$(parent)Highlight">
+            <Texture name="$(parent)Highlight" level="0" excludeFromResizeToFitExtents="true">
               <AnchorFill />
             </Texture>
           </Controls>

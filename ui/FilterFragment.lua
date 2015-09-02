@@ -30,12 +30,12 @@ function UI.FilterFragmentClass:Initialize()
 
   local filterBar = CreateControlFromVirtual(
     "MailLooterFitlerBar", self.win, "Lodur_MultiSelectBarTemplate")
-  filterBar:SetAnchor(CENTER, self.win, CENTER, 58, 0)
+  filterBar:SetAnchor(CENTER, self.win, CENTER, 58, 2)
 
   Lodur_MultiSelectBar_SetData(filterBar,
     { initialButtonAnchorPoint = LEFT,
       normalSize = {50, 50, 32},
-      downSize = {50, 50, 32},
+      downSize = {64, 58, 40},
       buttonPadding = {15, 10, 0 }, 
       separator = { false, true},
   })
@@ -212,7 +212,7 @@ function UI.FilterFragmentClass:Initialize()
   div:SetTexture("EsoUI/Art/Miscellaneous/centerscreen_topDivider.dds")
   div:SetHeight(2)
   div:SetWidth(900)
-  div:SetAnchor(TOP, self.win, TOP, 0, 50)
+  div:SetAnchor(TOP, self.win, TOP, 0, 54)
 
   Lodur_MultiSelectBar_SelectDescriptor(filterBar, 'all', true)
 
