@@ -2,27 +2,15 @@
 Player mail as tooltip
   - Just in case you want to see the mail after looting...
 
-Character filters: only loot hireling types on certain characters...
- - based on character name
- - based on crafting skill level?
- - based on menu bar filter buttons that are remembered per character?
-
-Remove auto clearing of loot list?
-
-Hot key loot all 
- - goto MailLooter screen
- - start looting
-
-UI Makeover
- - narrow the loot window
- - add left side info area
- - remove summary and looted headings
- - Need filting done and UI add first
-
 Find a better guild store icon.
+
+COD icon.
 
 BUG - keybind strip showing wrong key bind to some users.
 
+BUG - Stack items show as multiple items
+
+BUG - Returned mail tooltip on type icon in loot list
 
 Sandwitch
  - Cause every addon should be able to make a sandwitch...
@@ -30,6 +18,23 @@ Sandwitch
 
 DONE:
 ----
+
+UI Makeover
+ - narrow the loot window
+ - add left side info area
+ - remove summary and looted headings
+ - Need filting done and UI add first
+
+Remove auto clearing of loot list?
+
+Hot key loot all 
+ - goto MailLooter screen
+ - start looting
+
+Character filters: only loot hireling types on certain characters...
+ X based on character name
+ X based on crafting skill level?
+ - based on menu bar filter buttons that are remembered per character? - yes
 
 Sorting
   - quality / value / alpha / type
