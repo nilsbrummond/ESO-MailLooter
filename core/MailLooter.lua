@@ -440,6 +440,8 @@ local function AddItemsToHistory(loot, currentItems)
 
     if MailTypeStackable[item.mailType] then
 
+      DEBUG( "Item (stackable): " .. tostring(item.link))
+
       if loot.items[item.mailType][item.link] == nil then
         item.lootNum = CORE.nextLootNum
         CORE.nextLootNum = CORE.nextLootNum + 1
@@ -453,10 +455,11 @@ local function AddItemsToHistory(loot, currentItems)
         DEBUG("stack=" .. loot.items[item.mailType][item.link].stack)
       end
 
-      DEBUG( "MailLooter: " .. tostring(item.link))
       CORE.callbacks.ListUpdateCB(
         loot, false, loot.items[item.mailType][item.link], newItemType)
     else
+
+      DEBUG( "Item (unstackable): " .. tostring(item.link))
 
       -- Not stackable - keep them sepatated...
       item.lootNum = CORE.nextLootNum
@@ -464,7 +467,6 @@ local function AddItemsToHistory(loot, currentItems)
 
       table.insert( loot.items[item.mailType], item )
       
-      DEBUG( "MailLooter: " .. tostring(item.link))
       CORE.callbacks.ListUpdateCB(loot, false, item, true)
 
     end
@@ -872,11 +874,12 @@ local function LootMailsCont()
 
   elseif CORE.currentMail.money > 0 then
     --
-    -- Loot Money
+    -- Loot Money - this includes COD RECEIPT cases.
     --
 
     DEBUG("money id=" .. Id64ToString(CORE.currentMail.id))
-    CORE.loot.mailCount = CORE.loot.mailCount + 1
+    -- CORE.loot.mailCount = CORE.loot.mailCount + 1
+    MailCount(CORE.currentMail.mailType)
     CORE.state = STATE_MONEY
     TakeMailAttachedMoney(CORE.currentMail.id)
 
@@ -1024,6 +1027,7 @@ function CORE.MailReadableEvt( eventCode, mailId)
   if mailLooterOpen then
     if (CORE.state == STATE_READ) and 
        AreId64sEqual(CORE.currentMail.id, mailId) then
+
       LootMailsCont()
     end
   end
@@ -1449,6 +1453,19 @@ function CORE.TestLoot()
       testData.testSteps, {items={testItem[i]}, mail=Mail((i%5)+1, 1)})
   end
 
+  -- Test the stacking display bug:
+  local special = {
+    icon = "/esoui/art/icons/crafting_wood_turpen.dds",
+    link = "|H1:item:54179:32:50:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|hturpen|h",
+    stack=1,
+    creator="",
+  }
+
+  for i=1,5 do
+    table.insert(
+      testData.testSteps, {items={special}, mail=Mail(MAILTYPE_HIRELING, 0)})
+  end
+
   -- with items
   table.insert(
     testData.testSteps,
@@ -1518,8 +1535,8 @@ function CORE.Scan()
     numAttachments = numAttachments or 0
     attachedMoney = attachedMoney or 0
 
-    local mailType = GetMailType(subject, fromSystem, codAmount, 
-                                 returned, numAttachments, attachedMoney)
+    local mailType, hirelingType = GetMailType(
+      subject, fromSystem, codAmount, returned, numAttachments, attachedMoney)
 
     d("mail id=" .. Id64ToString(id) )
     d("-> subject='" .. subject .. "'")
@@ -1530,9 +1547,24 @@ function CORE.Scan()
     d("-> mailType=" .. mailType)
 
 
+    local items
+
+    if numAttachments > 0 then 
+      items = {}
+      GetMailAttachmentInfo(id)
+
+      for i=1, numAttachments do
+        local icon, stack, cn, sp, meets = GetAttachedItemInfo(id, i)
+        local link = GetAttachedItemLink(id, i, LINK_STYLE_BRACKETS)
+        table.insert(items, {stack=stack, link=link})
+      end
+    end
+
     table.insert(t, 
-      { id=id, subject=subject, system=fromSystem, 
-        returned=returned, mailType=mailType }
+      { id=Id64ToString(id), subject=subject, system=fromSystem, 
+        returned=returned, mailType=mailType, hirelingType=hirelingType,
+        money=attachedMoney, cod=codAmount, items=items,
+      }
     )
 
     id = GetNextMailId(id)

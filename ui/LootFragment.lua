@@ -82,7 +82,7 @@ local SortKeys =
 -- Local functions
 --
 
--- This function is must be determanistic. 
+-- This function must be determanistic. 
 -- Less then or great then - no equal.
 --
 -- Based on ZOS code for ZO_TableOrderingFunction.  But this
@@ -587,7 +587,7 @@ function UI.LootFragmentClass:AddLooted(item, isNewItemType)
          (data.mailType == item.mailType) and   -- in the same category 
          (data.link == item.link) then          -- and the same item.
 
-        UI.DEBUG("Updating stack")
+        UI.DEBUG("Updating stack: " .. data.stack .. " -> " .. item.stack)
         -- update the stack size  
         data.stack = item.stack
         data.value = GetItemLinkValue(data.link, true) * data.stack
