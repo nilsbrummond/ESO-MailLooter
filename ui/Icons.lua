@@ -65,10 +65,10 @@ UI.standardIcons = {
     },
 
     [ADDON.Core.MAILTYPE_COD] = {
-      normal = "/esoui/art/menubar/menubar_temp_over.dds",
-      pressed = "/esoui/art/menubar/menubar_temp_over.dds",
-      disabled = "/esoui/art/menubar/menubar_temp_over.dds",
-      highlight = "/esoui/art/menubar/menubar_temp_over.dds",
+      normal = "/esoui/art/menubar/menubar_temp_over.dds",  -- Use the original that works.
+      pressed = "MailLooter/assets/menubar_temp_down.dds",
+      disabled = "MailLooter/assets/menubar_temp_disabled.dds",
+      highlight = "MailLooter/assets/menubar_temp_over.dds",
     },
 
     [ADDON.Core.MAILTYPE_RETURNED] = {
