@@ -297,3 +297,10 @@ function UI.FilterFragmentClass:GetFilter()
   return Lodur_MultiSelectBar_GetSelected(self.filterBar)
 end
 
+function UI.FilterFragmentClass:SetEnabled(descriptor, enabled)
+  UI.DEBUG("Filter:SetEnabled d='" .. descriptor .. "' e=" .. tostring(enabled))
+
+  Lodur_MultiSelectBar_SetEnabled(self.filterBar, descriptor, enabled, true)
+
+end
+

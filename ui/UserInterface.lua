@@ -226,6 +226,8 @@ function UI.SceneStateChange(_, newState)
     if not UI.currentLoot then
       -- Initialize filter to saved.
       UI.filterFragment:SetFilter(ADDON.GetSetting_filter(), true)
+      UI.filterFragment:SetEnabled('cod', ADDON.GetSetting_lootCODMails())
+      UI.filterFragment:SetEnabled('simple', ADDON.GetSetting_enableSimple())
     end
 
   elseif newState == SCENE_SHOWN then
@@ -252,6 +254,9 @@ function UI.ClearLoot()
     UI.filterOverride = false
     UI.filterFragment:SetFilter(ADDON.GetSetting_filter(), false)
   end
+
+  UI.filterFragment:SetEnabled('cod', ADDON.GetSetting_lootCODMails())
+  UI.filterFragment:SetEnabled('simple', ADDON.GetSetting_enableSimple())
 
   KEYBIND_STRIP:UpdateKeybindButtonGroup(UI.mailLooterButtonGroup)
 end

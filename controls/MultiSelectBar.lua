@@ -187,13 +187,11 @@ function MultiSelectBarButton:MouseEnter()
     self:SizeUp()
   end
 
-  if not self.m_disabled then
-    if self.m_buttonData.tooltip then
-      InitializeTooltip(InformationTooltip, self.m_button, BOTTOM, 0, -10)
-      SetTooltipText(
-        InformationTooltip,
-        zo_strformat(SI_MENU_BAR_TOOLTIP, GetString(self.m_buttonData.tooltip)))
-    end
+  if self.m_buttonData.tooltip then
+    InitializeTooltip(InformationTooltip, self.m_button, BOTTOM, 0, -10)
+    SetTooltipText(
+      InformationTooltip,
+      zo_strformat(SI_MENU_BAR_TOOLTIP, GetString(self.m_buttonData.tooltip)))
   end
 
   return not self.m_disabled
@@ -206,9 +204,7 @@ function MultiSelectBarButton:MouseExit()
     self:SizeDown()
   end
 
-  if not self.m_disabled then
-    ClearTooltip(InformationTooltip)
-  end
+  ClearTooltip(InformationTooltip)
 
   return not self.m_disabled
 end
@@ -294,6 +290,18 @@ end
 
 function MultiSelectBarButton:GetControl()
   return self.m_button
+end
+
+function MultiSelectBarButton:SetEnabled(enabled, skipAnimation)
+
+  if enabled ~= (not self.m_disabled) then
+    self.m_disabled = not enabled
+    self.m_latched = false
+    self.m_down = false
+    
+    self:SetState(skipAnimation)
+  end
+
 end
 
 --
@@ -691,10 +699,22 @@ function MultiSelectBar:SelectDescriptor( descriptor, skipAnimation )
   local buttonObject = self:ButtonObjectForDescriptor(descriptor)
 
   if buttonObject then
-    if (not buttonObject.m_latched) then
+    if (not buttonObject.m_latched) and (not buttonObject.m_disabled) then
       self:SetClickedButton(buttonObject, skipAnimation)
     end
 
+    return true
+  end
+
+  return false
+
+end
+
+function MultiSelectBar:SetEnabled(descriptor, enabled, skipAnimation)
+  local buttonObject = self:ButtonObjectForDescriptor(descriptor)
+
+  if buttonObject then
+    buttonObject:SetEnabled(enabled, skipAnimation)
     return true
   end
 
@@ -770,3 +790,8 @@ function Lodur_MultiSelectBar_ClearSelection(self)
   self.m_object:ClearSelection()
 end
 
+function Lodur_MultiSelectBar_SetEnabled(
+  self, descriptor, enabled, skipAnimation)
+
+  self.m_object:SetEnabled(descriptor, enabled, skipAnimation)
+end
