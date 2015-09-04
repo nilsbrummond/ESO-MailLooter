@@ -4,8 +4,6 @@ Player mail as tooltip
 
 Find a better guild store icon.
 
-COD icon.
-
 BUG - keybind strip showing wrong key bind to some users.
 
 BUG - Stack items show as multiple items
@@ -18,6 +16,8 @@ Sandwitch
 
 DONE:
 ----
+
+COD icon.
 
 UI Makeover
  - narrow the loot window
