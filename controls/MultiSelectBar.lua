@@ -623,6 +623,8 @@ end
 
 local function GetSelectedSubtree(buttonObject, selected, unselected)
 
+  if buttonObject.m_disabled then return false end
+
   if buttonObject.m_latched then
     table.insert(selected, buttonObject:GetDescriptor())
     return true
