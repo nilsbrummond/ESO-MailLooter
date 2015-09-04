@@ -221,6 +221,10 @@ local function Row_OnMouseEnter(control, rowControl)
     end
   end
 
+  -- Tooltip mail display:
+  if rowControl.data.id then
+    -- TODO
+  end
 end
 
 local function Row_OnMouseExit(control, rowControl)
@@ -244,13 +248,9 @@ end
 local function RowStatus_OnMouseEnter(control)
  
   InitializeTooltip(InformationTooltip, control, TOPRIGHT, 0, 0, TOPLEFT)
-  if control:GetParent().data.id then
 
-  else
-    local mailType = control:GetParent().data.mailType
-
-    SetTooltipText(InformationTooltip, typeTooltips[mailType])
-  end
+  local mailType = control:GetParent().data.mailType
+  SetTooltipText(InformationTooltip, typeTooltips[mailType])
 end
 
 local function RowStatus_OnMouseExit(control)
