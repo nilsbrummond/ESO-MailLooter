@@ -182,7 +182,7 @@ function UI.OverviewFragmentClass:Initialize()
   self.codPayments = MakeValue(12, self.win)
 
   ZO_CurrencyControl_SetSimpleCurrency(
-    self.codPayments, CURRENCY_TYPE_MONEY, 0, 
+    self.codPayments, CURT_MONEY, 0, 
     currencyOptions, CURRENCY_SHOW_ALL, CURRENCY_HAS_ENOUGH)
 
 
@@ -211,7 +211,7 @@ function UI.OverviewFragmentClass:Update(loot)
   Set(CORE.MAILTYPE_BOUNCE)
 
   ZO_CurrencyControl_SetSimpleCurrency(
-    self.codPayments, CURRENCY_TYPE_MONEY, loot.codTotal, 
+    self.codPayments, CURT_MONEY, loot.codTotal, 
     currencyOptions, CURRENCY_SHOW_ALL, CURRENCY_HAS_ENOUGH)
 
 end
@@ -317,7 +317,7 @@ function UI.OverviewFragmentClass:Clear()
   Clear(CORE.MAILTYPE_BOUNCE)
 
   ZO_CurrencyControl_SetSimpleCurrency(
-    self.codPayments, CURRENCY_TYPE_MONEY, 0, 
+    self.codPayments, CURT_MONEY, 0, 
     currencyOptions, CURRENCY_SHOW_ALL, CURRENCY_HAS_ENOUGH)
 
 end
