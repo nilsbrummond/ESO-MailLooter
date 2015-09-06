@@ -813,13 +813,19 @@ local function LootMailsCont()
         CORE.state = STATE_MONEY
         TakeMailAttachedMoney(CORE.currentMail.id)
         return
-      else
+      elseif IsDeleteSimpleAfter() then
         -- delete
         DEBUG("delete id=" .. Id64ToString(CORE.currentMail.id))
         -- CORE.loot.mailCount = CORE.loot.mailCount + 1
         MailCount(MAILTYPE_SIMPLE)
         CORE.state = STATE_DELETE
         DeleteMail(CORE.currentMail.id, true)
+        return
+      else
+        DEBUG("simple mail - Do not delete")
+        CORE.skippedMails[zo_getSafeId64Key(CORE.currentMail.id)] = true
+        CORE.currentMail = {}
+        LootMails()
         return
       end
 
@@ -1086,9 +1092,16 @@ function CORE.TakeItemsEvt( eventCode, mailId )
       if (CORE.currentMail.money ~= nil) and (CORE.currentMail.money > 0) then
         CORE.state = STATE_MONEY
         TakeMailAttachedMoney(CORE.currentMail.id)
-      else
+      elseif (CORE.currentMail.mailType ~= MAILTYPE_SIMPLE) or 
+             IsDeleteSimpleAfter() then
         CORE.state = STATE_DELETE
         DeleteMail(CORE.currentMail.id, true)
+      else
+        -- simple mail - do not delete
+        DEBUG("simple mail - Do not delete")
+        CORE.skippedMails[zo_getSafeId64Key(CORE.currentMail.id)] = true
+        CORE.currentMail = {}
+        LootMails()
       end
     end
   end
@@ -1105,9 +1118,22 @@ function CORE.TakeMoneyEvt( eventCode, mailId )
     if AreId64sEqual(CORE.currentMail.id, mailId) then
       AddMoneyToHistory(CORE.loot, CORE.currentMail)
 
-      CORE.state = STATE_DELETE
-      zo_callLater(DoDeleteCmd, 1)
-      --DeleteMail(CORE.currentMail.id, true)
+      if (CORE.currentMail.mailType ~= MAILTYPE_SIMPLE) or 
+         IsDeleteSimpleAfter() then
+
+        CORE.state = STATE_DELETE
+        zo_callLater(DoDeleteCmd, 1)
+        --DeleteMail(CORE.currentMail.id, true)
+
+      else
+
+        -- simple mail - do not delete
+        DEBUG("simple mail - Do not delete")
+        CORE.skippedMails[zo_getSafeId64Key(CORE.currentMail.id)] = true
+        CORE.currentMail = {}
+        LootMails()
+
+      end
     end
   end
 
@@ -1454,16 +1480,24 @@ function CORE.TestLoot()
   end
 
   -- Test the stacking display bug:
-  local special = {
+  local special1 = {
     icon = "/esoui/art/icons/crafting_wood_turpen.dds",
     link = "|H1:item:54179:32:50:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|hturpen|h",
     stack=1,
     creator="",
   }
+  local special2 = {
+    icon = "/esoui/art/icons/crafting_ore_palladium.dds",
+    link = "|H1:item:46152:30:50:0:0:0:0:0:0:0:0:0:0:0:0:15:0:0:0:0:0|hPalladium|h",
+    stack=2,
+    creator="",
+  }
 
   for i=1,5 do
     table.insert(
-      testData.testSteps, {items={special}, mail=Mail(MAILTYPE_HIRELING, 0)})
+      testData.testSteps, {items={special1}, mail=Mail(MAILTYPE_HIRELING, 0)})
+    table.insert(
+      testData.testSteps, {items={special2}, mail=Mail(MAILTYPE_HIRELING, 0)})
   end
 
   -- with items
