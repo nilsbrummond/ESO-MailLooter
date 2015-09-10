@@ -5,6 +5,17 @@ local ADDON = MailLooter
 ADDON.Core = ADDON.Core or {}
 local CORE = ADDON.Core
 
+-- ZOS API (for testing)
+local API_GetNumBagFreeSlots = GetNumBagFreeSlots
+local API_GetNextMailId = GetNextMailId
+local API_GetMailItemInfo = GetMailItemInfo
+local API_GetAttachedItemInfo = GetAttachedItemInfo
+local API_GetAttachedItemLink = GetAttachedItemLink
+local API_ReadMail = ReadMail
+local API_TakeMailAttachedMoney = TakeMailAttachedMoney
+local API_TakeMailAttachedItems = TakeMailAttachedItems
+local API_DeleteMail = DeleteMail
+
 
 -- MAIL_TYPE
 local MAILTYPE_UNKNOWN      = 1
@@ -125,6 +136,8 @@ CORE.currentItems = {}
 CORE.skippedMails = {}
 CORE.nextLootNum = 1
 CORE.cancelClean = false
+CORE.mailHistory = {}
+
 
 CORE.callbacks = nil
 
@@ -331,7 +344,7 @@ local function LootThisMail(mailType, codAmount, hirelingType)
 end
 
 local function GetFreeLootSpace()
-  local space = GetNumBagFreeSlots(BAG_BACKPACK)
+  local space = API_GetNumBagFreeSlots(BAG_BACKPACK)
 
   if CORE.deconSpace then
     if space > 4 then space=space-4 else space=0 end
@@ -345,7 +358,7 @@ local function IsRoomToLoot(mailId, numAtt)
 
   -- NOTE: Testing seems to show that you can not loot items that will
   --       stack unless at least one inventory space is open.
-  if GetNumBagFreeSlots(BAG_BACKPACK) == 0 then return false end
+  if API_GetNumBagFreeSlots(BAG_BACKPACK) == 0 then return false end
 
 
   local space = GetFreeLootSpace()
@@ -358,11 +371,11 @@ local function IsRoomToLoot(mailId, numAtt)
   local roomNeeded = 0
 
   for i=1,numAtt do
-    local link = GetAttachedItemLink(mailId, i, LINK_STYLE_DEFAULT)
+    local link = API_GetAttachedItemLink(mailId, i, LINK_STYLE_DEFAULT)
 
     if IsItemLinkStackable(link) then
       -- Stackable Item
-      local _, stack = GetAttachedItemInfo(mailId, i)
+      local _, stack = API_GetAttachedItemInfo(mailId, i)
       local stackCountBackpack = GetItemLinkStacks(link)
 
       if (stackCountBackpack == 0) then
@@ -478,7 +491,7 @@ local function DoDeleteCmd()
   DEBUG( "DoDeleteCmd" )
 
   if CORE.state ~= STATE_DELETE then return end
-  DeleteMail(CORE.currentMail.id, true)
+  API_DeleteMail(CORE.currentMail.id, true)
 end
 
 local function SummaryScanMail()
@@ -499,9 +512,9 @@ local function SummaryScanMail()
 
   local codTotal = 0
 
-  local id = GetNextMailId(nil)
+  local id = API_GetNextMailId(nil)
   while id ~= nil do
-    local _, _, subject, _, unread, fromSystem, fromCustomerService, returned, numAttachments, attachedMoney, codAmount = GetMailItemInfo(id)
+    local _, _, subject, _, unread, fromSystem, fromCustomerService, returned, numAttachments, attachedMoney, codAmount = API_GetMailItemInfo(id)
 
     -- DEBUG(" -- Mail:" .. Id64ToString(id) .. " " .. subject .. " from:"..sdn.."/"..scn .. " sys:" .. tostring(fromSystem) .. " cs:"..tostring(fromCustomerService))
 
@@ -543,7 +556,7 @@ local function SummaryScanMail()
       countOther = countOther + 1
     end
 
-    id = GetNextMailId(id)
+    id = API_GetNextMailId(id)
   end
 
   local result = { countLootable = countLootable,
@@ -585,7 +598,7 @@ local function LootMails()
   CORE.state = STATE_LOOT
 
   local failedNoSpace = false
-  local id = GetNextMailId(nil)
+  local id = API_GetNextMailId(nil)
 
   if CORE.cancelClean then
     CORE.cancelClean = false
@@ -612,13 +625,15 @@ local function LootMails()
       local sdn, scn, subject, icon, unread, fromSystem, 
             fromCustomerService, returned, numAttachments, 
             attachedMoney, codAmount, expiresInDays, secsSinceReceived 
-        = GetMailItemInfo(id)
+        = API_GetMailItemInfo(id)
       
       numAttachments = numAttachments or 0
       attachedMoney = attachedMoney or 0
 
       local mailType, hirelingType = GetMailType(
         subject, fromSystem, codAmount, returned, numAttachments, attachedMoney)
+
+      table.insert(CORE.mailHistory, {API_GetMailItemInfo(id)})
 
       if fromCustomerService then
         -- NOOP - just skip it.
@@ -706,7 +721,7 @@ local function LootMails()
           -- CORE.loot.mailCount = CORE.loot.mailCount + 1
           MailCount(mailType)
           CORE.state = STATE_MONEY
-          TakeMailAttachedMoney(id)
+          API_TakeMailAttachedMoney(id)
           return
         elseif numAttachments == 0 then 
           -- DELETE
@@ -715,7 +730,7 @@ local function LootMails()
           -- CORE.loot.mailCount = CORE.loot.mailCount + 1
           MailCount(mailType)
           CORE.state = STATE_DELETE
-          DeleteMail(id, true)
+          API_DeleteMail(id, true)
           return
         else
           -- NOOP
@@ -731,7 +746,7 @@ local function LootMails()
     end
 
     CORE.currentMail = nil
-    id = GetNextMailId(id)
+    id = API_GetNextMailId(id)
 
   end
 
@@ -759,7 +774,7 @@ local function AddPlayerMailToHistory(id, body)
   local sdn, scn, subject, icon, unread, fromSystem, 
         fromCustomerService, returned, numAttachments, 
         attachedMoney, codAmount, expiresInDays, secsSinceReceived 
-    = GetMailItemInfo(id)
+    = API_GetMailItemInfo(id)
 
   mail.sdn = sdn
   mail.scn = scn
@@ -775,8 +790,8 @@ local function AddPlayerMailToHistory(id, body)
 
   mail.items = {}
   for i=1,numAttachments do
-    local icon, stack, creator = GetAttachedItemInfo(id, i)
-    local link = GetAttachedItemLink(id, i, LINK_STYLE_DEFAULT)
+    local icon, stack, creator = API_GetAttachedItemInfo(id, i)
+    local link = API_GetAttachedItemLink(id, i, LINK_STYLE_DEFAULT)
 
     table.insert(
       mail.items,
@@ -793,12 +808,12 @@ local function LootMailsCont()
   local body = false
 
   if CORE.currentMail.includeMail then
-    body = ReadMail(CORE.currentMail.id)
+    body = API_ReadMail(CORE.currentMail.id)
     AddPlayerMailToHistory(CORE.currentMail.id, body)
   end
 
   if CORE.currentMail.mailType == MAILTYPE_SIMPLE_PRE then
-    body = (not body) and ReadMail(CORE.currentMail.id) or body
+    body = (not body) and API_ReadMail(CORE.currentMail.id) or body
     if IsSimplePost(body) then
 
       CORE.currentMail.mailType = MAILTYPE_SIMPLE
@@ -811,7 +826,7 @@ local function LootMailsCont()
         -- CORE.loot.mailCount = CORE.loot.mailCount + 1
         MailCount(MAILTYPE_SIMPLE)
         CORE.state = STATE_MONEY
-        TakeMailAttachedMoney(CORE.currentMail.id)
+        API_TakeMailAttachedMoney(CORE.currentMail.id)
         return
       else
         -- delete
@@ -819,7 +834,7 @@ local function LootMailsCont()
         -- CORE.loot.mailCount = CORE.loot.mailCount + 1
         MailCount(MAILTYPE_SIMPLE)
         CORE.state = STATE_DELETE
-        DeleteMail(CORE.currentMail.id, true)
+        API_DeleteMail(CORE.currentMail.id, true)
         return
       end
 
@@ -846,9 +861,9 @@ local function LootMailsCont()
     CORE.currentItems = {}
 
     for i=1,CORE.currentMail.att do
-      local icon, stack, creator = GetAttachedItemInfo(
+      local icon, stack, creator = API_GetAttachedItemInfo(
         CORE.currentMail.id, i)
-      local link = GetAttachedItemLink(
+      local link = API_GetAttachedItemLink(
         CORE.currentMail.id, i, LINK_STYLE_DEFAULT)
 
       DEBUG("  item: " .. link .. " icon: " .. icon)
@@ -870,7 +885,7 @@ local function LootMailsCont()
 
     -- BUG: Why does this sometimes fail??? (FIXED)
     -- Work around: load the mail to be read first.
-    TakeMailAttachedItems(CORE.currentMail.id)
+    API_TakeMailAttachedItems(CORE.currentMail.id)
 
   elseif CORE.currentMail.money > 0 then
     --
@@ -881,7 +896,7 @@ local function LootMailsCont()
     -- CORE.loot.mailCount = CORE.loot.mailCount + 1
     MailCount(CORE.currentMail.mailType)
     CORE.state = STATE_MONEY
-    TakeMailAttachedMoney(CORE.currentMail.id)
+    API_TakeMailAttachedMoney(CORE.currentMail.id)
 
   else
 
@@ -1085,10 +1100,10 @@ function CORE.TakeItemsEvt( eventCode, mailId )
 
       if (CORE.currentMail.money ~= nil) and (CORE.currentMail.money > 0) then
         CORE.state = STATE_MONEY
-        TakeMailAttachedMoney(CORE.currentMail.id)
+        API_TakeMailAttachedMoney(CORE.currentMail.id)
       else
         CORE.state = STATE_DELETE
-        DeleteMail(CORE.currentMail.id, true)
+        API_DeleteMail(CORE.currentMail.id, true)
       end
     end
   end
@@ -1107,7 +1122,7 @@ function CORE.TakeMoneyEvt( eventCode, mailId )
 
       CORE.state = STATE_DELETE
       zo_callLater(DoDeleteCmd, 1)
-      --DeleteMail(CORE.currentMail.id, true)
+      --API_DeleteMail(CORE.currentMail.id, true)
     end
   end
 
@@ -1231,6 +1246,33 @@ function CORE.SetAutoReturnStrings(strings)
 
   CORE.bounceWords = newWords
 
+end
+
+-- Used by testing framework.
+function CORE.SetAPI(api)
+  if api == nil then
+    -- Set API to ZOS API
+    API_GetNumBagFreeSlots = GetNumBagFreeSlots
+    API_GetNextMailId = GetNextMailId
+    API_GetMailItemInfo = GetMailItemInfo
+    API_GetAttachedItemInfo = GetAttachedItemInfo
+    API_GetAttachedItemLink = GetAttachedItemLink
+    API_ReadMail = ReadMail
+    API_TakeMailAttachedMoney = TakeMailAttachedMoney
+    API_TakeMailAttachedItems = TakeMailAttachedItems
+    API_DeleteMail = DeleteMail
+  else
+    -- Set API to Testing framework.
+    API_GetNumBagFreeSlots = api.GetNumBagFreeSlots
+    API_GetNextMailId = api.GetNextMailId
+    API_GetMailItemInfo = api.GetMailItemInfo
+    API_GetAttachedItemInfo = api.GetAttachedItemInfo
+    API_GetAttachedItemLink = api.GetAttachedItemLink
+    API_ReadMail = api.ReadMail
+    API_TakeMailAttachedMoney = api.TakeMailAttachedMoney
+    API_TakeMailAttachedItems = api.TakeMailAttachedItems
+    API_DeleteMail = api.DeleteMail
+  end
 end
 
 -- Call to start a MailLooter session.
@@ -1523,14 +1565,14 @@ function CORE.Scan()
     return
   end
 
-  local id = GetNextMailId(nil)
+  local id = API_GetNextMailId(nil)
 
   local t = {}
 
   while id ~= nil do
 
     local _, _, subject, icon, unread, fromSystem, fromCustomerService, returned, 
-      numAttachments, attachedMoney, codAmount, expiresInDays, secsSinceReceived = GetMailItemInfo(id)
+      numAttachments, attachedMoney, codAmount, expiresInDays, secsSinceReceived = API_GetMailItemInfo(id)
 
     numAttachments = numAttachments or 0
     attachedMoney = attachedMoney or 0
@@ -1554,8 +1596,8 @@ function CORE.Scan()
       GetMailAttachmentInfo(id)
 
       for i=1, numAttachments do
-        local icon, stack, cn, sp, meets = GetAttachedItemInfo(id, i)
-        local link = GetAttachedItemLink(id, i, LINK_STYLE_BRACKETS)
+        local icon, stack, cn, sp, meets = API_GetAttachedItemInfo(id, i)
+        local link = API_GetAttachedItemLink(id, i, LINK_STYLE_BRACKETS)
         table.insert(items, {stack=stack, link=link})
       end
     end
@@ -1567,7 +1609,7 @@ function CORE.Scan()
       }
     )
 
-    id = GetNextMailId(id)
+    id = API_GetNextMailId(id)
   end
 
   return t
