@@ -1176,30 +1176,28 @@ function CORE.TakeItemsEvt( eventCode, mailId )
       CORE.currentItems = {}
 
       if (CORE.currentMail.money ~= nil) and (CORE.currentMail.money > 0) then
+
         CORE.state = STATE_MONEY
-<<<<<<< HEAD
         API_TakeMailAttachedMoney(CORE.currentMail.id)
-      else
+
+      elseif (CORE.currentMail.mailType ~= MAILTYPE_SIMPLE) or 
+             IsDeleteSimpleAfter() then
+
         CORE.state = STATE_DELETE
 
         -- In case any other Addon or code wants to handle
         -- this event.  Don't deleted it till after all 
         -- interested handlers have a chance to run....
-        -- zo_callLater(DoDeleteCmd, 10)
         DelayedDeleteCmd()
-=======
-        TakeMailAttachedMoney(CORE.currentMail.id)
-      elseif (CORE.currentMail.mailType ~= MAILTYPE_SIMPLE) or 
-             IsDeleteSimpleAfter() then
-        CORE.state = STATE_DELETE
-        DeleteMail(CORE.currentMail.id, true)
+
       else
         -- simple mail - do not delete
         DEBUG("simple mail - Do not delete")
         CORE.skippedMails[zo_getSafeId64Key(CORE.currentMail.id)] = true
         CORE.currentMail = {}
-        LootMails()
->>>>>>> delete_simple
+
+        CORE.state = STATE_LOOT
+        LootMailsAgain()
       end
     end
   end
