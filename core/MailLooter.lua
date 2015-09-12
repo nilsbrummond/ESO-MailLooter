@@ -879,7 +879,7 @@ local function LootMailsCont()
         CORE.state = STATE_MONEY
         API_TakeMailAttachedMoney(CORE.currentMail.id)
         return
-      else
+      elseif IsDeleteSimpleAfter() then
         -- delete
         DEBUG("delete id=" .. Id64ToString(CORE.currentMail.id))
         -- CORE.loot.mailCount = CORE.loot.mailCount + 1
@@ -891,6 +891,12 @@ local function LootMailsCont()
         -- interested handlers have a chance to run....
         DelayedDeleteCmd()
         return
+      else
+        DEBUG("simple mail - Do not delete")
+        CORE.skippedMails[zo_getSafeId64Key(CORE.currentMail.id)] = true
+        CORE.currentMail = {}
+        LootMails()
+        return
       end
 
     else
@@ -898,6 +904,8 @@ local function LootMailsCont()
       DEBUG("not simple id=" .. Id64ToString(CORE.currentMail.id))
       CORE.skippedMails[zo_getSafeId64Key(CORE.currentMail.id)] = true
       CORE.currentMail = {}
+      
+      CORE.state = STATE_LOOT
       LootMailsAgain()
       return
     end
@@ -974,6 +982,8 @@ local function LootMailsCont()
     -- skip it...
     CORE.skippedMails[zo_getSafeId64Key(CORE.currentMail.id)] = true
     CORE.currentMail = {}
+  
+    CORE.state = STATE_LOOT
     LootMailsAgain()
   end
 
@@ -1127,6 +1137,8 @@ function CORE.MailRemovedEvt( eventCode, mailId )
       -- normal case.
       if CORE.state == STATE_DELETE then
         CORE.currentMail = nil
+        
+        CORE.state = STATE_LOOT
         LootMailsAgain()
 
       -- Our mail was deleted on us...
@@ -1165,6 +1177,7 @@ function CORE.TakeItemsEvt( eventCode, mailId )
 
       if (CORE.currentMail.money ~= nil) and (CORE.currentMail.money > 0) then
         CORE.state = STATE_MONEY
+<<<<<<< HEAD
         API_TakeMailAttachedMoney(CORE.currentMail.id)
       else
         CORE.state = STATE_DELETE
@@ -1174,6 +1187,19 @@ function CORE.TakeItemsEvt( eventCode, mailId )
         -- interested handlers have a chance to run....
         -- zo_callLater(DoDeleteCmd, 10)
         DelayedDeleteCmd()
+=======
+        TakeMailAttachedMoney(CORE.currentMail.id)
+      elseif (CORE.currentMail.mailType ~= MAILTYPE_SIMPLE) or 
+             IsDeleteSimpleAfter() then
+        CORE.state = STATE_DELETE
+        DeleteMail(CORE.currentMail.id, true)
+      else
+        -- simple mail - do not delete
+        DEBUG("simple mail - Do not delete")
+        CORE.skippedMails[zo_getSafeId64Key(CORE.currentMail.id)] = true
+        CORE.currentMail = {}
+        LootMails()
+>>>>>>> delete_simple
       end
     end
   end
@@ -1190,13 +1216,28 @@ function CORE.TakeMoneyEvt( eventCode, mailId )
     if AreId64sEqual(CORE.currentMail.id, mailId) then
       AddMoneyToHistory(CORE.loot, CORE.currentMail)
 
-      CORE.state = STATE_DELETE
+      if (CORE.currentMail.mailType ~= MAILTYPE_SIMPLE) or 
+         IsDeleteSimpleAfter() then
+        
+        CORE.state = STATE_DELETE
 
-      -- In case any other Addon or code wants to handle
-      -- this event.  Don't deleted it till after all 
-      -- interested handlers have a chance to run....
-      -- zo_callLater(DoDeleteCmd, 10)
-      DelayedDeleteCmd()
+        -- In case any other Addon or code wants to handle
+        -- this event.  Don't deleted it till after all 
+        -- interested handlers have a chance to run....
+        -- zo_callLater(DoDeleteCmd, 10)
+        DelayedDeleteCmd()
+
+      else
+
+        -- simple mail - do not delete
+        DEBUG("simple mail - Do not delete")
+        CORE.skippedMails[zo_getSafeId64Key(CORE.currentMail.id)] = true
+        CORE.currentMail = {}
+  
+        CORE.state = STATE_LOOT
+        LootMailsAgain()
+
+      end
     end
   end
 
@@ -1572,16 +1613,24 @@ function CORE.TestLoot()
   end
 
   -- Test the stacking display bug:
-  local special = {
+  local special1 = {
     icon = "/esoui/art/icons/crafting_wood_turpen.dds",
     link = "|H1:item:54179:32:50:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|hturpen|h",
     stack=1,
     creator="",
   }
+  local special2 = {
+    icon = "/esoui/art/icons/crafting_ore_palladium.dds",
+    link = "|H1:item:46152:30:50:0:0:0:0:0:0:0:0:0:0:0:0:15:0:0:0:0:0|hPalladium|h",
+    stack=2,
+    creator="",
+  }
 
   for i=1,5 do
     table.insert(
-      testData.testSteps, {items={special}, mail=Mail(MAILTYPE_HIRELING, 0)})
+      testData.testSteps, {items={special1}, mail=Mail(MAILTYPE_HIRELING, 0)})
+    table.insert(
+      testData.testSteps, {items={special2}, mail=Mail(MAILTYPE_HIRELING, 0)})
   end
 
   -- with items
