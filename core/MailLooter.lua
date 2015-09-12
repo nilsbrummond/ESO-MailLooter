@@ -11,10 +11,12 @@ local API_GetNextMailId = GetNextMailId
 local API_GetMailItemInfo = GetMailItemInfo
 local API_GetAttachedItemInfo = GetAttachedItemInfo
 local API_GetAttachedItemLink = GetAttachedItemLink
+local API_RequestReadMail = RequestReadMail
 local API_ReadMail = ReadMail
 local API_TakeMailAttachedMoney = TakeMailAttachedMoney
 local API_TakeMailAttachedItems = TakeMailAttachedItems
 local API_DeleteMail = DeleteMail
+local API_ReturnMail = ReturnMail
 
 
 -- MAIL_TYPE
@@ -136,7 +138,6 @@ CORE.currentItems = {}
 CORE.skippedMails = {}
 CORE.nextLootNum = 1
 CORE.cancelClean = false
-CORE.mailHistory = {}
 
 
 CORE.callbacks = nil
@@ -190,6 +191,25 @@ local function IsDeleteSimpleAfter() return false end
 local function LootThisMailCOD(codAmount, codTotal) return false end
 local function IsBounceEnabled() return false end
 
+-- Makes a function to call a function later.  Like zo_callLater but there
+-- is not a closure created for every call.  Just once up front.
+local function MakeCallLater(func, id, ms)
+
+  local mid = 'MailLooter' .. id
+
+  local x = function()
+    EVENT_MANAGER:UnregisterForUpdate(mid)
+    func()
+  end
+
+  local delayFn = function()
+    EVENT_MANAGER:RegisterForUpdate( mid, ms, x )
+  end
+
+  return delayFn
+end
+
+
 local function MailCount(mailType)
   CORE.loot.mailCount[mailType] = CORE.loot.mailCount[mailType] + 1
   CORE.loot.mailCount.all = CORE.loot.mailCount.all + 1
@@ -223,6 +243,8 @@ local function NewLootStruct()
   l.items[MAILTYPE_COD] = {}
   l.items[MAILTYPE_RETURNED] = {}
   l.items[MAILTYPE_SIMPLE] = {}
+
+  l.debug = {}
 
   return l
 end
@@ -487,12 +509,28 @@ local function AddItemsToHistory(loot, currentItems)
 
 end
 
+
 local function DoDeleteCmd()
   DEBUG( "DoDeleteCmd" )
 
   if CORE.state ~= STATE_DELETE then return end
   API_DeleteMail(CORE.currentMail.id, true)
 end
+
+local DelayedDeleteCmd = MakeCallLater(DoDeleteCmd, "Delete", 10)
+
+
+local function DoReturnCmd()
+  DEBUG( "DoReturnCmd" )
+
+  -- Mail is confirmed returned by the deleted event.
+  if CORE.state ~= STATE_DELETE then return end
+
+  API_ReturnMail(CORE.currentMail.id)
+end
+
+local DelayedReturnCmd = MakeCallLater(DoReturnCmd, "Return", 50)
+
 
 local function SummaryScanMail()
 
@@ -633,7 +671,9 @@ local function LootMails()
       local mailType, hirelingType = GetMailType(
         subject, fromSystem, codAmount, returned, numAttachments, attachedMoney)
 
-      table.insert(CORE.mailHistory, {API_GetMailItemInfo(id)})
+      -- DEBUG: Store mail as looted
+      table.insert(CORE.loot.debug, {API_GetMailItemInfo(id)})
+      CORE.loot.debug[#CORE.loot.debug].id = id
 
       if fromCustomerService then
         -- NOOP - just skip it.
@@ -650,9 +690,11 @@ local function LootMails()
           -- CORE.loot.autoReturnCount = CORE.loot.autoReturnCount + 1
           -- increment(CORE.loot, "autoReturnCount")
           MailCount(MAILTYPE_BOUNCE)
+
+          -- Returned mail is 'Deleted' by ZOS.  Wait for Delete event.
           CORE.state = STATE_DELETE
           CORE.currentMail = {id=id}
-          ReturnMail(id)
+          DelayedReturnCmd()
           return
         else
           -- Skip it.
@@ -694,7 +736,7 @@ local function LootMails()
    
           DEBUG("simple-pre id=" .. Id64ToString(id))
           CORE.state = STATE_READ
-          RequestReadMail(id)
+          API_RequestReadMail(id)
           return
 
         elseif doItemLoot then
@@ -704,7 +746,7 @@ local function LootMails()
 
           DEBUG("items id=" .. Id64ToString(id))
           CORE.state = STATE_READ
-          RequestReadMail(id)
+          API_RequestReadMail(id)
           return
 
         elseif not fromSystem then
@@ -713,7 +755,7 @@ local function LootMails()
 
           DEBUG("player-mail id=" .. Id64ToString(id))
           CORE.state = STATE_READ
-          RequestReadMail(id)
+          API_RequestReadMail(id)
           return
 
         elseif attachedMoney > 0 then
@@ -730,7 +772,7 @@ local function LootMails()
           -- CORE.loot.mailCount = CORE.loot.mailCount + 1
           MailCount(mailType)
           CORE.state = STATE_DELETE
-          API_DeleteMail(id, true)
+          DelayedDeleteCmd()
           return
         else
           -- NOOP
@@ -767,6 +809,8 @@ local function LootMails()
   end
 end
 
+local LootMailsAgain = MakeCallLater(LootMails, "Loot", 50)
+
 local function AddPlayerMailToHistory(id, body)
 
   local mail = {body = body}
@@ -799,7 +843,7 @@ local function AddPlayerMailToHistory(id, body)
     )
   end
 
-  CORE.loot.mails[id] = mail
+  CORE.loot.mails[zo_getSafeId64Key(id)] = mail
 end
 
 local function LootMailsCont()
@@ -810,10 +854,17 @@ local function LootMailsCont()
   if CORE.currentMail.includeMail then
     body = API_ReadMail(CORE.currentMail.id)
     AddPlayerMailToHistory(CORE.currentMail.id, body)
+
+    -- DEBUG
+    CORE.loot.debug[#CORE.loot.debug].body = body
   end
 
   if CORE.currentMail.mailType == MAILTYPE_SIMPLE_PRE then
     body = (not body) and API_ReadMail(CORE.currentMail.id) or body
+
+    -- DEBUG
+    CORE.loot.debug[#CORE.loot.debug].body = body
+ 
     if IsSimplePost(body) then
 
       CORE.currentMail.mailType = MAILTYPE_SIMPLE
@@ -834,7 +885,11 @@ local function LootMailsCont()
         -- CORE.loot.mailCount = CORE.loot.mailCount + 1
         MailCount(MAILTYPE_SIMPLE)
         CORE.state = STATE_DELETE
-        API_DeleteMail(CORE.currentMail.id, true)
+
+        -- In case any other Addon or code wants to handle
+        -- this event.  Don't deleted it till after all 
+        -- interested handlers have a chance to run....
+        DelayedDeleteCmd()
         return
       end
 
@@ -843,7 +898,7 @@ local function LootMailsCont()
       DEBUG("not simple id=" .. Id64ToString(CORE.currentMail.id))
       CORE.skippedMails[zo_getSafeId64Key(CORE.currentMail.id)] = true
       CORE.currentMail = {}
-      LootMails()
+      LootMailsAgain()
       return
     end
   end
@@ -859,6 +914,9 @@ local function LootMailsCont()
 
     -- Reading the attached items works better after reading the mail.
     CORE.currentItems = {}
+
+    -- DEBUG
+    CORE.loot.debug[#CORE.loot.debug].items = {}
 
     for i=1,CORE.currentMail.att do
       local icon, stack, creator = API_GetAttachedItemInfo(
@@ -879,6 +937,13 @@ local function LootMailsCont()
           scn=CORE.currentMail.scn,
         }
       )
+
+      -- DEBUG
+      table.insert(
+        CORE.loot.debug[#CORE.loot.debug].items, 
+        { icon, stack, creator, link }
+      )
+
     end
 
     CORE.state = STATE_ITEMS
@@ -904,12 +969,12 @@ local function LootMailsCont()
     -- Is that the only way to get here?
 
     -- Unstore this mail
-    CORE.loot.mails[CORE.currentMail.id] = nil
+    CORE.loot.mails[zo_getSafeId64Key(CORE.currentMail.id)] = nil
 
     -- skip it...
     CORE.skippedMails[zo_getSafeId64Key(CORE.currentMail.id)] = true
     CORE.currentMail = {}
-    LootMails()
+    LootMailsAgain()
   end
 
 end
@@ -1062,7 +1127,7 @@ function CORE.MailRemovedEvt( eventCode, mailId )
       -- normal case.
       if CORE.state == STATE_DELETE then
         CORE.currentMail = nil
-        LootMails()
+        LootMailsAgain()
 
       -- Our mail was deleted on us...
       elseif (CORE.state == STATE_READ) or
@@ -1103,7 +1168,12 @@ function CORE.TakeItemsEvt( eventCode, mailId )
         API_TakeMailAttachedMoney(CORE.currentMail.id)
       else
         CORE.state = STATE_DELETE
-        API_DeleteMail(CORE.currentMail.id, true)
+
+        -- In case any other Addon or code wants to handle
+        -- this event.  Don't deleted it till after all 
+        -- interested handlers have a chance to run....
+        -- zo_callLater(DoDeleteCmd, 10)
+        DelayedDeleteCmd()
       end
     end
   end
@@ -1121,8 +1191,12 @@ function CORE.TakeMoneyEvt( eventCode, mailId )
       AddMoneyToHistory(CORE.loot, CORE.currentMail)
 
       CORE.state = STATE_DELETE
-      zo_callLater(DoDeleteCmd, 1)
-      --API_DeleteMail(CORE.currentMail.id, true)
+
+      -- In case any other Addon or code wants to handle
+      -- this event.  Don't deleted it till after all 
+      -- interested handlers have a chance to run....
+      -- zo_callLater(DoDeleteCmd, 10)
+      DelayedDeleteCmd()
     end
   end
 
@@ -1261,6 +1335,7 @@ function CORE.SetAPI(api)
     API_TakeMailAttachedMoney = TakeMailAttachedMoney
     API_TakeMailAttachedItems = TakeMailAttachedItems
     API_DeleteMail = DeleteMail
+    API_ReturnMail = ReturnMail
   else
     -- Set API to Testing framework.
     API_GetNumBagFreeSlots = api.GetNumBagFreeSlots
@@ -1272,6 +1347,7 @@ function CORE.SetAPI(api)
     API_TakeMailAttachedMoney = api.TakeMailAttachedMoney
     API_TakeMailAttachedItems = api.TakeMailAttachedItems
     API_DeleteMail = api.DeleteMail
+    API_ReturnMail = api.ReturnMail
   end
 end
 
