@@ -32,17 +32,17 @@ local function CommandHandler(text)
   elseif cmd == "loot-all" then
     ADDON.QuickLaunchAll()
   elseif cmd == "debug" then
-    if (arg == nil) or (arg1 == "") then
+    if (arg1 == nil) or (arg1 == "") then
       -- Noithing...
     elseif arg1 == "off" then
       ADDON.SetSetting_debug(false)
-    elseif cmd == "on" then
+    elseif arg1 == "on" then
       ADDON.SetSetting_debug(true)
-    elseif cmd == "hide" then
+    elseif arg1 == "hide" then
       if ADDON.debugMsgWin then 
         ADDON.debugMsgWin:SetHidden(true) 
       end
-    elseif cmd == "show" then
+    elseif arg1 == "show" then
       if ADDON.debugMsgWin then 
         ADDON.debugMsgWin:SetHidden(false) 
       end
