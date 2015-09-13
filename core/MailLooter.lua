@@ -469,7 +469,6 @@ end
 
 -- Since some equivalent items can have different meaningless levels.
 -- Then these items have varrying links.
---[[
 local function GetItemLinkKey(link)
   local itemType = GetItemLinkItemType(link)
 
@@ -478,7 +477,8 @@ local function GetItemLinkKey(link)
      (itemType == ITEMTYPE_ARMOR_TRAIT) or
      (itemType == ITEMTYPE_WOODWORKING_BOOSTER) or
      (itemType == ITEMTYPE_CLOTHIER_BOOSTER) or
-     (itemType == ITEMTYPE_BLACKSMITHING_BOOSTER) then
+     (itemType == ITEMTYPE_BLACKSMITHING_BOOSTER) or
+     (itemType == ITEMTYPE_INGREDIENT) then
 
     local _, _, _, f4, f5 = ZO_LinkHandler_ParseLink(link)
 
@@ -487,11 +487,6 @@ local function GetItemLinkKey(link)
    else
      return link
    end
-end
---]]
-
-local function GetItemLinkKey(link)
-  return link
 end
 
 local function AddItemsToHistory(loot, currentItems)
@@ -502,9 +497,9 @@ local function AddItemsToHistory(loot, currentItems)
 
     if MailTypeStackable[item.mailType] then
 
-      DEBUG( "Item (stackable): " .. tostring(item.link))
-
       local key = GetItemLinkKey(item.link)
+
+      DEBUG( "Item (stackable): " .. key)
 
       if loot.items[item.mailType][key] == nil then
         item.lootNum = CORE.nextLootNum
@@ -520,7 +515,7 @@ local function AddItemsToHistory(loot, currentItems)
       end
 
       CORE.callbacks.ListUpdateCB(
-        loot, false, loot.items[item.mailType][item.link], newItemType)
+        loot, false, loot.items[item.mailType][key], newItemType)
     else
 
       DEBUG( "Item (unstackable): " .. tostring(item.link))
