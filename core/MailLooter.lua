@@ -4,6 +4,8 @@ MailLooter = MailLooter or {}
 local ADDON = MailLooter
 ADDON.Core = ADDON.Core or {}
 local CORE = ADDON.Core
+ADDON.Core.Test = ADDON.Core.Test or {}
+local TEST = ADDON.Core.Test
 
 -- ZOS API (for testing)
 local API_GetNumBagFreeSlots = GetNumBagFreeSlots
@@ -697,7 +699,8 @@ local function LootMails()
 
       -- DEBUG: Store mail as looted
       table.insert(CORE.loot.debug, {API_GetMailItemInfo(id)})
-      CORE.loot.debug[#CORE.loot.debug].id = id
+      CORE.loot.debug[#CORE.loot.debug].id = Id64ToString(id)
+      CORE.loot.debug[#CORE.loot.debug].mailType = mailType
 
       if fromCustomerService then
         -- NOOP - just skip it.
@@ -893,6 +896,9 @@ local function LootMailsCont()
 
       CORE.currentMail.mailType = MAILTYPE_SIMPLE
 
+      -- DEBUG
+      CORE.loot.debug[#CORE.loot.debug].mailType = MAILTYPE_SIMPLE
+
       if (CORE.currentMail.att > 0) then
         -- Fall through to loot items...
       elseif CORE.currentMail.money > 0 then
@@ -1036,6 +1042,9 @@ local function Start(filter)
 
 end
 
+-- forward declared.
+local DelayedTestLoot
+
 -- Perform a test step on the timer.
 local function DoTestLoot()
 
@@ -1074,7 +1083,7 @@ local function DoTestLoot()
     AddItemsToHistory(testData.loot, step.items)
     AddMoneyToHistory(testData.loot, step.mail)
 
-    zo_callLater(DoTestLoot, 50)
+    DelayedTestLoot()
   else
     DEBUG ( "Test Done" )
     CORE.callbacks.ListUpdateCB(testData.loot, true, nil, false)
@@ -1085,6 +1094,8 @@ local function DoTestLoot()
   end
 
 end
+
+DelayedTestLoot = MakeCallLater(DoTestLoot, "Test", 50)
 
 --
 -- Event Handler Functions
@@ -1246,7 +1257,6 @@ function CORE.TakeMoneyEvt( eventCode, mailId )
         -- In case any other Addon or code wants to handle
         -- this event.  Don't deleted it till after all 
         -- interested handlers have a chance to run....
-        -- zo_callLater(DoDeleteCmd, 10)
         DelayedDeleteCmd()
 
       else
@@ -1545,13 +1555,37 @@ function CORE.IsActionReady()
 end
 
 -- Test functions to fake loot mail.
-function CORE.TestLoot()
+function CORE.TestLoot(arg)
   
   if not (mailLooterOpen and (CORE.state == STATE_IDLE)) then
     d("Test function can not run right now")
     return
   end
 
+  if not arg then
+    CORE.TestLootOld()
+    return true
+  else
+    if TEST.tests[arg] then
+      testData = {}
+      testData.testSteps = TEST.MakeItemTest(TEST.tests[arg])
+      testData.loot = NewLootStruct()
+      testData.nextStep = 1
+
+      -- Start the test..
+      CORE.state = STATE_TEST
+      CORE.nextLootNum = 1
+      CORE.callbacks.StatusUpdateCB(true, true, nil)
+
+      DelayedTestLoot()
+      return true
+    end
+  end
+
+  return false
+end
+
+function CORE.TestLootOld()
   DEBUG("TestLoot start")
 
   local realItem = {}
@@ -1700,7 +1734,7 @@ function CORE.TestLoot()
   CORE.nextLootNum = 1
   CORE.callbacks.StatusUpdateCB(true, true, nil)
 
-  zo_callLater(DoTestLoot, 250)
+  DelayedTestLoot()
 
 end
 

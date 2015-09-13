@@ -568,6 +568,8 @@ function UI.LootFragmentClass:AddLooted(item, isNewItemType)
     data.name = GetItemLinkName(item.link)
     data.value = GetItemLinkValue(item.link, true) * item.stack
 
+    UI.DEBUG("New stack: " .. data.stack)
+
     local row = ZO_ScrollList_CreateDataEntry(
       typeRowType[item.mailType], data, CATEGORY_DEFAULT)
 
@@ -580,20 +582,26 @@ function UI.LootFragmentClass:AddLooted(item, isNewItemType)
   else
     -- update row
     --
+    local updated = false
     local data = ZO_ScrollList_GetDataList(self.scrollList)
     for i,v in ipairs(data) do
-      local data = ZO_ScrollList_GetDataEntryData(v)
-      if (data.link ~= nil) and                 -- is an item
-         (data.mailType == item.mailType) and   -- in the same category 
-         (data.link == item.link) then          -- and the same item.
+      local rowdata = ZO_ScrollList_GetDataEntryData(v)
+      if (rowdata.link ~= nil) and                 -- is an item
+         (rowdata.mailType == item.mailType) and   -- in the same category 
+         (rowdata.link == item.link) then          -- and the same item.
 
-        UI.DEBUG("Updating stack: " .. data.stack .. " -> " .. item.stack)
+        UI.DEBUG("Updating stack: " .. rowdata.stack .. " -> " .. item.stack)
         -- update the stack size  
-        data.stack = item.stack
-        data.value = GetItemLinkValue(data.link, true) * data.stack
+        rowdata.stack = item.stack
+        rowdata.value = GetItemLinkValue(rowdata.link, true) * rowdata.stack
+        updated = true
         break
 
       end
+    end
+
+    if not updated then
+      UI.DEBUG("Update of stack FAILED: " .. item.link)
     end
 
     if self.currentSortKey == "value" then

@@ -21,29 +21,39 @@ local function CommandHandler(text)
     end
 
     return
-  elseif text == "open" then
+  end
+
+  local cmd, arg1, arg2 = zo_strsplit(' ', text)
+
+  if cmd == "open" then
     ADDON.QuickLaunch()
-  elseif text == "loot" then
+  elseif cmd == "loot" then
     ADDON.QuickLaunchFiltered()
-  elseif text == "loot-all" then
+  elseif cmd == "loot-all" then
     ADDON.QuickLaunchAll()
-  elseif text == "debug off" then
-    ADDON.SetSetting_debug(false)
-  elseif text == "debug on" then
-    ADDON.SetSetting_debug(true)
-  elseif text == "debug hide" then
-    if ADDON.debugMsgWin then 
-      ADDON.debugMsgWin:SetHidden(true) 
+  elseif cmd == "debug" then
+    if (arg == nil) or (arg1 == "") then
+      -- Noithing...
+    elseif arg1 == "off" then
+      ADDON.SetSetting_debug(false)
+    elseif cmd == "on" then
+      ADDON.SetSetting_debug(true)
+    elseif cmd == "hide" then
+      if ADDON.debugMsgWin then 
+        ADDON.debugMsgWin:SetHidden(true) 
+      end
+    elseif cmd == "show" then
+      if ADDON.debugMsgWin then 
+        ADDON.debugMsgWin:SetHidden(false) 
+      end
+    else
+      -- Nothing...
     end
-  elseif text == "debug show" then
-    if ADDON.debugMsgWin then 
-      ADDON.debugMsgWin:SetHidden(false) 
-    end
-  elseif text == "reset" then
+  elseif cmd == "reset" then
     ADDON.Core.Reset()
-  elseif text == "test" then
-    ADDON.Core.TestLoot()
-  elseif text == "scan" then
+  elseif cmd == "test" then
+    ADDON.Core.TestLoot(arg1)
+  elseif cmd == "scan" then
     ADDON.settings.scan = ADDON.Core.Scan()
   end
 end

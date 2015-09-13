@@ -42,6 +42,11 @@ lang/$(language).lua
 
 core/MailLooter.lua
 
+; Test files.
+core/ItemTest.lua
+core/TestData1.lua
+core/TestData2.lua
+
 ui/UserInterface.lua
 ui/Settings.lua
 ui/KeybindStrip.lua
