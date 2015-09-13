@@ -42,7 +42,8 @@ lang/$(language).lua
 
 core/MailLooter.lua
 
-; Test files.
+; Test files.  
+; All test files must have test in path or filename.
 core/ItemTest.lua
 core/TestData1.lua
 core/TestData2.lua
