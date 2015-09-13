@@ -3,15 +3,31 @@ MailLooter = MailLooter or {}
 local ADDON = MailLooter
 ADDON.Core = ADDON.Core or {}
 local CORE = ADDON.Core
+ADDON.Core.Test = ADDON.Core.Test or {}
+local TEST = ADDON.Core.Test
 
-CORE.TEST = {}
+
+
 
 local function Test_GetNumBagFreeSlots(bad)
-
+  return TEST.current.numBagFreeSlots
 end
 
 local function Test_GetNextMailId(id)
 
+  if (TEST.current.tests[TEST.current.index] ~= nil) then
+    
+    TEST.current.index = TEST.current.index + 1
+    
+    if (TEST.current.tests[TEST.current.index] ~= nil) then
+      return TEST.current.tests[TEST.current.index].id
+    else
+      return nil
+    end
+
+  else
+    return nil
+  end
 end
 
 local function Test_GetMailItemInfo(id)

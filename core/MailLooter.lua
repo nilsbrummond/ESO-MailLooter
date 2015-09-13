@@ -484,40 +484,44 @@ local function GetItemLinkKey(link)
 
     local _, _, _, f4, f5 = ZO_LinkHandler_ParseLink(link)
 
-    return 'key:item:' ..  f4 .. ':' ..  f5
+    return 'key:item:' ..  f4 .. ':' ..  f5, true
 
    else
-     return link
+     return link, false
    end
 end
 
 local function AddItemsToHistory(loot, currentItems)
 
-  local newItemType = false
-
   for ind,item in ipairs(currentItems) do
 
     if MailTypeStackable[item.mailType] then
 
-      local key = GetItemLinkKey(item.link)
+      local key, diff = GetItemLinkKey(item.link)
 
-      DEBUG( "Item (stackable): " .. key)
+      if diff then
+        DEBUG( "Item (stackable): " .. key .. ' ' .. item.link)
+      else
+        DEBUG( "Item (stackable): " .. key)
+      end
 
       if loot.items[item.mailType][key] == nil then
         item.lootNum = CORE.nextLootNum
         CORE.nextLootNum = CORE.nextLootNum + 1
 
         loot.items[item.mailType][key] = item
-        newItemType = true
+
+        CORE.callbacks.ListUpdateCB(loot, false, item, true)
       else
         loot.items[item.mailType][key].stack = 
           loot.items[item.mailType][key].stack + item.stack
 
         DEBUG("stack=" .. loot.items[item.mailType][key].stack)
+        
+        CORE.callbacks.ListUpdateCB(
+          loot, false, loot.items[item.mailType][key], false)
       end
 
-      CORE.callbacks.ListUpdateCB(
-        loot, false, loot.items[item.mailType][key], newItemType)
     else
 
       DEBUG( "Item (unstackable): " .. tostring(item.link))
@@ -527,7 +531,7 @@ local function AddItemsToHistory(loot, currentItems)
       CORE.nextLootNum = CORE.nextLootNum + 1
 
       table.insert( loot.items[item.mailType], item )
-      
+
       CORE.callbacks.ListUpdateCB(loot, false, item, true)
 
     end
