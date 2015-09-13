@@ -467,6 +467,33 @@ local function AddMoneyToHistory(loot, mail)
   end
 end
 
+-- Since some equivalent items can have different meaningless levels.
+-- Then these items have varrying links.
+--[[
+local function GetItemLinkKey(link)
+  local itemType = GetItemLinkItemType(link)
+
+  if (itemType == ITEMTYPE_ENCHANTING_RUNE_ASPECT) or
+     (itemType == ITEMTYPE_WEAPON_TRAIT) or
+     (itemType == ITEMTYPE_ARMOR_TRAIT) or
+     (itemType == ITEMTYPE_WOODWORKING_BOOSTER) or
+     (itemType == ITEMTYPE_CLOTHIER_BOOSTER) or
+     (itemType == ITEMTYPE_BLACKSMITHING_BOOSTER) then
+
+    local _, _, _, f4, f5 = ZO_LinkHandler_ParseLink(link)
+
+    return 'key:item:' ..  f4 .. ':' ..  f5
+
+   else
+     return link
+   end
+end
+--]]
+
+local function GetItemLinkKey(link)
+  return link
+end
+
 local function AddItemsToHistory(loot, currentItems)
 
   local newItemType = false
@@ -477,17 +504,19 @@ local function AddItemsToHistory(loot, currentItems)
 
       DEBUG( "Item (stackable): " .. tostring(item.link))
 
-      if loot.items[item.mailType][item.link] == nil then
+      local key = GetItemLinkKey(item.link)
+
+      if loot.items[item.mailType][key] == nil then
         item.lootNum = CORE.nextLootNum
         CORE.nextLootNum = CORE.nextLootNum + 1
 
-        loot.items[item.mailType][item.link] = item
+        loot.items[item.mailType][key] = item
         newItemType = true
       else
-        loot.items[item.mailType][item.link].stack = 
-          loot.items[item.mailType][item.link].stack + item.stack
+        loot.items[item.mailType][key].stack = 
+          loot.items[item.mailType][key].stack + item.stack
 
-        DEBUG("stack=" .. loot.items[item.mailType][item.link].stack)
+        DEBUG("stack=" .. loot.items[item.mailType][key].stack)
       end
 
       CORE.callbacks.ListUpdateCB(
@@ -1612,16 +1641,16 @@ function CORE.TestLoot()
 
   -- Test the stacking display bug:
   local special1 = {
-    icon = "/esoui/art/icons/crafting_wood_turpen.dds",
-    link = "|H1:item:54179:32:50:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|hturpen|h",
-    stack=1,
-    creator="",
+    icon = "/esoui/art/icons/crafting_components_runestones_002.dds",
+    link = "|H0:item:45853:23:3:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|hRekuta|h",
+    stack = 1,
+    creator = "",
   }
   local special2 = {
-    icon = "/esoui/art/icons/crafting_ore_palladium.dds",
-    link = "|H1:item:46152:30:50:0:0:0:0:0:0:0:0:0:0:0:0:15:0:0:0:0:0|hPalladium|h",
-    stack=2,
-    creator="",
+    icon = "/esoui/art/icons/crafting_components_runestones_002.dds",
+    link = "|H0:item:45853:23:50:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|hRekuta|h",
+    stack = 2,
+    creator = "",
   }
 
   for i=1,5 do
