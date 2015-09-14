@@ -4,6 +4,8 @@ MailLooter = MailLooter or {}
 local ADDON = MailLooter
 ADDON.Core = ADDON.Core or {}
 local CORE = ADDON.Core
+ADDON.Core.Test = ADDON.Core.Test or {}
+local TEST = ADDON.Core.Test
 
 -- ZOS API (for testing)
 local API_GetNumBagFreeSlots = GetNumBagFreeSlots
@@ -467,31 +469,59 @@ local function AddMoneyToHistory(loot, mail)
   end
 end
 
-local function AddItemsToHistory(loot, currentItems)
+-- Since some equivalent items can have different meaningless levels.
+-- Then these items have varrying links.
+local function GetItemLinkKey(link)
+  local itemType = GetItemLinkItemType(link)
 
-  local newItemType = false
+  if (itemType == ITEMTYPE_ENCHANTING_RUNE_ASPECT) or
+     (itemType == ITEMTYPE_WEAPON_TRAIT) or
+     (itemType == ITEMTYPE_ARMOR_TRAIT) or
+     (itemType == ITEMTYPE_WOODWORKING_BOOSTER) or
+     (itemType == ITEMTYPE_CLOTHIER_BOOSTER) or
+     (itemType == ITEMTYPE_BLACKSMITHING_BOOSTER) or
+     (itemType == ITEMTYPE_INGREDIENT) then
+
+    local _, _, _, f4, f5 = ZO_LinkHandler_ParseLink(link)
+
+    return 'key:item:' ..  f4 .. ':' ..  f5, true
+
+   else
+     return link, false
+   end
+end
+
+local function AddItemsToHistory(loot, currentItems)
 
   for ind,item in ipairs(currentItems) do
 
     if MailTypeStackable[item.mailType] then
 
-      DEBUG( "Item (stackable): " .. tostring(item.link))
+      local key, diff = GetItemLinkKey(item.link)
 
-      if loot.items[item.mailType][item.link] == nil then
+      if diff then
+        DEBUG( "Item (stackable): " .. key .. ' ' .. item.link)
+      else
+        DEBUG( "Item (stackable): " .. key)
+      end
+
+      if loot.items[item.mailType][key] == nil then
         item.lootNum = CORE.nextLootNum
         CORE.nextLootNum = CORE.nextLootNum + 1
 
-        loot.items[item.mailType][item.link] = item
-        newItemType = true
-      else
-        loot.items[item.mailType][item.link].stack = 
-          loot.items[item.mailType][item.link].stack + item.stack
+        loot.items[item.mailType][key] = item
 
-        DEBUG("stack=" .. loot.items[item.mailType][item.link].stack)
+        CORE.callbacks.ListUpdateCB(loot, false, item, true)
+      else
+        loot.items[item.mailType][key].stack = 
+          loot.items[item.mailType][key].stack + item.stack
+
+        DEBUG("stack=" .. loot.items[item.mailType][key].stack)
+        
+        CORE.callbacks.ListUpdateCB(
+          loot, false, loot.items[item.mailType][key], false)
       end
 
-      CORE.callbacks.ListUpdateCB(
-        loot, false, loot.items[item.mailType][item.link], newItemType)
     else
 
       DEBUG( "Item (unstackable): " .. tostring(item.link))
@@ -501,7 +531,7 @@ local function AddItemsToHistory(loot, currentItems)
       CORE.nextLootNum = CORE.nextLootNum + 1
 
       table.insert( loot.items[item.mailType], item )
-      
+
       CORE.callbacks.ListUpdateCB(loot, false, item, true)
 
     end
@@ -673,7 +703,8 @@ local function LootMails()
 
       -- DEBUG: Store mail as looted
       table.insert(CORE.loot.debug, {API_GetMailItemInfo(id)})
-      CORE.loot.debug[#CORE.loot.debug].id = id
+      CORE.loot.debug[#CORE.loot.debug].id = Id64ToString(id)
+      CORE.loot.debug[#CORE.loot.debug].mailType = mailType
 
       if fromCustomerService then
         -- NOOP - just skip it.
@@ -869,6 +900,9 @@ local function LootMailsCont()
 
       CORE.currentMail.mailType = MAILTYPE_SIMPLE
 
+      -- DEBUG
+      CORE.loot.debug[#CORE.loot.debug].mailType = MAILTYPE_SIMPLE
+
       if (CORE.currentMail.att > 0) then
         -- Fall through to loot items...
       elseif CORE.currentMail.money > 0 then
@@ -936,15 +970,19 @@ local function LootMailsCont()
 
       local mailId = CORE.currentMail.includeMail and CORE.currentMail.id or nil
 
-      table.insert(
-        CORE.currentItems,
-        { icon=icon, stack=stack, link=link, 
-          mailType=CORE.currentMail.mailType,
-          id = mailId,
-          sdn=CORE.currentMail.sdn,
-          scn=CORE.currentMail.scn,
-        }
-      )
+      if link and (link ~= "") then
+        table.insert(
+          CORE.currentItems,
+          { icon=icon, stack=stack, link=link, 
+            mailType=CORE.currentMail.mailType,
+            id = mailId,
+            sdn=CORE.currentMail.sdn,
+            scn=CORE.currentMail.scn,
+          }
+        )
+      else
+        UI.DEBUG("ERROR - item has no link")
+      end
 
       -- DEBUG
       table.insert(
@@ -1012,6 +1050,9 @@ local function Start(filter)
 
 end
 
+-- forward declared.
+local DelayedTestLoot
+
 -- Perform a test step on the timer.
 local function DoTestLoot()
 
@@ -1050,7 +1091,7 @@ local function DoTestLoot()
     AddItemsToHistory(testData.loot, step.items)
     AddMoneyToHistory(testData.loot, step.mail)
 
-    zo_callLater(DoTestLoot, 50)
+    DelayedTestLoot()
   else
     DEBUG ( "Test Done" )
     CORE.callbacks.ListUpdateCB(testData.loot, true, nil, false)
@@ -1061,6 +1102,8 @@ local function DoTestLoot()
   end
 
 end
+
+DelayedTestLoot = MakeCallLater(DoTestLoot, "Test", 50)
 
 --
 -- Event Handler Functions
@@ -1222,7 +1265,6 @@ function CORE.TakeMoneyEvt( eventCode, mailId )
         -- In case any other Addon or code wants to handle
         -- this event.  Don't deleted it till after all 
         -- interested handlers have a chance to run....
-        -- zo_callLater(DoDeleteCmd, 10)
         DelayedDeleteCmd()
 
       else
@@ -1521,163 +1563,45 @@ function CORE.IsActionReady()
 end
 
 -- Test functions to fake loot mail.
-function CORE.TestLoot()
+function CORE.TestLoot(arg)
   
   if not (mailLooterOpen and (CORE.state == STATE_IDLE)) then
     d("Test function can not run right now")
     return
   end
 
-  DEBUG("TestLoot start")
+  if not arg then
+    testData = {}
+    testData.testSteps = TEST.GetTestDataOld()
+    testData.loot = NewLootStruct()
+    testData.nextStep = 1
+    CORE.testData = testData
 
-  local realItem = {}
-  realItem[1] =
-  {
-    ["stack"] = 1,
-    ["icon"] = "/esoui/art/icons/crafting_forester_weapon_vendor_component_002.dds",
-    ["link"] = "|H1:item:54171:32:50:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|hdwarven oil|h",
-    ["creator"] = "",
-  }
+    -- Start the test..
+    CORE.state = STATE_TEST
+    CORE.nextLootNum = 1
+    CORE.callbacks.StatusUpdateCB(true, true, nil)
 
-  realItem[2] =
-  {
-    ["stack"] = 5,
-    ["icon"] = "/esoui/art/icons/crafting_ore_voidstone.dds",
-    ["link"] = "|H1:item:23135:30:50:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|hvoidstone ore|h",
-    ["creator"] = "",
-  }
+    DelayedTestLoot()
+    return true
+  else
+    if TEST.tests[arg] then
+      testData = {}
+      testData.testSteps = TEST.MakeItemTest(TEST.tests[arg])
+      testData.loot = NewLootStruct()
+      testData.nextStep = 1
 
-  realItem[3] =
-  {
-    ["stack"] = 2,
-    ["icon"] = "/esoui/art/icons/crafting_ore_palladium.dds",
-    ["link"] = "|H1:item:46152:30:50:0:0:0:0:0:0:0:0:0:0:0:0:15:0:0:0:0:0|hPalladium|h",
-    ["creator"] = "",
-  }
+      -- Start the test..
+      CORE.state = STATE_TEST
+      CORE.nextLootNum = 1
+      CORE.callbacks.StatusUpdateCB(true, true, nil)
 
-  realItem[4] = 
-  {
-    ["stack"] = 1,
-    ["icon"] = "/esoui/art/icons/crafting_wood_turpen.dds",
-    ["link"] = "|H1:item:54179:32:50:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|hturpen|h",
-    ["creator"] = "",
-  }
-
-  local testItem = {}
-  for i=1,20 do
-    testItem[i] = { 
-      link=ZO_LinkHandler_CreateLink(
-        "Test Trash" .. i, nil, ITEM_LINK_TYPE, 45336, 1, 26, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 10000, 0),
-      stack=1, 
-      icon='/esoui/art/icons/crafting_components_spice_004.dds',
-      creator="",
-    }
+      DelayedTestLoot()
+      return true
+    end
   end
 
-  local function Mail(mailType, money, sdn, scn, subject, body)
-    local mail = { mailType=mailType, money=money, sdn=sdn, scn=scn }
-    return mail
-  end
-
-  testData = {
-    loot = NewLootStruct(),
-
-    nextStep = 1,
-
-    testSteps = {
-      { items={realItem[1],realItem[2],realItem[3]},
-        mail=Mail(MAILTYPE_HIRELING,25) },
-      { items={realItem[4]}, mail=Mail(MAILTYPE_HIRELING,25) },
-      { items={realItem[1],realItem[2],realItem[3]}, 
-        mail=Mail(MAILTYPE_HIRELING,25) },
-      { items={realItem[4]}, mail=Mail(MAILTYPE_HIRELING,25) },
-      { items={realItem[1],realItem[2],realItem[3]}, 
-        mail=Mail(MAILTYPE_HIRELING,25) },
-      { items={realItem[4]}, mail=Mail(MAILTYPE_HIRELING,25) },
-      { items={realItem[1],realItem[2],realItem[3]}, 
-        mail=Mail(MAILTYPE_HIRELING,25) },
-      { items={realItem[4]}, mail=Mail(MAILTYPE_HIRELING,25) },
-    },
-  }
-
-  for i=1,20 do
-    table.insert(
-      testData.testSteps, {items={testItem[1]}, mail=Mail((i%5)+1, 1)})
-  end
-
-  for i=1,20 do
-    table.insert(
-      testData.testSteps, {items={testItem[i]}, mail=Mail((i%5)+1, 1)})
-  end
-
-  -- Test the stacking display bug:
-  local special1 = {
-    icon = "/esoui/art/icons/crafting_wood_turpen.dds",
-    link = "|H1:item:54179:32:50:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|hturpen|h",
-    stack=1,
-    creator="",
-  }
-  local special2 = {
-    icon = "/esoui/art/icons/crafting_ore_palladium.dds",
-    link = "|H1:item:46152:30:50:0:0:0:0:0:0:0:0:0:0:0:0:15:0:0:0:0:0|hPalladium|h",
-    stack=2,
-    creator="",
-  }
-
-  for i=1,5 do
-    table.insert(
-      testData.testSteps, {items={special1}, mail=Mail(MAILTYPE_HIRELING, 0)})
-    table.insert(
-      testData.testSteps, {items={special2}, mail=Mail(MAILTYPE_HIRELING, 0)})
-  end
-
-  -- with items
-  table.insert(
-    testData.testSteps,
-    { items={realItem[4]}, 
-      mail=Mail(MAILTYPE_RETURNED, 0, 
-                "Lodur", "Lodur", "Hi", "xxx")})
-
-  table.insert(
-    testData.testSteps,
-    { items={realItem[4]}, 
-      mail=Mail(MAILTYPE_SIMPLE, 0, 
-                "Lodur", "Lodur", "Hi", "xxx")})
-
-  -- Money only:
-  table.insert(
-    testData.testSteps,
-    { items={}, 
-      mail=Mail(MAILTYPE_RETURNED, 7777, 
-                "Lodur", "Lodur", "Hi", "xxx")})
-  table.insert(
-    testData.testSteps,
-    { items={}, 
-      mail=Mail(MAILTYPE_SIMPLE, 7777, 
-                "Lodur", "Lodur", "Hi", "xxx")})
-  table.insert(
-    testData.testSteps,
-    { items={}, 
-      mail=Mail(MAILTYPE_COD_RECEIPT, 7777, 
-                "Lodur", "Lodur", "Hi", "xxx")})
-  table.insert(
-    testData.testSteps,
-    { items={}, 
-      mail=Mail(MAILTYPE_COD_RECEIPT, 7777, 
-                "Lodur", "Lodur", "Hi", "xxx")})
-  table.insert(
-    testData.testSteps,
-    { items={}, 
-      mail=Mail(MAILTYPE_COD_RECEIPT, 7777, 
-                "Lodur", "Lodur", "Hi", "xxx")})
-
-  -- Start the test..
-  CORE.state = STATE_TEST
-  CORE.nextLootNum = 1
-  CORE.callbacks.StatusUpdateCB(true, true, nil)
-
-  zo_callLater(DoTestLoot, 250)
-
+  return false
 end
 
 -- Scan inbox and print out interesting things about mails.

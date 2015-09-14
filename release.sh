@@ -20,10 +20,18 @@ if [ -d ./MailLooter ]; then
   exit 1
 fi
 
-echo "MailLooter release building"
+testmode=0
+
+if [ "$1" = 'test' ]; then
+  echo "MailLooter TEST release building"
+  testmode=1
+else
+  echo "MailLooter release building"
+fi
+
 
 IFS=' '
-ver_str=$(grep "## Version:" MailLooter.txt)
+ver_str=$(grep "## Version:" manifest.txt)
 ver_array=(${ver_str// / })
 version=${ver_array[2]}
 echo "Building release version" ${version}
@@ -40,12 +48,22 @@ rm $build_name
 cmd="$zip_7z"
 #echo $cmd
 
-# Include all files in the MailLoter directory except for:
-# - any .git subdirectories
-# - TODO.txt  - because ESO thinks this is another addon (all .txt are addons)
-# - *.sh      - build scripts such as this file...
-"$cmd" a -tzip $build_name "MailLooter\\" "-xr!.git" "-xr!TODO.txt" "-xr!*.sh"
+if [ $testmode -eq 0 ]; then
 
+  # Include all files in the MailLoter directory except for:
+  # - any .git subdirectories
+  # - TODO.txt  - because ESO thinks this is another addon (all .txt are addons)
+  # - *.sh      - build scripts such as this file...
+  "$cmd" a -tzip $build_name "MailLooter\\" "-xr!.git" "-xr!.gitignore" "-xr!TODO.txt" "-xr!*.sh" "-xr!Test*.lua" "-xr!*Test.lua" "-xr!manifest.txt"
+  cat "MailLooter\\manifest.txt" | "grep -iv test" >> "MailLooter\\MailLooter.txt" 
+  "$cmd" a -tzip $build_name "MailLooter\\MailLooter.txt" 
+else
+
+  "$cmd" a -tzip $build_name "MailLooter\\" "-xr!.git" "-xr!.gitignore" "-xr!TODO.txt" "-xr!*.sh" "-xr!manifest.txt"
+  cp "MailLooter\\manifest.txt" "MailLooter\\MailLooter.txt"
+  "$cmd" a -tzip $build_name "MailLooter\\MailLooter.txt" 
+
+fi
 
 ## Done.
 if [ $? -eq 0 ];  then
