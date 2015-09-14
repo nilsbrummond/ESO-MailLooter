@@ -970,15 +970,19 @@ local function LootMailsCont()
 
       local mailId = CORE.currentMail.includeMail and CORE.currentMail.id or nil
 
-      table.insert(
-        CORE.currentItems,
-        { icon=icon, stack=stack, link=link, 
-          mailType=CORE.currentMail.mailType,
-          id = mailId,
-          sdn=CORE.currentMail.sdn,
-          scn=CORE.currentMail.scn,
-        }
-      )
+      if link and (link ~= "") then
+        table.insert(
+          CORE.currentItems,
+          { icon=icon, stack=stack, link=link, 
+            mailType=CORE.currentMail.mailType,
+            id = mailId,
+            sdn=CORE.currentMail.sdn,
+            scn=CORE.currentMail.scn,
+          }
+        )
+      else
+        UI.DEBUG("ERROR - item has no link")
+      end
 
       -- DEBUG
       table.insert(
@@ -1567,7 +1571,18 @@ function CORE.TestLoot(arg)
   end
 
   if not arg then
-    CORE.TestLootOld()
+    testData = {}
+    testData.testSteps = TEST.GetTestDataOld()
+    testData.loot = NewLootStruct()
+    testData.nextStep = 1
+    CORE.testData = testData
+
+    -- Start the test..
+    CORE.state = STATE_TEST
+    CORE.nextLootNum = 1
+    CORE.callbacks.StatusUpdateCB(true, true, nil)
+
+    DelayedTestLoot()
     return true
   else
     if TEST.tests[arg] then
@@ -1587,159 +1602,6 @@ function CORE.TestLoot(arg)
   end
 
   return false
-end
-
-function CORE.TestLootOld()
-  DEBUG("TestLoot start")
-
-  local realItem = {}
-  realItem[1] =
-  {
-    ["stack"] = 1,
-    ["icon"] = "/esoui/art/icons/crafting_forester_weapon_vendor_component_002.dds",
-    ["link"] = "|H1:item:54171:32:50:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|hdwarven oil|h",
-    ["creator"] = "",
-  }
-
-  realItem[2] =
-  {
-    ["stack"] = 5,
-    ["icon"] = "/esoui/art/icons/crafting_ore_voidstone.dds",
-    ["link"] = "|H1:item:23135:30:50:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|hvoidstone ore|h",
-    ["creator"] = "",
-  }
-
-  realItem[3] =
-  {
-    ["stack"] = 2,
-    ["icon"] = "/esoui/art/icons/crafting_ore_palladium.dds",
-    ["link"] = "|H1:item:46152:30:50:0:0:0:0:0:0:0:0:0:0:0:0:15:0:0:0:0:0|hPalladium|h",
-    ["creator"] = "",
-  }
-
-  realItem[4] = 
-  {
-    ["stack"] = 1,
-    ["icon"] = "/esoui/art/icons/crafting_wood_turpen.dds",
-    ["link"] = "|H1:item:54179:32:50:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|hturpen|h",
-    ["creator"] = "",
-  }
-
-  local testItem = {}
-  for i=1,20 do
-    testItem[i] = { 
-      link=ZO_LinkHandler_CreateLink(
-        "Test Trash" .. i, nil, ITEM_LINK_TYPE, 45336, 1, 26, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 10000, 0),
-      stack=1, 
-      icon='/esoui/art/icons/crafting_components_spice_004.dds',
-      creator="",
-    }
-  end
-
-  local function Mail(mailType, money, sdn, scn, subject, body)
-    local mail = { mailType=mailType, money=money, sdn=sdn, scn=scn }
-    return mail
-  end
-
-  testData = {
-    loot = NewLootStruct(),
-
-    nextStep = 1,
-
-    testSteps = {
-      { items={realItem[1],realItem[2],realItem[3]},
-        mail=Mail(MAILTYPE_HIRELING,25) },
-      { items={realItem[4]}, mail=Mail(MAILTYPE_HIRELING,25) },
-      { items={realItem[1],realItem[2],realItem[3]}, 
-        mail=Mail(MAILTYPE_HIRELING,25) },
-      { items={realItem[4]}, mail=Mail(MAILTYPE_HIRELING,25) },
-      { items={realItem[1],realItem[2],realItem[3]}, 
-        mail=Mail(MAILTYPE_HIRELING,25) },
-      { items={realItem[4]}, mail=Mail(MAILTYPE_HIRELING,25) },
-      { items={realItem[1],realItem[2],realItem[3]}, 
-        mail=Mail(MAILTYPE_HIRELING,25) },
-      { items={realItem[4]}, mail=Mail(MAILTYPE_HIRELING,25) },
-    },
-  }
-
-  for i=1,20 do
-    table.insert(
-      testData.testSteps, {items={testItem[1]}, mail=Mail((i%5)+1, 1)})
-  end
-
-  for i=1,20 do
-    table.insert(
-      testData.testSteps, {items={testItem[i]}, mail=Mail((i%5)+1, 1)})
-  end
-
-  -- Test the stacking display bug:
-  local special1 = {
-    icon = "/esoui/art/icons/crafting_components_runestones_002.dds",
-    link = "|H0:item:45853:23:3:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|hRekuta|h",
-    stack = 1,
-    creator = "",
-  }
-  local special2 = {
-    icon = "/esoui/art/icons/crafting_components_runestones_002.dds",
-    link = "|H0:item:45853:23:50:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|hRekuta|h",
-    stack = 2,
-    creator = "",
-  }
-
-  for i=1,5 do
-    table.insert(
-      testData.testSteps, {items={special1}, mail=Mail(MAILTYPE_HIRELING, 0)})
-    table.insert(
-      testData.testSteps, {items={special2}, mail=Mail(MAILTYPE_HIRELING, 0)})
-  end
-
-  -- with items
-  table.insert(
-    testData.testSteps,
-    { items={realItem[4]}, 
-      mail=Mail(MAILTYPE_RETURNED, 0, 
-                "Lodur", "Lodur", "Hi", "xxx")})
-
-  table.insert(
-    testData.testSteps,
-    { items={realItem[4]}, 
-      mail=Mail(MAILTYPE_SIMPLE, 0, 
-                "Lodur", "Lodur", "Hi", "xxx")})
-
-  -- Money only:
-  table.insert(
-    testData.testSteps,
-    { items={}, 
-      mail=Mail(MAILTYPE_RETURNED, 7777, 
-                "Lodur", "Lodur", "Hi", "xxx")})
-  table.insert(
-    testData.testSteps,
-    { items={}, 
-      mail=Mail(MAILTYPE_SIMPLE, 7777, 
-                "Lodur", "Lodur", "Hi", "xxx")})
-  table.insert(
-    testData.testSteps,
-    { items={}, 
-      mail=Mail(MAILTYPE_COD_RECEIPT, 7777, 
-                "Lodur", "Lodur", "Hi", "xxx")})
-  table.insert(
-    testData.testSteps,
-    { items={}, 
-      mail=Mail(MAILTYPE_COD_RECEIPT, 7777, 
-                "Lodur", "Lodur", "Hi", "xxx")})
-  table.insert(
-    testData.testSteps,
-    { items={}, 
-      mail=Mail(MAILTYPE_COD_RECEIPT, 7777, 
-                "Lodur", "Lodur", "Hi", "xxx")})
-
-  -- Start the test..
-  CORE.state = STATE_TEST
-  CORE.nextLootNum = 1
-  CORE.callbacks.StatusUpdateCB(true, true, nil)
-
-  DelayedTestLoot()
-
 end
 
 -- Scan inbox and print out interesting things about mails.
