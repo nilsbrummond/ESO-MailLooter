@@ -39,6 +39,15 @@ echo "Building release version" ${version}
 build_name="MailLooter-${version}.zip"
 echo $build_name
 
+
+rm -f MailLooter.txt
+
+if [ $testmode -eq 0 ]; then
+  grep -iv test manifest.txt > MailLooter.txt
+else
+  cp manifest.txt MailLooter.txt
+fi
+
 cd ..
 rm $build_name
 
@@ -54,14 +63,11 @@ if [ $testmode -eq 0 ]; then
   # - any .git subdirectories
   # - TODO.txt  - because ESO thinks this is another addon (all .txt are addons)
   # - *.sh      - build scripts such as this file...
+  
   "$cmd" a -tzip $build_name "MailLooter\\" "-xr!.git" "-xr!.gitignore" "-xr!TODO.txt" "-xr!*.sh" "-xr!Test*.lua" "-xr!*Test.lua" "-xr!manifest.txt"
-  cat "MailLooter\\manifest.txt" | "grep -iv test" >> "MailLooter\\MailLooter.txt" 
-  "$cmd" a -tzip $build_name "MailLooter\\MailLooter.txt" 
 else
 
   "$cmd" a -tzip $build_name "MailLooter\\" "-xr!.git" "-xr!.gitignore" "-xr!TODO.txt" "-xr!*.sh" "-xr!manifest.txt"
-  cp "MailLooter\\manifest.txt" "MailLooter\\MailLooter.txt"
-  "$cmd" a -tzip $build_name "MailLooter\\MailLooter.txt" 
 
 fi
 
