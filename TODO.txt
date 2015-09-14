@@ -6,8 +6,7 @@ Find a better guild store icon.
 
 BUG - keybind strip showing wrong key bind to some users.
 
-BUG - Stack items show as multiple items
-
+Guild Store Expired - Added 'Expired' Tag to loot list.
 
 Sandwitch
  - Cause every addon should be able to make a sandwitch...
@@ -15,6 +14,8 @@ Sandwitch
 
 DONE:
 ----
+
+BUG - Stack items show as multiple items
 
 BUG - Returned mail tooltip on type icon in loot list
 
