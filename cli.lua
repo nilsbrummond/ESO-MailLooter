@@ -52,7 +52,7 @@ local function CommandHandler(text)
   elseif cmd == "reset" then
     ADDON.Core.Reset()
   elseif cmd == "test" then
-    if not ADDON.Core.Test then
+    if not ADDON.Core.Test.tests then
       d("This is NOT a test build.  No tests available.")
     elseif not ADDON.Core.TestLoot(arg1) then
       d("Could not find test: " .. arg1)
