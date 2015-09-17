@@ -52,6 +52,13 @@
     <Control name="MailLooterLootListRow" mouseEnabled="true" virtual="true">
       <Dimensions x="650" y="52" />
 
+      <OnMouseEnter>
+        MailLooter_LootListRow_OnMouseEnter(self)
+      </OnMouseEnter>
+      <OnMouseExit>
+        MailLooter_LootListRow_OnMouseExit(self)
+      </OnMouseExit>
+
       <Controls>
         <Texture name="$(parent)_BG" textureFile="/esoui/art/miscellaneous/listitem_backdrop.dds" layer="BACKGROUND" alpha="0.8" pixelRoundingEnabled="true" >
           <AnchorFill />
@@ -66,6 +73,14 @@
         <Texture name="$(parent)_Type" alpha="0.7" mouseEnabled="true">
           <Dimensions x="40" y="40" />
           <Anchor point="TOPLEFT" relativeTo="$(parent)" offsetX="10" offsetY="5" />
+
+          <OnMouseEnter>
+            MailLooter_LootListRowStatus_OnMouseEnter(self)
+          </OnMouseEnter>
+          <OnMouseExit>
+            MailLooter_LootListRowStatus_OnMouseExit(self)
+          </OnMouseExit>
+
         </Texture>
 
         <Texture name="$(parent)_Icon">
@@ -87,6 +102,13 @@
     <Control name="MailLooterLootListRowExtra" mouseEnabled="true" virtual="true">
       <Dimensions x="650" y="52" />
 
+      <OnMouseEnter>
+        MailLooter_LootListRow_OnMouseEnter(self)
+      </OnMouseEnter>
+      <OnMouseExit>
+        MailLooter_LootListRow_OnMouseExit(self)
+      </OnMouseExit>
+
       <Controls>
         <Texture name="$(parent)_BG" textureFile="/esoui/art/miscellaneous/listitem_backdrop.dds" layer="BACKGROUND" alpha="0.8" pixelRoundingEnabled="true" >
           <AnchorFill />
@@ -101,6 +123,14 @@
         <Texture name="$(parent)_Type" alpha="0.7" mouseEnabled="true">
           <Dimensions x="40" y="40" />
           <Anchor point="TOPLEFT" relativeTo="$(parent)" offsetX="10" offsetY="5" />
+
+          <OnMouseEnter>
+            MailLooter_LootListRowStatus_OnMouseEnter(self)
+          </OnMouseEnter>
+          <OnMouseExit>
+            MailLooter_LootListRowStatus_OnMouseExit(self)
+          </OnMouseExit>
+
         </Texture>
 
         <Texture name="$(parent)_Icon">
@@ -127,6 +157,13 @@
     <Control name="MailLooterLootListRowMoney" mouseEnabled="true" virtual="true">
       <Dimensions x="650" y="52" />
 
+      <OnMouseEnter>
+        MailLooter_LootListRow_OnMouseEnter(self)
+      </OnMouseEnter>
+      <OnMouseExit>
+        MailLooter_LootListRow_OnMouseExit(self)
+      </OnMouseExit>
+
       <Controls>
         <Texture name="$(parent)_BG" textureFile="/esoui/art/miscellaneous/listitem_backdrop.dds" layer="BACKGROUND" alpha="0.8" pixelRoundingEnabled="true" >
           <AnchorFill />
@@ -141,6 +178,14 @@
         <Texture name="$(parent)_Type" alpha="0.7" mouseEnabled="true">
           <Dimensions x="40" y="40" />
           <Anchor point="TOPLEFT" relativeTo="$(parent)" offsetX="10" offsetY="5" />
+
+          <OnMouseEnter>
+            MailLooter_LootListRowStatus_OnMouseEnter(self)
+          </OnMouseEnter>
+          <OnMouseExit>
+            MailLooter_LootListRowStatus_OnMouseExit(self)
+          </OnMouseExit>
+
         </Texture>
 
         <Texture name="$(parent)_Icon" textureFile="/esoui/art/mainmenu/menubar_inventory_up.dds">
@@ -169,7 +214,6 @@
 
       </Controls>
     </Control>
-
 
   </Controls>
 </GuiXml>
