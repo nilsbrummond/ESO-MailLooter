@@ -178,9 +178,10 @@ local function SetListHighlightHidden(listPart, hidden)
     end
 end
 
-local function Row_OnMouseEnter(control, rowControl)
+-- Global function for external XML access.
+function MailLooter_LootListRow_OnMouseEnter(rowControl)
 
-  -- UI.DEBUG("Row_OnMouseEnter")
+  local control = rowControl:GetParent()
 
   -- Scale the icon...
   local iconPart = rowControl:GetNamedChild("_Icon")
@@ -227,9 +228,10 @@ local function Row_OnMouseEnter(control, rowControl)
   end
 end
 
-local function Row_OnMouseExit(control, rowControl)
+-- Global function for external XML access.
+function MailLooter_LootListRow_OnMouseExit(rowControl)
 
-  -- UI.DEBUG("Row_OnMouseExit")
+  local control = rowControl:GetParent()
 
   ClearTooltip(ItemTooltip)
   ClearTooltip(InformationTooltip)
@@ -245,7 +247,8 @@ local function Row_OnMouseExit(control, rowControl)
 
 end
 
-local function RowStatus_OnMouseEnter(control)
+-- Global function for external XML access.
+function MailLooter_LootListRowStatus_OnMouseEnter(control)
  
   InitializeTooltip(InformationTooltip, control, TOPRIGHT, 0, 0, TOPLEFT)
 
@@ -253,7 +256,8 @@ local function RowStatus_OnMouseEnter(control)
   SetTooltipText(InformationTooltip, typeTooltips[mailType])
 end
 
-local function RowStatus_OnMouseExit(control)
+-- Global function for external XML access.
+function MailLooter_LootListRowStatus_OnMouseExit(control)
   ClearTooltip(InformationTooltip)
 end
 
@@ -264,6 +268,13 @@ local function SetupRowDataBase(rowControl, data, scrollList)
   local typeIcon = rowControl:GetNamedChild("_Type")
   typeIcon:SetTexture(UI.GetIcon(data.mailType))
 
+  -- NOTE:
+  -- SetHandler now done ONCE in XML on creation.  This was bad
+  -- to all SetHandler in the row setup function which can be
+  -- called many times with the list is scrolled...
+  -- Calling SetHandler often leads to bad performance per ZOS.
+
+  --[[
   -- Handlers
   rowControl:SetHandler("OnMouseEnter", function()
       Row_OnMouseEnter(scrollList, rowControl)
@@ -280,6 +291,8 @@ local function SetupRowDataBase(rowControl, data, scrollList)
   typeIcon:SetHandler("OnMouseExit", function()
       RowStatus_OnMouseExit(typeIcon)
     end)
+
+  --]]
 
 end
 
