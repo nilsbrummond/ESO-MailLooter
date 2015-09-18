@@ -45,6 +45,19 @@ CORE.MAILTYPE_SIMPLE      = MAILTYPE_SIMPLE
 CORE.MAILTYPE_COD_RECEIPT = MAILTYPE_COD_RECEIPT
 CORE.MAILTYPE_BOUNCE      = MAILTYPE_BOUNCE
 
+
+local SUBTYPE_STORE_EXPIRED   = 1
+local SUBTYPE_STORE_CANCELLED = 2
+local SUBTYPE_STORE_PURCHASED = 3
+local SUBTYPE_STORE_SOLD      = 4
+
+-- exported
+CORE.SUBTYPE_STORE_EXPIRED    = SUBTYPE_STORE_EXPIRED
+CORE.SUBTYPE_STORE_CANCELLED  = SUBTYPE_STORE_CANCELLED
+CORE.SUBTYPE_STORE_PURCHASED  = SUBTYPE_STORE_PURCHASED
+CORE.SUBTYPE_STORE_SOLD       = SUBTYPE_STORE_SOLD
+
+
 -- internal only
 -- CORE.MAILTYPE_SIMPLE_PRE
 
@@ -55,7 +68,8 @@ local MailTypeStackable = {
   [MAILTYPE_UNKNOWN]      = false,  -- n/a
   [MAILTYPE_AVA]          = true,
   [MAILTYPE_HIRELING]     = true,
-  [MAILTYPE_STORE]        = true,
+  [MAILTYPE_STORE]        = 
+    { false, false, true, false }, -- only one can be true.
   [MAILTYPE_COD]          = false,
   [MAILTYPE_RETURNED]     = false,
   [MAILTYPE_SIMPLE]       = false,
@@ -108,22 +122,22 @@ local TitlesHirelings = {
 
 local TitlesStores = {
   -- English
-  ["Item Expired"] = true,
-  ["Item Purchased"] = true,
-  ["Item Canceled"] = true,
-  ["Item Sold"] = true,
+  ["Item Expired"] =    { true, SUBTYPE_STORE_EXPIRED },
+  ["Item Purchased"] =  { true, SUBTYPE_STORE_PURCHASED },
+  ["Item Canceled"] =   { true, SUBTYPE_STORE_CANCELLED },
+  ["Item Sold"] =       { true, SUBTYPE_STORE_SOLD },
 
   -- German
-  ["Angebot ausgelaufen"] = true,
-  ["Gegenstand gekauft"] = true, 
-  ["Verkauf abgebrochen"] = true,
-  ["Gegenstand verkauft"] = true, 
+  ["Angebot ausgelaufen"] = { true, SUBTYPE_STORE_EXPIRED },
+  ["Gegenstand gekauft"] =  { true, SUBTYPE_STORE_PURCHASED },
+  ["Verkauf abgebrochen"] = { true, SUBTYPE_STORE_CANCELLED },
+  ["Gegenstand verkauft"] = { true, SUBTYPE_STORE_SOLD },
 
   -- French
-  ["Objet arrivé à expiration"]  = true,
-  ["Objet acheté"] = true,
-  ["Objet annulé"] = true,
-  ["Objet vendu"] = true,
+  ["Objet arrivé à expiration"]  =  { true, SUBTYPE_STORE_EXPIRED },
+  ["Objet acheté"] =                { true, SUBTYPE_STORE_PURCHASED },
+  ["Objet annulé"] =                { true, SUBTYPE_STORE_CANCELLED },
+  ["Objet vendu"] =                 { true, SUBTYPE_STORE_SOLD },
   
 }
 
@@ -298,7 +312,10 @@ local function GetMailType(subject, fromSystem, codAmount, returned, attachments
     if TitlesAvA[subject] then
       return MAILTYPE_AVA
     elseif TitlesStores[subject] then
-      return MAILTYPE_STORE
+      local hdata = TitlesStores[subject]
+      if hdata and hdata[1] then
+        return MAILTYPE_STORE, hdata[2]
+      end
     else
       local hdata = TitlesHirelings[subject]
       if hdata and hdata[1] then
@@ -333,7 +350,7 @@ local function GetMailType(subject, fromSystem, codAmount, returned, attachments
 end
 
 -- Return based on mailType and type filter.
-local function LootThisMail(mailType, codAmount, hirelingType)
+local function LootThisMail(mailType, codAmount, subType)
 
   -- filter
   if CORE.filters[mailType] then
@@ -353,11 +370,11 @@ local function LootThisMail(mailType, codAmount, hirelingType)
   -- Handle hireling sub-filtering...
   elseif mailType == MAILTYPE_HIRELING then
 
-    if CORE.filters.hirelings and CORE.filters.hirelings[hirelingType] then
---      DEBUG("LootThisMail mt=_HIRELING ht=" .. hirelingType .. " - true")
+    if CORE.filters.hirelings and CORE.filters.hirelings[subType] then
+--      DEBUG("LootThisMail mt=_HIRELING ht=" .. subType .. " - true")
       return true
     else
---      DEBUG("LootThisMail mt=_HIRELING ht=" .. hirelingType .. " - false")
+--      DEBUG("LootThisMail mt=_HIRELING ht=" .. subType .. " - false")
       return false
     end
 
@@ -491,11 +508,23 @@ local function GetItemLinkKey(link)
    end
 end
 
+local function IsMailTypeStackable(mailType, subType)
+
+ local val = MailTypeStackable[mailType]
+
+ if type(val) == 'table' then
+   return val[subType]
+ else
+   return val
+ end
+
+end
+
 local function AddItemsToHistory(loot, currentItems)
 
   for ind,item in ipairs(currentItems) do
 
-    if MailTypeStackable[item.mailType] then
+    if IsMailTypeStackable(item.mailType, item.subType) then
 
       local key, diff = GetItemLinkKey(item.link)
 
@@ -641,11 +670,12 @@ local function SummaryScanMail()
 end
 
 local function StoreCurrentMail(
-  id, sdn, scn, subject, fromSystem, numAttachments, attachedMoney, codAmount, mailType)
+  id, sdn, scn, subject, fromSystem, numAttachments, attachedMoney, 
+  codAmount, mailType, subType)
 
   CORE.currentMail = { 
     id=id, att=numAttachments, money=attachedMoney, 
-    codAmount=codAmount, mailType=mailType
+    codAmount=codAmount, mailType=mailType, subType=subType
   }
 
   -- Might care who it is from for non-system mail...
@@ -698,7 +728,7 @@ local function LootMails()
       numAttachments = numAttachments or 0
       attachedMoney = attachedMoney or 0
 
-      local mailType, hirelingType = GetMailType(
+      local mailType, subType = GetMailType(
         subject, fromSystem, codAmount, returned, numAttachments, attachedMoney)
 
       -- DEBUG: Store mail as looted
@@ -732,7 +762,7 @@ local function LootMails()
           CORE.skippedMails[zo_getSafeId64Key(id)] = true
         end
 
-      elseif LootThisMail(mailType, codAmount, hirelingType) then
+      elseif LootThisMail(mailType, codAmount, subType) then
 
         -- Loot this Mail
         DEBUG( "found mail: " .. Id64ToString(id) .. " '" .. 
@@ -740,7 +770,7 @@ local function LootMails()
 
         StoreCurrentMail(
           id, sdn, scn, subject, fromSystem, numAttachments, 
-          attachedMoney, codAmount, mailType)
+          attachedMoney, codAmount, mailType, subType)
 
         local doItemLoot = false
         local noRoomToLoot = false
@@ -975,6 +1005,7 @@ local function LootMailsCont()
           CORE.currentItems,
           { icon=icon, stack=stack, link=link, 
             mailType=CORE.currentMail.mailType,
+            subType=CORE.currentMail.subType,
             id = mailId,
             sdn=CORE.currentMail.sdn,
             scn=CORE.currentMail.scn,
@@ -1084,6 +1115,7 @@ local function DoTestLoot()
 
     for ind,item in ipairs(step.items) do
       item.mailType = step.mail.mailType
+      item.subType = step.mail.subType
       item.sdn = step.mail.sdn
       item.scn = step.mail.scn
     end
@@ -1624,7 +1656,7 @@ function CORE.Scan()
     numAttachments = numAttachments or 0
     attachedMoney = attachedMoney or 0
 
-    local mailType, hirelingType = GetMailType(
+    local mailType, subType = GetMailType(
       subject, fromSystem, codAmount, returned, numAttachments, attachedMoney)
 
     d("mail id=" .. Id64ToString(id) )
@@ -1651,7 +1683,7 @@ function CORE.Scan()
 
     table.insert(t, 
       { id=Id64ToString(id), subject=subject, system=fromSystem, 
-        returned=returned, mailType=mailType, hirelingType=hirelingType,
+        returned=returned, mailType=mailType, subType=subType,
         money=attachedMoney, cod=codAmount, items=items,
       }
     )

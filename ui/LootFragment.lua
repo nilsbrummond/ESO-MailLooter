@@ -15,7 +15,13 @@ local typeRowType = {
   [ADDON.Core.MAILTYPE_UNKNOWN]     = ROW_TYPE_ID,
   [ADDON.Core.MAILTYPE_AVA]         = ROW_TYPE_ID,
   [ADDON.Core.MAILTYPE_HIRELING]    = ROW_TYPE_ID,
-  [ADDON.Core.MAILTYPE_STORE]       = ROW_TYPE_ID,
+
+  -- ADDON.Core.SUBTYPE_STORE_* ordered
+  [ADDON.Core.MAILTYPE_STORE]       = { ROW_TYPE_ID_EXTRA,
+                                        ROW_TYPE_ID_EXTRA, 
+                                        ROW_TYPE_ID, 
+                                        ROW_TYPE_ID_MONEY },
+
   [ADDON.Core.MAILTYPE_COD]         = ROW_TYPE_ID,
   [ADDON.Core.MAILTYPE_RETURNED]    = ROW_TYPE_ID_EXTRA,
   [ADDON.Core.MAILTYPE_SIMPLE]      = ROW_TYPE_ID_EXTRA,
@@ -334,14 +340,26 @@ local function SetupRowDataItem(rowControl, data, scrollList)
   rowControl:GetNamedChild("_Name"):SetText(
     text .. "|r   (" .. data.stack .. ")")
 
-  if data.mailType == ADDON.Core.MAILTYPE_RETURNED then
-    local extra = rowControl:GetNamedChild("_Extra")
-    extra:SetText(
-      "|cFF0000Returned|r from: " .. SenderString(data.sdn, data.scn))
-  elseif data.mailType == ADDON.Core.MAILTYPE_SIMPLE then
-    local extra = rowControl:GetNamedChild("_Extra")
-    extra:SetText(
-      "From: " .. SenderString(data.sdn, data.scn))
+  local extra = rowControl:GetNamedChild("_Extra")
+  if extra ~= nil then
+    local text = ""
+
+    if data.mailType == ADDON.Core.MAILTYPE_RETURNED then
+      text = "|cFF0000Returned|r from: " .. SenderString(data.sdn, data.scn)
+
+    elseif data.mailType == ADDON.Core.MAILTYPE_SIMPLE then
+      text = "From: " .. SenderString(data.sdn, data.scn)
+
+    elseif data.mailType == ADDON.Core.MAILTYPE_STORE then
+      if data.subType == ADDON.Core.SUBTYPE_STORE_EXPIRED then
+        text = "|cFF0000Expired|r"
+
+      elseif data.subType == ADDON.Core.SUBTYPE_STORE_CANCELLED then
+        text = "|cFF0000Cancelled|r"
+      end
+    end
+
+    extra:SetText(text)
   end
 
   ZO_CurrencyControl_SetSimpleCurrency(
@@ -571,6 +589,21 @@ function UI.LootFragmentClass:UpdateMoney(gold)
 
 end
 
+local function GetLootRowType(mailType, subType)
+
+  UI.DEBUG("GetLootRowType(".. mailType..", ".. tostring(subType) .. ")")
+
+  local val = typeRowType[mailType]
+
+  if type(val) == 'table' then
+    val = val[subType]
+  end
+
+  UI.DEBUG("GetLootRowType()=" .. val)
+
+  return val
+end
+
 function UI.LootFragmentClass:AddLooted(item, isNewItemType)
 
   if isNewItemType then
@@ -584,7 +617,7 @@ function UI.LootFragmentClass:AddLooted(item, isNewItemType)
     UI.DEBUG("New stack: " .. data.stack)
 
     local row = ZO_ScrollList_CreateDataEntry(
-      typeRowType[item.mailType], data, CATEGORY_DEFAULT)
+      GetLootRowType(item.mailType, item.subType), data, CATEGORY_DEFAULT)
 
     table.insert(
       ZO_ScrollList_GetDataList(

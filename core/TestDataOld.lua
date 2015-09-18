@@ -55,7 +55,7 @@ function TEST.GetTestDataOld()
   end
 
   local function Mail(mailType, money, sdn, scn, subject, body)
-    local mail = { mailType=mailType, money=money, sdn=sdn, scn=scn }
+    local mail = { mailType=mailType, subType=1, money=money, sdn=sdn, scn=scn }
     return mail
   end
 
