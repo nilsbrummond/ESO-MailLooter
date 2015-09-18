@@ -671,7 +671,7 @@ end
 
 local function StoreCurrentMail(
   id, sdn, scn, subject, fromSystem, numAttachments, attachedMoney, 
-  codAmount, mailType, suybType)
+  codAmount, mailType, subType)
 
   CORE.currentMail = { 
     id=id, att=numAttachments, money=attachedMoney, 
