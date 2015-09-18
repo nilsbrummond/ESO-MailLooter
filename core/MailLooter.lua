@@ -585,7 +585,12 @@ local function DoReturnCmd()
   -- Mail is confirmed returned by the deleted event.
   if CORE.state ~= STATE_DELETE then return end
 
+  -- Return it.
   API_ReturnMail(CORE.currentMail.id)
+
+  -- Only the mail count changed.
+  CORE.callbacks.ListUpdateCB( CORE.loot, false )
+
 end
 
 local DelayedReturnCmd = MakeCallLater(DoReturnCmd, "Return", 50)
