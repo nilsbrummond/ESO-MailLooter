@@ -1017,7 +1017,7 @@ local function LootMailsCont()
           }
         )
       else
-        UI.DEBUG("ERROR - item has no link")
+        DEBUG("ERROR - item has no link")
       end
 
       -- DEBUG
