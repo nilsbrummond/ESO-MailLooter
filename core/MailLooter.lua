@@ -1023,7 +1023,7 @@ local function LootMailsCont()
       -- DEBUG
       table.insert(
         CORE.loot.debug[#CORE.loot.debug].items, 
-        { icon, stack, creator, link }
+        { icon, stack, creator, link, IsReadMailInfoReady() }
       )
 
     end
