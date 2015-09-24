@@ -104,6 +104,8 @@ local function Initialize( eventCode, addOnName )
     ADDON.GetSetting_deleteSimple,
     ADDON.GetSetting_enableBounce)
 
+  ADDON.Core.Test.Initialize(ADDON.DebugMsg)
+
   ADDON.Core.SetAutoReturnStrings(ADDON.settings.autoReturnSubjects)
 
   ADDON.UI.InitUserInterface(ADDON.DebugMsg)

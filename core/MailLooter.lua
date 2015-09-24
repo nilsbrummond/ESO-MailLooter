@@ -1449,6 +1449,7 @@ function CORE.SetAPI(api)
     API_GetMailItemInfo = GetMailItemInfo
     API_GetAttachedItemInfo = GetAttachedItemInfo
     API_GetAttachedItemLink = GetAttachedItemLink
+    API_RequestReadMail = RequestReadMail
     API_ReadMail = ReadMail
     API_TakeMailAttachedMoney = TakeMailAttachedMoney
     API_TakeMailAttachedItems = TakeMailAttachedItems
@@ -1461,6 +1462,7 @@ function CORE.SetAPI(api)
     API_GetMailItemInfo = api.GetMailItemInfo
     API_GetAttachedItemInfo = api.GetAttachedItemInfo
     API_GetAttachedItemLink = api.GetAttachedItemLink
+    API_RequestReadMail = api.RequestReadMail
     API_ReadMail = api.ReadMail
     API_TakeMailAttachedMoney = api.TakeMailAttachedMoney
     API_TakeMailAttachedItems = api.TakeMailAttachedItems

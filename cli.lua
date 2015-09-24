@@ -57,6 +57,12 @@ local function CommandHandler(text)
     elseif not ADDON.Core.TestLoot(arg1) then
       d("Could not find test: " .. arg1)
     end
+  elseif cmd == "coretest" then
+    if not ADDON.Core.Test.tests then
+      d("This is NOT a test build.  No tests available.")
+    elseif not ADDON.Core.Test.StartTest(arg1) then
+      d("Could not find test: " .. arg1)
+    end
   elseif cmd == "scan" then
     ADDON.settings.scan = ADDON.Core.Scan()
   end
