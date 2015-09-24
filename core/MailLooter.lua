@@ -19,6 +19,7 @@ local API_TakeMailAttachedMoney = TakeMailAttachedMoney
 local API_TakeMailAttachedItems = TakeMailAttachedItems
 local API_DeleteMail = DeleteMail
 local API_ReturnMail = ReturnMail
+local API_IsReadMailInfoReady = IsReadMailInfoReady
 
 
 -- MAIL_TYPE
@@ -1023,7 +1024,8 @@ local function LootMailsCont()
       -- DEBUG
       table.insert(
         CORE.loot.debug[#CORE.loot.debug].items, 
-        { icon, stack, creator, link, IsReadMailInfoReady() }
+        { icon, stack, creator, link, 
+          API_IsReadMailInfoReady(CORE.currentMail.id) }
       )
 
     end
@@ -1454,6 +1456,7 @@ function CORE.SetAPI(api)
     API_TakeMailAttachedItems = TakeMailAttachedItems
     API_DeleteMail = DeleteMail
     API_ReturnMail = ReturnMail
+    API_IsReadMailInfoReady = IsReadMailInfoReady
   else
     -- Set API to Testing framework.
     API_GetNumBagFreeSlots = api.GetNumBagFreeSlots
@@ -1466,6 +1469,7 @@ function CORE.SetAPI(api)
     API_TakeMailAttachedItems = api.TakeMailAttachedItems
     API_DeleteMail = api.DeleteMail
     API_ReturnMail = api.ReturnMail
+    API_IsReadMailInfoReady = api.IsReadMailInfoReady
   end
 end
 
