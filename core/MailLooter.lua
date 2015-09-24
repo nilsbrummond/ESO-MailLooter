@@ -19,7 +19,8 @@ local API_TakeMailAttachedMoney = TakeMailAttachedMoney
 local API_TakeMailAttachedItems = TakeMailAttachedItems
 local API_DeleteMail = DeleteMail
 local API_ReturnMail = ReturnMail
-
+local API_IsLocalMailboxFull = IsLocalMailboxFull
+local API_Id64ToString = Id64ToString
 
 -- MAIL_TYPE
 local MAILTYPE_UNKNOWN      = 1
@@ -618,7 +619,7 @@ local function SummaryScanMail()
   while id ~= nil do
     local _, _, subject, _, unread, fromSystem, fromCustomerService, returned, numAttachments, attachedMoney, codAmount = API_GetMailItemInfo(id)
 
-    -- DEBUG(" -- Mail:" .. Id64ToString(id) .. " " .. subject .. " from:"..sdn.."/"..scn .. " sys:" .. tostring(fromSystem) .. " cs:"..tostring(fromCustomerService))
+    -- DEBUG(" -- Mail:" .. API_Id64ToString(id) .. " " .. subject .. " from:"..sdn.."/"..scn .. " sys:" .. tostring(fromSystem) .. " cs:"..tostring(fromCustomerService))
 
     countItems = countItems + numAttachments
     countMoney = countMoney + attachedMoney
@@ -667,7 +668,7 @@ local function SummaryScanMail()
                    countStore = countStore,
                    countReturned = countReturned,
                    countBounce = countBounce,
-                   countOther = countOther, more = IsLocalMailboxFull(),
+                   countOther = countOther, more = API_IsLocalMailboxFull(),
                    countItems = countItems, countMoney = countMoney }
 
   CORE.callbacks.ScanUpdateCB(result)
@@ -722,7 +723,7 @@ local function LootMails()
 
     if CORE.skippedMails[zo_getSafeId64Key(id)] then
       -- Already looked at and rejected this mail for looting...
-      -- DEBUG("skipping mail: " .. Id64ToString(id))
+      -- DEBUG("skipping mail: " .. API_Id64ToString(id))
     else
 
       local sdn, scn, subject, icon, unread, fromSystem, 
@@ -738,7 +739,7 @@ local function LootMails()
 
       -- DEBUG: Store mail as looted
       table.insert(CORE.loot.debug, {API_GetMailItemInfo(id)})
-      CORE.loot.debug[#CORE.loot.debug].id = Id64ToString(id)
+      CORE.loot.debug[#CORE.loot.debug].id = API_Id64ToString(id)
       CORE.loot.debug[#CORE.loot.debug].mailType = mailType
 
       if fromCustomerService then
@@ -748,11 +749,11 @@ local function LootMails()
 
       elseif mailType == MAILTYPE_BOUNCE then
 
-        DEBUG("mail: " .. Id64ToString(id) .. 
+        DEBUG("mail: " .. API_Id64ToString(id) .. 
           " '" .. subject .. "' - Marked Auto-return")
 
         if IsBounceEnabled() then
-          DEBUG("bounce id=" .. Id64ToString(id))
+          DEBUG("bounce id=" .. API_Id64ToString(id))
           -- CORE.loot.autoReturnCount = CORE.loot.autoReturnCount + 1
           -- increment(CORE.loot, "autoReturnCount")
           MailCount(MAILTYPE_BOUNCE)
@@ -770,7 +771,7 @@ local function LootMails()
       elseif LootThisMail(mailType, codAmount, subType) then
 
         -- Loot this Mail
-        DEBUG( "found mail: " .. Id64ToString(id) .. " '" .. 
+        DEBUG( "found mail: " .. API_Id64ToString(id) .. " '" .. 
                subject .. "' numAtt=" .. numAttachments)
 
         StoreCurrentMail(
@@ -800,7 +801,7 @@ local function LootMails()
         elseif mailType == MAILTYPE_SIMPLE_PRE then
           -- Must read the mail to know if we loot it...
    
-          DEBUG("simple-pre id=" .. Id64ToString(id))
+          DEBUG("simple-pre id=" .. API_Id64ToString(id))
           CORE.state = STATE_READ
           API_RequestReadMail(id)
           return
@@ -810,7 +811,7 @@ local function LootMails()
           -- NOTE: Seems reading the mail help with getting items more reliably.
           -- Setup currentItems moved from here to after read event.
 
-          DEBUG("items id=" .. Id64ToString(id))
+          DEBUG("items id=" .. API_Id64ToString(id))
           CORE.state = STATE_READ
           API_RequestReadMail(id)
           return
@@ -819,13 +820,13 @@ local function LootMails()
 
           -- Read all player mail to store it for tooltip
 
-          DEBUG("player-mail id=" .. Id64ToString(id))
+          DEBUG("player-mail id=" .. API_Id64ToString(id))
           CORE.state = STATE_READ
           API_RequestReadMail(id)
           return
 
         elseif attachedMoney > 0 then
-          DEBUG("money id=" .. Id64ToString(id))
+          DEBUG("money id=" .. API_Id64ToString(id))
           -- CORE.loot.mailCount = CORE.loot.mailCount + 1
           MailCount(mailType)
           CORE.state = STATE_MONEY
@@ -834,7 +835,7 @@ local function LootMails()
         elseif numAttachments == 0 then 
           -- DELETE
           -- player may have manually looted and not deleted it.
-          DEBUG("delete id=" .. Id64ToString(id))
+          DEBUG("delete id=" .. API_Id64ToString(id))
           -- CORE.loot.mailCount = CORE.loot.mailCount + 1
           MailCount(mailType)
           CORE.state = STATE_DELETE
@@ -847,7 +848,7 @@ local function LootMails()
       else
 
         -- This mail is not for looting.
-        DEBUG("not-loot id=" .. Id64ToString(id))
+        DEBUG("not-loot id=" .. API_Id64ToString(id))
         CORE.skippedMails[zo_getSafeId64Key(id)] = true
 
       end
@@ -942,7 +943,7 @@ local function LootMailsCont()
         -- Fall through to loot items...
       elseif CORE.currentMail.money > 0 then
         -- loot money
-        DEBUG("money id=" .. Id64ToString(CORE.currentMail.id))
+        DEBUG("money id=" .. API_Id64ToString(CORE.currentMail.id))
         -- CORE.loot.mailCount = CORE.loot.mailCount + 1
         MailCount(MAILTYPE_SIMPLE)
         CORE.state = STATE_MONEY
@@ -950,7 +951,7 @@ local function LootMailsCont()
         return
       elseif IsDeleteSimpleAfter() then
         -- delete
-        DEBUG("delete id=" .. Id64ToString(CORE.currentMail.id))
+        DEBUG("delete id=" .. API_Id64ToString(CORE.currentMail.id))
         -- CORE.loot.mailCount = CORE.loot.mailCount + 1
         MailCount(MAILTYPE_SIMPLE)
         CORE.state = STATE_DELETE
@@ -970,7 +971,7 @@ local function LootMailsCont()
 
     else
       -- Skip this mail...
-      DEBUG("not simple id=" .. Id64ToString(CORE.currentMail.id))
+      DEBUG("not simple id=" .. API_Id64ToString(CORE.currentMail.id))
       CORE.skippedMails[zo_getSafeId64Key(CORE.currentMail.id)] = true
       CORE.currentMail = {}
       
@@ -1039,7 +1040,7 @@ local function LootMailsCont()
     -- Loot Money - this includes COD RECEIPT cases.
     --
 
-    DEBUG("money id=" .. Id64ToString(CORE.currentMail.id))
+    DEBUG("money id=" .. API_Id64ToString(CORE.currentMail.id))
     -- CORE.loot.mailCount = CORE.loot.mailCount + 1
     MailCount(CORE.currentMail.mailType)
     CORE.state = STATE_MONEY
@@ -1192,7 +1193,7 @@ function CORE.InboxUpdateEvt( eventCode )
 end
 
 function CORE.MailReadableEvt( eventCode, mailId)
-  DEBUG( "MailReadable state=" .. CORE.state .. " id=" .. Id64ToString(mailId) )
+  DEBUG( "MailReadable state=" .. CORE.state .. " id=" .. API_Id64ToString(mailId) )
 
   if mailLooterOpen then
     if (CORE.state == STATE_READ) and 
@@ -1205,7 +1206,7 @@ function CORE.MailReadableEvt( eventCode, mailId)
 end
 
 function CORE.MailRemovedEvt( eventCode, mailId )
-  DEBUG( "MailRemoved state=" .. CORE.state .. " id=" .. Id64ToString(mailId) )
+  DEBUG( "MailRemoved state=" .. CORE.state .. " id=" .. API_Id64ToString(mailId) )
 
   if mailLooterOpen then
     if CORE.state == STATE_IDLE then return end
@@ -1444,6 +1445,8 @@ end
 function CORE.SetAPI(api)
   if api == nil then
     -- Set API to ZOS API
+    DEBUG("SetAPI - Normal")
+
     API_GetNumBagFreeSlots = GetNumBagFreeSlots
     API_GetNextMailId = GetNextMailId
     API_GetMailItemInfo = GetMailItemInfo
@@ -1455,8 +1458,12 @@ function CORE.SetAPI(api)
     API_TakeMailAttachedItems = TakeMailAttachedItems
     API_DeleteMail = DeleteMail
     API_ReturnMail = ReturnMail
+    API_IsLocalMailboxFull = IsLocalMailboxFull
+    API_Id64ToString = Id64ToString
   else
     -- Set API to Testing framework.
+    DEBUG("SetAPI - Test")
+
     API_GetNumBagFreeSlots = api.GetNumBagFreeSlots
     API_GetNextMailId = api.GetNextMailId
     API_GetMailItemInfo = api.GetMailItemInfo
@@ -1468,6 +1475,8 @@ function CORE.SetAPI(api)
     API_TakeMailAttachedItems = api.TakeMailAttachedItems
     API_DeleteMail = api.DeleteMail
     API_ReturnMail = api.ReturnMail
+    API_IsLocalMailboxFull = api.IsLocalMailboxFull
+    API_Id64ToString = api.Id64ToString
   end
 end
 
@@ -1666,7 +1675,7 @@ function CORE.Scan()
     local mailType, subType = GetMailType(
       subject, fromSystem, codAmount, returned, numAttachments, attachedMoney)
 
-    d("mail id=" .. Id64ToString(id) )
+    d("mail id=" .. API_Id64ToString(id) )
     d("-> subject='" .. subject .. "'")
     d("-> system=" .. tostring(fromSystem))
     d("-> custService=" .. tostring(fromCustomerService))
@@ -1689,7 +1698,7 @@ function CORE.Scan()
     end
 
     table.insert(t, 
-      { id=Id64ToString(id), subject=subject, system=fromSystem, 
+      { id=API_Id64ToString(id), subject=subject, system=fromSystem, 
         returned=returned, mailType=mailType, subType=subType,
         money=attachedMoney, cod=codAmount, items=items,
       }
