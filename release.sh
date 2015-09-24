@@ -64,7 +64,7 @@ if [ $testmode -eq 0 ]; then
   # - TODO.txt  - because ESO thinks this is another addon (all .txt are addons)
   # - *.sh      - build scripts such as this file...
   
-  "$cmd" a -tzip $build_name "MailLooter\\" "-xr!.git" "-xr!.gitignore" "-xr!TODO.txt" "-xr!*.sh" "-xr!Test*.lua" "-xr!*Test.lua" "-xr!manifest.txt"
+  "$cmd" a -tzip $build_name "MailLooter\\" "-xr!.git" "-xr!.gitignore" "-xr!TODO.txt" "-xr!*.sh" "-xr!test" "-xr!Test*.lua" "-xr!*Test.lua" "-xr!manifest.txt"
 else
 
   "$cmd" a -tzip $build_name "MailLooter\\" "-xr!.git" "-xr!.gitignore" "-xr!TODO.txt" "-xr!*.sh" "-xr!manifest.txt"
