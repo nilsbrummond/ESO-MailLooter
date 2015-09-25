@@ -119,7 +119,7 @@ local function Test_GetNextMailId(id)
 
   end
 
-  TEST.DEBUG("GetNextMailId id=" .. tostring(id) .. " -> " .. tostring(nextId))
+  -- TEST.DEBUG("GetNextMailId id=" .. tostring(id) .. " -> " .. tostring(nextId))
 
   return nextId
 
@@ -212,6 +212,8 @@ local function Test_RequestReadMail(id)
 end
 
 local function Test_ReadMail(id)
+  TEST.DEBUG("ReadMail id=" .. tostring(id))
+
   local good, index = MailIdToIndex(id)
   if not good then return nil end
 
@@ -231,6 +233,8 @@ end
 
 local function Test_TakeMailAttachedMoney(id)
 
+  TEST.DEBUG("TakeMailAttachedMoney id=" .. tostring(id))
+
   local good, index = MailIdToIndex(id)
   if not good then return end
 
@@ -241,6 +245,8 @@ local function Test_TakeMailAttachedMoney(id)
 end
 
 local function Test_TakeMailAttachedItems(id)
+
+  TEST.DEBUG("TakeMailAttachedItems id=" .. tostring(id))
 
   local good, index = MailIdToIndex(id)
   if not good then return end
@@ -283,14 +289,18 @@ local function Test_IsMailReturnable(id)
 
   local mail = TEST.current.mails[index]
 
+  return (not mail[6]) and (not mail[7]) and (not mail[8])
+
 end
 
 local function Test_IsReadMailInfoReady(id)
 
+  -- TODO: What should this really do?
+
   local good, index = MailIdToIndex(id)
   if not good then return false end
 
-  local mail = TEST.current.mails[index]
+  return TEST.current.mailReadId == id
 
 end
 
