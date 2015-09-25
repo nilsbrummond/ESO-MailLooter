@@ -44,10 +44,11 @@ core/MailLooter.lua
 
 ; Test files.  
 ; All test files must have test in path or filename.
-core/TestDataOld.lua
-core/ItemTest.lua
-core/TestData1.lua
-core/TestData2.lua
+core/test/CoreTest.lua
+core/test/ItemTest.lua
+core/test/TestDataOld.lua
+core/test/TestData1.lua
+core/test/TestData2.lua
 
 ui/UserInterface.lua
 ui/Settings.lua
