@@ -16,6 +16,7 @@ local function NewTest(testdata)
     test.mailId = nil
 
     test.mails = testdata
+    test.mailsCount = #testdata
 
     -- build mail ID -> index table
     -- build list of delete mail
@@ -264,6 +265,7 @@ local function Test_DeleteMail(id, forceDelete)
   local good, index = MailIdToIndex(id)
   if not good then return end
 
+  TEST.current.mailsCount = TEST.current.mailsCount - 1
   TEST.current.deleted[index] = true
   TEST.current.event = { EVENT_MAIL_REMOVED, id }
   zo_callLater(PerformEvent, 50)
@@ -276,6 +278,14 @@ local function Test_ReturnMail(id)
   local good, index = MailIdToIndex(id)
   if not good then return end
 
+  -- Silently fail if not returnable is the ZOS API
+  if not Test_IsMailReturnable(id) then 
+    TEST.DEBUG("Attempt to return mail that is not returnable.")
+    assert(false)
+    return
+  end
+
+  TEST.current.mailsCount = TEST.current.mailsCount - 1
   TEST.current.deleted[index] = true
   TEST.current.event = { EVENT_MAIL_REMOVED, id }
   zo_callLater(PerformEvent, 50)
@@ -284,18 +294,31 @@ end
 
 local function Test_IsMailReturnable(id)
 
-  local good, index = MailIdToIndex(id)
-  if not good then return false end
+  local function Work(id)
+    local good, index = MailIdToIndex(id)
+    if not good then return false end
 
-  local mail = TEST.current.mails[index]
+    local mail = TEST.current.mails[index]
 
-  return (not mail[6]) and (not mail[7]) and (not mail[8])
+    -- fromSystem or from CS or returned
+    if (mail[6]) or (mail[7]) or (mail[8]) then return false end
 
+    -- has items or money
+    return mail[9] or mail[10]
+  end 
+
+  local rtn = Work(id)
+
+  TEST.DEBUG("IsMailReturnable id=" .. tostring(id) .. " -> " .. tostring(rtn)) 
+
+  return rtn
 end
 
 local function Test_IsReadMailInfoReady(id)
 
   -- TODO: What should this really do?
+  -- Pretty sure this is if ReadMail() will work now or if RequestReadMail()
+  -- must be called first and the event waited for.
 
   local good, index = MailIdToIndex(id)
   if not good then return false end
