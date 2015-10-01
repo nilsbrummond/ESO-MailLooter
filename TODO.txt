@@ -1,4 +1,6 @@
 
+COD - Added from line
+
 BUG - name sorting not looking right?
 
 Add right click context menu to loot list.
