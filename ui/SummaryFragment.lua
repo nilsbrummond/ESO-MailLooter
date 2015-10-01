@@ -5,8 +5,8 @@ ADDON.UI = ADDON.UI or {}
 local UI = ADDON.UI
 
 
-local function mailfull(str)
-  if IsLocalMailboxFull() then return str .. "+" else return str end
+local function mailfull(str, full)
+  if full then return str .. "+" else return str end
 end
 
 local function summaryStr(num)
@@ -91,18 +91,16 @@ end
 
 function UI.SummaryFragmentClass:UpdateSummary(summary)
 
-  local full = IsLocalMailboxFull()
-  local mailCount = GetNumMailItems()
-  local unreadCount = GetNumUnreadMail()
+  local full = summary.more
 
-  local strAllMail = mailfull(summaryStr(mailCount))
-  local strUnread = mailfull(summaryStr(unreadCount))
-  local strLootable = mailfull(summaryStr(summary.countLootable))
-  local strAVA = mailfull(summaryStr(summary.countAvA))
-  local strHireling = mailfull(summaryStr(summary.countHireling))
-  local strStore = mailfull(summaryStr(summary.countStore))
-  local strCoD = mailfull(summaryStr(summary.countCOD))
-  local strOther = mailfull(summaryStr(summary.countOther))
+  local strAllMail = mailfull(summaryStr(summary.countAll), full)
+  local strUnread = mailfull(summaryStr(summary.countUnread), full)
+  local strLootable = mailfull(summaryStr(summary.countLootable), full)
+  local strAVA = mailfull(summaryStr(summary.countAvA), full)
+  local strHireling = mailfull(summaryStr(summary.countHireling), full)
+  local strStore = mailfull(summaryStr(summary.countStore), full)
+  local strCoD = mailfull(summaryStr(summary.countCOD), full)
+  local strOther = mailfull(summaryStr(summary.countOther), full)
 
   self.summaryLabel:SetText(
     colortxt(   "All Mail: ") .. colorval(strAllMail) ..
