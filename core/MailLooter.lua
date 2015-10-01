@@ -19,8 +19,10 @@ local API_TakeMailAttachedMoney = TakeMailAttachedMoney
 local API_TakeMailAttachedItems = TakeMailAttachedItems
 local API_DeleteMail = DeleteMail
 local API_ReturnMail = ReturnMail
+local API_IsMailReturnable = IsMailReturnable
 local API_IsLocalMailboxFull = IsLocalMailboxFull
 local API_Id64ToString = Id64ToString
+
 
 -- MAIL_TYPE
 local MAILTYPE_UNKNOWN      = 1
@@ -289,9 +291,13 @@ local function CleanBouncePhrase(phrase)
 end
 
 -- Check the subject of a mail against the auto-return subjects.
-local function IsBounceReqMail(subject)
+local function IsBounceReqMail(id, subject)
 
   -- DEBUG("IsBounceReqMail: " .. subject)
+
+  -- Must be returnable mail...
+  if not API_IsMailReturnable(id) then return false end
+
 
   local cleaned = CleanBouncePhrase(subject)
   if cleaned == false then return false end
@@ -307,7 +313,7 @@ local function IsBounceReqMail(subject)
 end
 
 -- Detect the type of a mail message.
-local function GetMailType(subject, fromSystem, codAmount, returned, attachments, money)
+local function GetMailType(id, subject, fromSystem, codAmount, returned, attachments, money)
 
   if fromSystem then
     if TitlesAvA[subject] then
@@ -338,7 +344,7 @@ local function GetMailType(subject, fromSystem, codAmount, returned, attachments
     end
 
     -- Check bounce type
-    if IsBounceReqMail(subject) then return MAILTYPE_BOUNCE end
+    if IsBounceReqMail(id, subject) then return MAILTYPE_BOUNCE end
 
     -- Check simple type
     if IsSimplePre(subject, attachments, money) then
@@ -628,7 +634,8 @@ local function SummaryScanMail()
     attachedMoney = attachedMoney or 0
 
     local mailType = GetMailType(
-      subject, fromSystem, codAmount, returned, numAttachments, attachedMoney)
+      id, subject, fromSystem, codAmount, returned, 
+      numAttachments, attachedMoney)
 
     if mailType == MAILTYPE_COD then
       countCOD = countCOD + 1
@@ -735,7 +742,8 @@ local function LootMails()
       attachedMoney = attachedMoney or 0
 
       local mailType, subType = GetMailType(
-        subject, fromSystem, codAmount, returned, numAttachments, attachedMoney)
+        id, subject, fromSystem, codAmount, returned,
+        numAttachments, attachedMoney)
 
       -- DEBUG: Store mail as looted
       table.insert(CORE.loot.debug, {API_GetMailItemInfo(id)})
@@ -1460,6 +1468,7 @@ function CORE.SetAPI(api)
     API_ReturnMail = ReturnMail
     API_IsLocalMailboxFull = IsLocalMailboxFull
     API_Id64ToString = Id64ToString
+    API_IsMailReturnable = IsMailReturnable
   else
     -- Set API to Testing framework.
     DEBUG("SetAPI - Test")
@@ -1477,6 +1486,7 @@ function CORE.SetAPI(api)
     API_ReturnMail = api.ReturnMail
     API_IsLocalMailboxFull = api.IsLocalMailboxFull
     API_Id64ToString = api.Id64ToString
+    API_IsMailReturnable = api.IsMailReturnable
   end
 end
 
@@ -1673,7 +1683,8 @@ function CORE.Scan()
     attachedMoney = attachedMoney or 0
 
     local mailType, subType = GetMailType(
-      subject, fromSystem, codAmount, returned, numAttachments, attachedMoney)
+      id, subject, fromSystem, codAmount, returned,
+      numAttachments, attachedMoney)
 
     d("mail id=" .. API_Id64ToString(id) )
     d("-> subject='" .. subject .. "'")

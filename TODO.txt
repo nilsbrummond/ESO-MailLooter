@@ -1,4 +1,6 @@
 
+BUG - name sorting not looking right?
+
 Add right click context menu to loot list.
 
 Player mail as tooltip
