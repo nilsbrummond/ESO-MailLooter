@@ -10,6 +10,8 @@ TEST.tests = TEST.tests or {}
 
 --
 -- Test Goal... At least one of each type of mail...
+--              Basic coverage of all success cases.
+--              Basic coverage of all loot list UI elements.
 --
 
 local testData = {
@@ -598,6 +600,102 @@ local testData = {
         [4] = "|H0:item:33251:30:3:0:0:0:0:0:0:0:0:0:0:0:0:1:0:0:0:0:0|hMolybdenum|h",
       },
     },
+  },
+  [19] = 
+  {
+    [1] = "@Finrfin",
+    [2] = "Rhyli",
+    [3] = "",
+    [4] = "/esoui/art/icons/grafting_gems_adamantine.dds",
+    [5] = false,
+    [6] = false,
+    [7] = false,
+    [8] = false,
+    [9] = 1,
+    [10] = 0,
+    [11] = 0,
+    [12] = 30,
+    [13] = 721,
+    ["mailType"] = 7,
+    ["id"] = "383542693",
+    ["body"] = "",
+    ["items"] = 
+    {
+      [1] = 
+      {
+        [1] = "/esoui/art/icons/grafting_gems_adamantine.dds",
+        [2] = 1,
+        [3] = "",
+        [4] = "|H0:item:33252:30:16:0:0:0:0:0:0:0:0:0:0:0:0:7:0:0:0:0:0|hAdamantite|h",
+      },
+    },
+  },
+  [20] = 
+  {
+    [1] = "@Finrfin",
+    [2] = "Rhyli",
+    [3] = "",
+    [4] = "/esoui/art/icons/mail_001.dds",
+    [5] = false,
+    [6] = false,
+    [7] = false,
+    [8] = false,
+    [9] = 0,
+    [10] = 1,
+    [11] = 0,
+    [12] = 3,
+    [13] = 710,
+    ["mailType"] = 7,
+    ["id"] = "383542781",
+    ["body"] = "",
+  },
+  [21] = 
+  {
+    [1] = "@Finrfin",
+    [2] = "Rhyli",
+    [3] = "",
+    [4] = "/esoui/art/icons/crafting_components_runestones_050.dds",
+    [5] = false,
+    [6] = false,
+    [7] = false,
+    [8] = false,
+    [9] = 1,
+    [10] = 1,
+    [11] = 0,
+    [12] = 30,
+    [13] = 681,
+    ["mailType"] = 7,
+    ["id"] = "383542987",
+    ["body"] = "",
+    ["items"] = 
+    {
+      [1] = 
+      {
+        [1] = "/esoui/art/icons/crafting_components_runestones_050.dds",
+        [2] = 1,
+        [3] = "",
+        [4] = "|H0:item:45855:20:20:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|hJora|h",
+      },
+    },
+  },
+  [22] = 
+  {
+    [1] = "@Finrfin",
+    [2] = "",
+    [3] = "RE: cod this",
+    [4] = "/esoui/art/icons/mail_001.dds",
+    [5] = false,
+    [6] = false,
+    [7] = false,
+    [8] = false,
+    [9] = 0,
+    [10] = 10,
+    [11] = 0,
+    [12] = 3,
+    [13] = 180,
+    ["mailType"] = 8,
+    ["id"] = "383547329",
+    ["body"] = "",
   },
 
 
