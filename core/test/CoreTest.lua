@@ -328,7 +328,9 @@ end
 
 local function Test_IsLocalMailboxFull()
   -- TODO: add local mailbox concept.
-  return false
+  --
+
+  return (TEST.current.mailsCount > 10)
 end
 
 local function Test_Id64ToString(id)
