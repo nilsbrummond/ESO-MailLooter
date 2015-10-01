@@ -22,6 +22,7 @@ local API_ReturnMail = ReturnMail
 local API_IsMailReturnable = IsMailReturnable
 local API_IsLocalMailboxFull = IsLocalMailboxFull
 local API_Id64ToString = Id64ToString
+local API_GetNumMailItems = GetNumMailItems
 
 
 -- MAIL_TYPE
@@ -669,7 +670,9 @@ local function SummaryScanMail()
     id = API_GetNextMailId(id)
   end
 
-  local result = { countLootable = countLootable,
+  local result = { countAll = API_GetNumMailItems(),
+                   countUnread = GetNumUnreadMail(),
+                   countLootable = countLootable,
                    countAvA = countAvA, countHireling=countHireling, 
                    countCOD = countCOD, countCODReceipt = countCODReceipt,
                    countStore = countStore,
@@ -1469,6 +1472,7 @@ function CORE.SetAPI(api)
     API_IsLocalMailboxFull = IsLocalMailboxFull
     API_Id64ToString = Id64ToString
     API_IsMailReturnable = IsMailReturnable
+    API_GetNumMailItems = GetNumMailItems
   else
     -- Set API to Testing framework.
     DEBUG("SetAPI - Test")
@@ -1487,6 +1491,7 @@ function CORE.SetAPI(api)
     API_IsLocalMailboxFull = api.IsLocalMailboxFull
     API_Id64ToString = api.Id64ToString
     API_IsMailReturnable = api.IsMailReturnable
+    API_GetNumMailItems = api.GetNumMailItems
   end
 end
 
@@ -1612,7 +1617,7 @@ end
 function CORE.IsActionReady()
 
   if (CORE.state == STATE_IDLE) and 
-     (GetNumMailItems() > 0)
+     (API_GetNumMailItems() > 0)
   then
     return true
   end

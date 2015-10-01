@@ -271,6 +271,27 @@ local function Test_DeleteMail(id, forceDelete)
   zo_callLater(PerformEvent, 50)
 end
 
+local function IsMailReturnableWork(id)
+  local good, index = MailIdToIndex(id)
+  if not good then return false end
+
+  local mail = TEST.current.mails[index]
+
+  -- fromSystem or from CS or returned
+  if (mail[6]) or (mail[7]) or (mail[8]) then return false end
+
+  -- has items or money
+  return mail[9] or mail[10]
+end 
+
+
+local function Test_IsMailReturnable(id)
+
+  local rtn = IsMailReturnableWork(id)
+  TEST.DEBUG("IsMailReturnable id=" .. tostring(id) .. " -> " .. tostring(rtn)) 
+  return rtn
+end
+
 local function Test_ReturnMail(id)
 
   TEST.DEBUG("ReturnMail id=" .. tostring(id))
@@ -279,7 +300,7 @@ local function Test_ReturnMail(id)
   if not good then return end
 
   -- Silently fail if not returnable is the ZOS API
-  if not Test_IsMailReturnable(id) then 
+  if not IsMailReturnableWork(id) then 
     TEST.DEBUG("Attempt to return mail that is not returnable.")
     assert(false)
     return
@@ -290,28 +311,6 @@ local function Test_ReturnMail(id)
   TEST.current.event = { EVENT_MAIL_REMOVED, id }
   zo_callLater(PerformEvent, 50)
 
-end
-
-local function Test_IsMailReturnable(id)
-
-  local function Work(id)
-    local good, index = MailIdToIndex(id)
-    if not good then return false end
-
-    local mail = TEST.current.mails[index]
-
-    -- fromSystem or from CS or returned
-    if (mail[6]) or (mail[7]) or (mail[8]) then return false end
-
-    -- has items or money
-    return mail[9] or mail[10]
-  end 
-
-  local rtn = Work(id)
-
-  TEST.DEBUG("IsMailReturnable id=" .. tostring(id) .. " -> " .. tostring(rtn)) 
-
-  return rtn
 end
 
 local function Test_IsReadMailInfoReady(id)
@@ -347,6 +346,12 @@ local function Test_Id64ToString(id)
   end
 
 end
+  
+local function Test_GetNumMailItems()
+  
+  return TEST.current.mailsCount
+
+end
 
 local apiTestInterface = {
   GetNumBagFreeSlots = Test_GetNumBagFreeSlots,
@@ -364,6 +369,7 @@ local apiTestInterface = {
   IsReadMailInfoReady = Test_IsReadMailInfoReady,
   IsLocalMailboxFull = Test_IsLocalMailboxFull,
   Id64ToString = Test_Id64ToString,
+  GetNumMailItems = Test_GetNumMailItems,
 }
 
 function TEST.StartTest(test)
