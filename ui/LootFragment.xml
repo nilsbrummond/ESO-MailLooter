@@ -58,6 +58,9 @@
       <OnMouseExit>
         MailLooter_LootListRow_OnMouseExit(self)
       </OnMouseExit>
+      <OnMouseUp>
+        MailLooter_LootListRow_OnMouseUp(self, button, upInside)
+      </OnMouseUp>
 
       <Controls>
         <Texture name="$(parent)_BG" textureFile="/esoui/art/miscellaneous/listitem_backdrop.dds" layer="BACKGROUND" alpha="0.8" pixelRoundingEnabled="true" >
@@ -108,6 +111,9 @@
       <OnMouseExit>
         MailLooter_LootListRow_OnMouseExit(self)
       </OnMouseExit>
+      <OnMouseUp>
+        MailLooter_LootListRow_OnMouseUp(self, button, upInside)
+      </OnMouseUp>
 
       <Controls>
         <Texture name="$(parent)_BG" textureFile="/esoui/art/miscellaneous/listitem_backdrop.dds" layer="BACKGROUND" alpha="0.8" pixelRoundingEnabled="true" >
