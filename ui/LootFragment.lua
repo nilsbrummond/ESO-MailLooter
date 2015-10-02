@@ -267,6 +267,29 @@ function MailLooter_LootListRowStatus_OnMouseExit(control)
   ClearTooltip(InformationTooltip)
 end
 
+function MailLooter_LootListRow_OnMouseUp(rowControl, button, upInside)
+  
+  if not upInside then return end
+  if button ~= MOUSE_BUTTON_INDEX_RIGHT then return end
+
+  --[[
+  ClearMenu()
+
+  AddMenuItem(
+    GetString(SI_ITEM_ACTION_LINK_TO_CHAT), 
+    function() 
+      ZO_LinkHandler_InsertLink(
+        zo_strformat(SI_TOOLTIP_ITEM_NAME, rowControl.data.link))
+    end
+  )
+
+  ShowMenu(rowControl)
+  --]]
+
+  ZO_LinkHandler_OnLinkMouseUp(rowControl.data.link, button, rowControl)
+
+end
+
 local function SetupRowDataBase(rowControl, data, scrollList)
   data.control = rowControl
   rowControl.data = data
