@@ -22,7 +22,7 @@ local typeRowType = {
                                         ROW_TYPE_ID, 
                                         ROW_TYPE_ID_MONEY },
 
-  [ADDON.Core.MAILTYPE_COD]         = ROW_TYPE_ID,
+  [ADDON.Core.MAILTYPE_COD]         = ROW_TYPE_ID_EXTRA,
   [ADDON.Core.MAILTYPE_RETURNED]    = ROW_TYPE_ID_EXTRA,
   [ADDON.Core.MAILTYPE_SIMPLE]      = ROW_TYPE_ID_EXTRA,
   [ADDON.Core.MAILTYPE_COD_RECEIPT] = ROW_TYPE_ID_MONEY,
@@ -347,7 +347,8 @@ local function SetupRowDataItem(rowControl, data, scrollList)
     if data.mailType == ADDON.Core.MAILTYPE_RETURNED then
       text = "|cFF0000Returned|r from: " .. SenderString(data.sdn, data.scn)
 
-    elseif data.mailType == ADDON.Core.MAILTYPE_SIMPLE then
+    elseif (data.mailType == ADDON.Core.MAILTYPE_SIMPLE) or
+           (data.mailType == ADDON.Core.MAILTYPE_COD) then
       text = "From: " .. SenderString(data.sdn, data.scn)
 
     elseif data.mailType == ADDON.Core.MAILTYPE_STORE then
