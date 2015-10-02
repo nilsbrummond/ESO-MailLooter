@@ -1,9 +1,5 @@
 
-COD - Added from line
-
 BUG - name sorting not looking right?
-
-Add right click context menu to loot list.
 
 Player mail as tooltip
   - Just in case you want to see the mail after looting...
@@ -19,6 +15,10 @@ Sandwitch
 
 DONE:
 ----
+
+Add right click context menu to loot list.
+
+COD - Added from line
 
 Guild Store Expired - Added 'Expired' Tag to loot list.
 
