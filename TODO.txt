@@ -1,5 +1,7 @@
 
-BUG - name sorting not looking right?
+German Translation
+
+French Translation
 
 Player mail as tooltip
   - Just in case you want to see the mail after looting...
@@ -15,6 +17,8 @@ Sandwitch
 
 DONE:
 ----
+
+BUG - name sorting not looking right?
 
 Add right click context menu to loot list.
 
