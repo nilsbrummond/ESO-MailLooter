@@ -68,12 +68,13 @@ local NoComparisionTooltip =
 local SortKeys =
 {
   mailType =  { tieBreaker = { "quality","name","value" }, 
-                isNumberic=true },
+                isNumberic=true, order=ZO_SORT_ORDER_UP },
   quality =   { tieBreaker = { "name", "mailType", "value" },
-                isNumberic=true },
-  name =      { tieBreaker = { "mailType", "quality", "value" }},
+                isNumberic=true, order=ZO_SORT_ORDER_DOWN },
+  name =      { tieBreaker = { "mailType", "quality", "value" },
+                order=ZO_SORT_ORDER_UP },
   value =     { tieBreaker = { "quality", "mailType", "name" },
-                isNumberic=true },
+                isNumberic=true, order=ZO_SORT_ORDER_DOWN },
 
   -- tiebreakers only:              
   stack =     { isNumberic=true },
@@ -88,6 +89,45 @@ local SortKeys =
 -- Local functions
 --
 
+local IS_LESS_THAN = -1
+local IS_EQUAL_TO = 0
+local IS_GREATER_THAN = 1
+
+-- Used by TableOrderingFunction.
+local function TOFCompareSimple(entry1, entry2, key, keys)
+  local value1 = entry1[key]
+  local value2 = entry2[key]
+
+  if keys[key].isNumberic then
+    value1 = tonumber(value1)
+    value2 = tonumber(value2)
+  else -- "string"
+    value1 = zo_strlower(value1)
+    value2 = zo_strlower(value2)
+  end
+
+  local compareResult
+
+  if value1 < value2 then
+    compareResult = IS_LESS_THAN
+  elseif value1 > value2 then
+    compareResult = IS_GREATER_THAN
+  else
+    compareResult = IS_EQUAL_TO
+  end
+
+  return compareResult
+end
+
+-- Adjust for sort order.  Used by TableOrderingFunction
+local function TOFSortOrder(cr, sortOrder)
+  if sortOrder == ZO_SORT_ORDER_UP then
+    return cr == IS_LESS_THAN
+  end
+  return cr == IS_GREATER_THAN
+end
+
+
 -- This function must be determanistic. 
 -- Less then or great then - no equal.
 --
@@ -100,63 +140,30 @@ local SortKeys =
 --
 local function TableOrderingFunction(entry1, entry2, key, keys, sortOrder)
  
-  local IS_LESS_THAN = -1
-  local IS_EQUAL_TO = 0
-  local IS_GREATER_THAN = 1
-
-  local function CompareSimple(entry1, entry2, key, keys)
-    local value1 = entry1[key]
-    local value2 = entry2[key]
-
-    if keys[key].isNumberic then
-      value1 = tonumber(value1)
-      value2 = tonumber(value2)
-    else -- "string"
-      value1 = zo_strlower(value1)
-      value2 = zo_strlower(value2)
-    end
-
-    local compareResult
-
-    if value1 < value2 then
-      compareResult = IS_LESS_THAN
-    elseif value1 > value2 then
-      compareResult = IS_GREATER_THAN
-    else
-      compareResult = IS_EQUAL_TO
-    end
-
-    return compareResult
-  end
-
-  local cr = CompareSimple(entry1, entry2, key, keys)
+  local cr = TOFCompareSimple(entry1, entry2, key, keys)
 
   -- sortOrder for first key only
   if cr ~= IS_EQUAL_TO then 
-    if sortOrder == ZO_SORT_ORDER_UP then
-      return cr == IS_LESS_THAN
-    end
-    return cr == IS_GREATER_THAN
+    return TOFSortOrder(cr, sortOrder)
   end
 
   if (cr == IS_EQUAL_TO) and (keys[key].tieBreaker ~= nil) then
 
     for i,v in ipairs(keys[key].tieBreaker) do
-      cr = CompareSimple(entry1, entry2, v, keys)
-      if cr ~= IS_EQUAL_TO then break end
+      cr = TOFCompareSimple(entry1, entry2, v, keys)
+      if cr ~= IS_EQUAL_TO then
+        return TOFSortOrder(cr, keys[v].order)
+      end
     end
 
   end
 
   -- last chance
   if (cr == IS_EQUAL_TO) and (keys.final ~= nil) then
-    cr = CompareSimple(entry1, entry2, keys.final, keys)
+    cr = TOFCompareSimple(entry1, entry2, keys.final, keys)
   end
 
---  if sortOrder == ZO_SORT_ORDER_UP then
---    return cr == IS_LESS_THAN
---  end
-  return cr == IS_GREATER_THAN
+  return cr == IS_LESS_THAN
 
 end
 
