@@ -67,13 +67,14 @@ local NoComparisionTooltip =
 
 local SortKeys =
 {
-  mailType =  { tiebreaker = { "quality","name","stack","value" }, 
-                isNumberic=true },
-  quality =   { tiebreaker = { "name", "mailType", "stack", "value" },
-                isNumberic=true },
-  name =      { tiebreaker = { "mailType", "quality", "stack", "value" }},
-  value =     { tiebreaker = { "quality", "mailType", "name", "stack" },
-                isNumberic=true },
+  mailType =  { tieBreaker = { "quality","name","value" }, 
+                isNumberic=true, order=ZO_SORT_ORDER_UP },
+  quality =   { tieBreaker = { "name", "mailType", "value" },
+                isNumberic=true, order=ZO_SORT_ORDER_DOWN },
+  name =      { tieBreaker = { "mailType", "quality", "value" },
+                order=ZO_SORT_ORDER_UP },
+  value =     { tieBreaker = { "quality", "mailType", "name" },
+                isNumberic=true, order=ZO_SORT_ORDER_DOWN },
 
   -- tiebreakers only:              
   stack =     { isNumberic=true },
@@ -88,6 +89,45 @@ local SortKeys =
 -- Local functions
 --
 
+local IS_LESS_THAN = -1
+local IS_EQUAL_TO = 0
+local IS_GREATER_THAN = 1
+
+-- Used by TableOrderingFunction.
+local function TOFCompareSimple(entry1, entry2, key, keys)
+  local value1 = entry1[key]
+  local value2 = entry2[key]
+
+  if keys[key].isNumberic then
+    value1 = tonumber(value1)
+    value2 = tonumber(value2)
+  else -- "string"
+    value1 = zo_strlower(value1)
+    value2 = zo_strlower(value2)
+  end
+
+  local compareResult
+
+  if value1 < value2 then
+    compareResult = IS_LESS_THAN
+  elseif value1 > value2 then
+    compareResult = IS_GREATER_THAN
+  else
+    compareResult = IS_EQUAL_TO
+  end
+
+  return compareResult
+end
+
+-- Adjust for sort order.  Used by TableOrderingFunction
+local function TOFSortOrder(cr, sortOrder)
+  if sortOrder == ZO_SORT_ORDER_UP then
+    return cr == IS_LESS_THAN
+  end
+  return cr == IS_GREATER_THAN
+end
+
+
 -- This function must be determanistic. 
 -- Less then or great then - no equal.
 --
@@ -100,55 +140,30 @@ local SortKeys =
 --
 local function TableOrderingFunction(entry1, entry2, key, keys, sortOrder)
  
-  local IS_LESS_THAN = -1
-  local IS_EQUAL_TO = 0
-  local IS_GREATER_THAN = 1
+  local cr = TOFCompareSimple(entry1, entry2, key, keys)
 
-  local function CompareSimple(entry1, entry2, key, keys)
-    local value1 = entry1[key]
-    local value2 = entry2[key]
-
-    if keys[key].isNumberic then
-      value1 = tonumber(value1)
-      value2 = tonumber(value2)
-    else -- "string"
-      value1 = zo_strlower(value1)
-      value2 = zo_strlower(value2)
-    end
-
-    local compareResult
-
-    if value1 < value2 then
-      compareResult = IS_LESS_THAN
-    elseif value1 > value2 then
-      compareResult = IS_GREATER_THAN
-    else
-      compareResult = IS_EQUAL_TO
-    end
-
-    return compareResult
+  -- sortOrder for first key only
+  if cr ~= IS_EQUAL_TO then 
+    return TOFSortOrder(cr, sortOrder)
   end
-
-  local cr = CompareSimple(entry1, entry2, key, keys)
 
   if (cr == IS_EQUAL_TO) and (keys[key].tieBreaker ~= nil) then
 
-    for i,v in keys[key].tieBreaker do
-      cr = CompareSimple(entry1, entry2, v, keys)
-      if cr ~= IS_EQUAL_TO then break end
+    for i,v in ipairs(keys[key].tieBreaker) do
+      cr = TOFCompareSimple(entry1, entry2, v, keys)
+      if cr ~= IS_EQUAL_TO then
+        return TOFSortOrder(cr, keys[v].order)
+      end
     end
 
   end
 
   -- last chance
   if (cr == IS_EQUAL_TO) and (keys.final ~= nil) then
-    cr = CompareSimple(entry1, entry2, keys.final, keys)
+    cr = TOFCompareSimple(entry1, entry2, keys.final, keys)
   end
 
-  if sortOrder == ZO_SORT_ORDER_UP then
-    return cr == IS_LESS_THAN
-  end
-  return cr == IS_GREATER_THAN
+  return cr == IS_LESS_THAN
 
 end
 
@@ -182,6 +197,22 @@ local function SetListHighlightHidden(listPart, hidden)
             end
         end
     end
+end
+
+local function GetMoneyName(data)
+
+  local name = "Money"
+
+  if data.mailType == ADDON.Core.MAILTYPE_COD_RECEIPT then
+    name = "COD Payment"
+  elseif data.mailType == ADDON.Core.MAILTYPE_RETURNED then
+    name = "Returned Money"
+  elseif data.mailType == ADDON.Core.MAILTYPE_SIMPLE then
+    name = "Simple Mail"
+  end
+
+  return name
+
 end
 
 -- Global function for external XML access.
@@ -329,13 +360,7 @@ local function SetupRowDataMoney(rowControl, data, scrollList)
 
   SetupRowDataBase(rowControl, data, scrollList)
 
-  if data.mailType == ADDON.Core.MAILTYPE_COD_RECEIPT then
-    rowControl:GetNamedChild("_Name"):SetText("COD Payment")
-  elseif data.mailType == ADDON.Core.MAILTYPE_RETURNED then
-    rowControl:GetNamedChild("_Name"):SetText("Returned Money")
-  elseif data.mailType == ADDON.Core.MAILTYPE_SIMPLE then
-    rowControl:GetNamedChild("_Name"):SetText("Simple Mail")
-  end
+  rowControl:GetNamedChild("_Name"):SetText(GetMoneyName(data))
 
   local extra = rowControl:GetNamedChild("_Extra")
   if data.mailType == ADDON.Core.MAILTYPE_RETURNED then
@@ -692,8 +717,10 @@ function UI.LootFragmentClass:AddLootedMoney(mail, isNewMoneyStack)
     local data = ZO_DeepTableCopy(mail)
 
     data.quality = -1
-    data.name = "money"
+    data.name = GetMoneyName(data)
     data.value = mail.money
+    -- data.stack = 1
+
 
     local row = ZO_ScrollList_CreateDataEntry(
       ROW_TYPE_ID_MONEY, data, CATEGORY_DEFAULT)
