@@ -104,7 +104,10 @@ local function Initialize( eventCode, addOnName )
     ADDON.GetSetting_deleteSimple,
     ADDON.GetSetting_enableBounce)
 
-  ADDON.Core.Test.Initialize(ADDON.DebugMsg)
+  -- If test build...
+  if ADDON.Core.Test.tests ~= nil then
+    ADDON.Core.Test.Initialize(ADDON.DebugMsg)
+  end
 
   ADDON.Core.SetAutoReturnStrings(ADDON.settings.autoReturnSubjects)
 
