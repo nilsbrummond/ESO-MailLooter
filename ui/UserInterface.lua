@@ -300,7 +300,14 @@ function UI.QuickLaunch(mode)
 
   UI.queuedCommand = mode
   if not SCENE_MANAGER:IsShowing("mailLooter") then
-    MAIN_MENU:ShowScene("mailLooter")
+  
+    if IsInGamepadPreferredMode() then
+      -- Nothing for now...
+      UI.queuedCommand = nil
+    else
+      MAIN_MENU_KEYBOARD:ShowScene("mailLooter")
+    end
+
   else
     QuickLaunchCmd()
   end

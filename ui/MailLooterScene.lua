@@ -23,8 +23,8 @@ function ADDON.UI.CreateScene(
   MAIL_LOOTER_SCENE:AddFragment(filterFragment.FRAGMENT)
   MAIL_LOOTER_SCENE:AddFragment(lootFragment.FRAGMENT)
 
-  local index = #MAIN_MENU.sceneGroupInfo.mailSceneGroup.menuBarIconData + 1
-  MAIN_MENU.sceneGroupInfo.mailSceneGroup.menuBarIconData[index] = {
+  local index = #MAIN_MENU_KEYBOARD.sceneGroupInfo.mailSceneGroup.menuBarIconData + 1
+  MAIN_MENU_KEYBOARD.sceneGroupInfo.mailSceneGroup.menuBarIconData[index] = {
     categoryName = SI_MAIL_LOOTER,
     descriptor = "mailLooter",
     normal = "EsoUI/Art/MainMenu/menuBar_inventory_up.dds",
@@ -32,15 +32,15 @@ function ADDON.UI.CreateScene(
     highlight = "EsoUI/Art/MainMenu/menuBar_inventory_over.dds",
   }
 
-  local MAIL_CAT = MAIN_MENU.sceneGroupInfo.mailSceneGroup.category
+  local MAIL_CAT = MAIN_MENU_KEYBOARD.sceneGroupInfo.mailSceneGroup.category
 
   SCENE_MANAGER:GetSceneGroup("mailSceneGroup").scenes[index] = "mailLooter"
   MAIL_LOOTER_SCENE:AddFragment(
-    ZO_FadeSceneFragment:New(MAIN_MENU.sceneGroupBar))
+    ZO_FadeSceneFragment:New(MAIN_MENU_KEYBOARD.sceneGroupBar))
 
   MAIL_LOOTER_SCENE:RegisterCallback("StateChange", UI.SceneStateChange)
 
-  MAIN_MENU:AddRawScene(
-    "mailLooter", MAIL_CAT, MAIN_MENU.categoryInfo[MAIL_CAT], "mailSceneGroup")
+  MAIN_MENU_KEYBOARD:AddRawScene(
+    "mailLooter", MAIL_CAT, MAIN_MENU_KEYBOARD.categoryInfo[MAIL_CAT], "mailSceneGroup")
 
 end
