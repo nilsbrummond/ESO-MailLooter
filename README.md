@@ -39,7 +39,7 @@ These tests are played by the core module into the UI.  They are only for UI tes
 
 /maillooter coretest <testname>
 -------------------------------
-These tests inject a fake ESO Addon API with a different pre-coded mail Inboxes to run the maillooter against.  These test will test both the core and ui modules.
+These tests inject a fake ESO Addon API with a different pre-coded mail Inboxes to run the maillooter against.  These tests will test both the core and ui modules.  Only API calls that are through the core module are put under test.
 
 The currently available test are:
 ```
