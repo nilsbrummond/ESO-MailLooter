@@ -53,7 +53,7 @@ function UI.SummaryFragmentClass:Initialize()
   local title = WINDOW_MANAGER:CreateControl(
     "MailLooterSummaryTitle", wrapper, CT_LABEL)
   title:SetFont("ZoFontGameBold")
-  title:SetText("INBOX:")
+  title:SetText(GetString(SI_MAILLOOTER_SUMMARY_INBOX))
   title:SetColor(1,1,1,1)
   title:SetHeight(title:GetFontHeight())
   --title:SetHorizontalAlignment(TEXT_ALIGN_CENTER)
@@ -102,16 +102,25 @@ function UI.SummaryFragmentClass:UpdateSummary(summary)
   local strCoD = mailfull(summaryStr(summary.countCOD), full)
   local strOther = mailfull(summaryStr(summary.countOther), full)
 
-  self.summaryLabel:SetText(
-    colortxt(   "All Mail: ") .. colorval(strAllMail) ..
-    colortxt("   Unread: ") .. colorval(strUnread) ..
-    colortxt("   Lootable: ") .. colorval(strLootable) ..
-    colortxt("   AvA: ") .. colorval(strAVA) ..
-    colortxt("   Hireling: ") .. colorval(strHireling) ..
-    colortxt("   Store: ") .. colorval(strStore) ..
-    colortxt("   CoD: ") .. colorval(strCoD) ..
-    colortxt("   Other: ") .. colorval(strOther)
-  )
+  local msg = 
+    colortxt(GetString(SI_MAILLOOTER_SUMMARY_ALL)) .. " " ..
+      colorval(strAllMail) .. "   " ..
+    colortxt(GetString(SI_MAILLOOTER_SUMMARY_UNREAD)) .. " " ..
+      colorval(strUnread) .. "   " ..
+    colortxt(GetString(SI_MAILLOOTER_SUMMARY_LOOTABLE)) .. " " ..
+      colorval(strLootable) .. "   " ..
+    colortxt(GetString(SI_MAILLOOTER_SUMMARY_AVA)) .. " " ..
+      colorval(strAVA) .. "   " ..
+    colortxt(GetString(SI_MAILLOOTER_SUMMARY_HIRELING)) .. " " ..
+      colorval(strHireling) .. "   " ..
+    colortxt(GetString(SI_MAILLOOTER_SUMMARY_STORE)) .. " " ..
+      colorval(strStore) .. "   " ..
+    colortxt(GetString(SI_MAILLOOTER_SUMMARY_COD)) .. " " ..
+      colorval(strCoD) .. "   " ..
+    colortxt(GetString(SI_MAILLOOTER_SUMMARY_OTHER)) .. " " ..
+      colorval(strOther)
+
+  self.summaryLabel:SetText( msg )
 
 end
 

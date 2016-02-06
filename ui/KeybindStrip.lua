@@ -6,7 +6,7 @@ local UI = ADDON.UI
 
 UI.mailLooterButtonGroup = {
     {
-        name = "Loot Mail",
+        name = GetString(SI_MAILLOOTER_STRIP_LOOT_MAIN),
         keybind = "UI_SHORTCUT_PRIMARY",
         visible = function() 
             return ADDON.Core.IsActionReady() and 
@@ -14,13 +14,13 @@ UI.mailLooterButtonGroup = {
         callback = function() UI.StartLooting() end,
     },
     {
-        name = "Cancel",
+        name = GetString(SI_MAILLOOTER_STRIP_CANCEL),
         keybind = "UI_SHORTCUT_NEGATIVE",
         visible = function() return not ADDON.Core.IsIdle() end,
         callback = function() ADDON.Core.CancelClean() end,
     },
     {
-        name = "Clear",
+        name = GetString(SI_MAILLOOTER_STRIP_CLEAR),
         keybind = "UI_SHORTCUT_SECONDARY",
         visible = function() 
             return ADDON.Core.IsIdle() and UI.IsLootShown() end,
