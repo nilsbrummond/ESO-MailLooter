@@ -30,14 +30,15 @@ local typeRowType = {
 
 -- TODO: Translate:
 local typeTooltips = {
-  [ADDON.Core.MAILTYPE_UNKNOWN]     = "Unknown Mail Type",
-  [ADDON.Core.MAILTYPE_AVA]         = "AvA Mail",
-  [ADDON.Core.MAILTYPE_HIRELING]    = "Hireling Mail",
-  [ADDON.Core.MAILTYPE_STORE]       = "Guild Store Mail",
-  [ADDON.Core.MAILTYPE_COD]         = "COD Mail",
-  [ADDON.Core.MAILTYPE_RETURNED]    = "Returned Mail",
-  [ADDON.Core.MAILTYPE_SIMPLE]      = "Player Mail",
-  [ADDON.Core.MAILTYPE_COD_RECEIPT] = "COD Receipt Mail",
+  [ADDON.Core.MAILTYPE_UNKNOWN]     = GetString(SI_MAILLOOTER_LOOT_MT_UNKNOWN),
+  [ADDON.Core.MAILTYPE_AVA]         = GetString(SI_MAILLOOTER_LOOT_MT_AVA),
+  [ADDON.Core.MAILTYPE_HIRELING]    = GetString(SI_MAILLOOTER_LOOT_MT_HIRELING),
+  [ADDON.Core.MAILTYPE_STORE]       = GetString(SI_MAILLOOTER_LOOT_MT_STORE),
+  [ADDON.Core.MAILTYPE_COD]         = GetString(SI_MAILLOOTER_LOOT_MT_COD),
+  [ADDON.Core.MAILTYPE_RETURNED]    = GetString(SI_MAILLOOTER_LOOT_MT_RETURNED),
+  [ADDON.Core.MAILTYPE_SIMPLE]      = GetString(SI_MAILLOOTER_LOOT_MT_SIMPLE),
+  [ADDON.Core.MAILTYPE_COD_RECEIPT] = GetString(
+                                          SI_MAILLOOTER_LOOT_MT_COD_RECEIPT),
 }
 
 local currencyOptions = {
@@ -201,14 +202,14 @@ end
 
 local function GetMoneyName(data)
 
-  local name = "Money"
+  local name = GetString(SI_MAILLOOTER_LOOT_MN_MONEY)
 
   if data.mailType == ADDON.Core.MAILTYPE_COD_RECEIPT then
-    name = "COD Payment"
+    name = GetString(SI_MAILLOOTER_LOOT_MN_COD_PAYMENT)
   elseif data.mailType == ADDON.Core.MAILTYPE_RETURNED then
-    name = "Returned Money"
+    name = GetString(SI_MAILLOOTER_LOOT_MN_RETURNED)
   elseif data.mailType == ADDON.Core.MAILTYPE_SIMPLE then
-    name = "Simple Mail"
+    name = GetString(SI_MAILLOOTER_LOOT_MN_SIMPLE)
   end
 
   return name
@@ -365,9 +366,12 @@ local function SetupRowDataMoney(rowControl, data, scrollList)
   local extra = rowControl:GetNamedChild("_Extra")
   if data.mailType == ADDON.Core.MAILTYPE_RETURNED then
     extra:SetText(
-      "|cFF0000Returned|r from: " .. SenderString(data.sdn, data.scn))
+      GetString(SI_MAILLOOTER_LOOT_EXTRA_RETURNED_FROM) .. 
+      SenderString(data.sdn, data.scn))
   else
-    extra:SetText("From: " .. SenderString(data.sdn, data.scn))
+    extra:SetText(
+      GetString(SI_MAILLOOTER_LOOT_EXTRA_FROM) .. 
+      SenderString(data.sdn, data.scn))
   end
 
   ZO_CurrencyControl_SetSimpleCurrency(
@@ -393,18 +397,20 @@ local function SetupRowDataItem(rowControl, data, scrollList)
     local text = ""
 
     if data.mailType == ADDON.Core.MAILTYPE_RETURNED then
-      text = "|cFF0000Returned|r from: " .. SenderString(data.sdn, data.scn)
+      text = GetString(SI_MAILLOOTER_LOOT_EXTRA_RETURNED_FROM) .. 
+        SenderString(data.sdn, data.scn)
 
     elseif (data.mailType == ADDON.Core.MAILTYPE_SIMPLE) or
            (data.mailType == ADDON.Core.MAILTYPE_COD) then
-      text = "From: " .. SenderString(data.sdn, data.scn)
+      text = GetString(SI_MAILLOOTER_LOOT_EXTRA_FROM) .. 
+        SenderString(data.sdn, data.scn)
 
     elseif data.mailType == ADDON.Core.MAILTYPE_STORE then
       if data.subType == ADDON.Core.SUBTYPE_STORE_EXPIRED then
-        text = "|cFF0000Expired|r"
+        text = GetString(SI_MAILLOOTER_LOOT_EXTRA_EXPIRED)
 
       elseif data.subType == ADDON.Core.SUBTYPE_STORE_CANCELLED then
-        text = "|cFF0000Cancelled|r"
+        text = GetString(SI_MAILLOOTER_LOOT_EXTRA_CANCELED)
       end
     end
 
@@ -542,7 +548,8 @@ function UI.LootFragmentClass:Initialize()
   local invLabel = WINDOW_MANAGER:CreateControl(
     nil, fragment.win, CT_LABEL)
   invLabel:SetFont("ZoFontGameBold")
-  invLabel:SetText("|cC0C0A0Inventory Space: ")
+  invLabel:SetText(
+    "|cC0C0A0" .. GetString(SI_MAILLOOTER_LOOT_FOOTER_INV_SPACE))
   invLabel:SetHeight(invLabel:GetFontHeight())
   invLabel:SetHorizontalAlignment(TEXT_ALIGN_LEFT)
   invLabel:SetAnchor(TOPLEFT, div, BOTTOMLEFT, 40, 10)
@@ -560,7 +567,8 @@ function UI.LootFragmentClass:Initialize()
   local moneyLabel = WINDOW_MANAGER:CreateControl(
     nil, fragment.win, CT_LABEL)
   moneyLabel:SetFont("ZoFontGameBold")
-  moneyLabel:SetText(" |cC0C0A0Looted")
+  moneyLabel:SetText(
+    " |cC0C0A0" .. GetString(SI_MAILLOOTER_LOOT_FOOTER_LOOTED))
   moneyLabel:SetHeight(moneyLabel:GetFontHeight())
   moneyLabel:SetHorizontalAlignment(TEXT_ALIGN_RIGHT)
   moneyLabel:SetAnchor(TOPRIGHT, div, BOTTOMRIGHT, -40, 10)
@@ -615,10 +623,12 @@ function UI.LootFragmentClass:UpdateInv(current, max, reserved)
   local msg = ""
 
   if reserved then
+    local res4 = GetString(SI_MAILLOOTER_LOOT_FOOTER_INV_RES4)
+
     if (current >= (max - 4)) then
-      msg = "|cFF0000" .. current .. " / " .. (max-4) .. "|r   (4 Reserved)"
+      msg = "|cFF0000" .. current .. " / " .. (max-4) .. "|r   " .. res4
     else
-      msg = current .. " / " .. (max-4) .. "   (4 Reserved)"
+      msg = current .. " / " .. (max-4) .. "   " .. res4
     end
   else
     msg = current .. " / " .. max

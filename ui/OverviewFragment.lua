@@ -40,7 +40,7 @@ local function MakeLabel(index, parent, icon, text)
     local label = WINDOW_MANAGER:CreateControl(
       "MailLooterOverviewLabel" .. index, parent, CT_LABEL)
     label:SetFont("ZoFontGameBold")
-    label:SetText(text)
+    label:SetText(GetString(text))
     label:SetColor(ZO_NORMAL_TEXT:UnpackRGBA())
     label:SetHeight(label:GetFontHeight())
     label:SetHorizontalAlignment(TEXT_ALIGN_LEFT)
@@ -140,21 +140,30 @@ function UI.OverviewFragmentClass:Initialize()
     "MailLooterOverviewTotal", self.win, CT_LABEL)
 
   mclabel:SetFont("ZoFontGameBold")
-  mclabel:SetText("Total Mails")
+  mclabel:SetText(GetString(SI_MAILLOOTER_OVERVIEW_TOTAL))
   mclabel:SetHeight(mclabel:GetFontHeight())
   mclabel:SetHorizontalAlignment(TEXT_ALIGN_CENTER)
   mclabel:SetAnchor(TOP, self.win, TOP, 0, VertPosition(1))
 
   -- MakeLabel(1, self.win, nil, "Total Mails")
-  MakeLabel(2, self.win, UI.GetIcon("all"), "All Looted:")
-  MakeLabel(3, self.win, UI.GetIcon(CORE.MAILTYPE_AVA), "AvA:")
-  MakeLabel(4, self.win, UI.GetIcon(CORE.MAILTYPE_HIRELING), "Hireling:")
-  MakeLabel(5, self.win, UI.GetIcon(CORE.MAILTYPE_STORE), "Store:")
-  MakeLabel(6, self.win, UI.GetIcon(CORE.MAILTYPE_COD), "COD:")
-  MakeLabel(7, self.win, UI.GetIcon(CORE.MAILTYPE_RETURNED), "Returned:")
-  MakeLabel(8, self.win, UI.GetIcon(CORE.MAILTYPE_SIMPLE), "Simple:")
-  MakeLabel(9, self.win, UI.GetIcon(CORE.MAILTYPE_COD_RECEIPT), "COD Receipts:")
-  MakeLabel(10, self.win, UI.GetIcon(CORE.MAILTYPE_BOUNCE), "Auto-Returned:")
+  MakeLabel(2, self.win, UI.GetIcon("all"), 
+            SI_MAILLOOTER_OVERVIEW_ALL)
+  MakeLabel(3, self.win, UI.GetIcon(CORE.MAILTYPE_AVA), 
+            SI_MAILLOOTER_OVERVIEW_AVA)
+  MakeLabel(4, self.win, UI.GetIcon(CORE.MAILTYPE_HIRELING), 
+            SI_MAILLOOTER_OVERVIEW_HIRELING)
+  MakeLabel(5, self.win, UI.GetIcon(CORE.MAILTYPE_STORE), 
+            SI_MAILLOOTER_OVERVIEW_STORE)
+  MakeLabel(6, self.win, UI.GetIcon(CORE.MAILTYPE_COD), 
+            SI_MAILLOOTER_OVERVIEW_COD)
+  MakeLabel(7, self.win, UI.GetIcon(CORE.MAILTYPE_RETURNED), 
+            SI_MAILLOOTER_OVERVIEW_RETURNED)
+  MakeLabel(8, self.win, UI.GetIcon(CORE.MAILTYPE_SIMPLE), 
+            SI_MAILLOOTER_OVERVIEW_SIMPLE)
+  MakeLabel(9, self.win, UI.GetIcon(CORE.MAILTYPE_COD_RECEIPT), 
+            SI_MAILLOOTER_OVERVIEW_COD_RTN)
+  MakeLabel(10, self.win, UI.GetIcon(CORE.MAILTYPE_BOUNCE), 
+            SI_MAILLOOTER_OVERVIEW_AUTO_RTN)
 
   self.countLabels = {}
   self.countLabels.all = MakeValue(2, self.win)
@@ -178,7 +187,9 @@ function UI.OverviewFragmentClass:Initialize()
   div:SetWidth(self.win:GetWidth() * 0.8)
   div:SetAnchor(TOP, self.win, TOP, 0, VertPosition(11) + 14)
 
-  MakeLabel(12, self.win, UI.GetIcon(CORE.MAILTYPE_COD_RECEIPT), "COD Paid:")
+  MakeLabel(12, self.win, UI.GetIcon(CORE.MAILTYPE_COD_RECEIPT), 
+            SI_MAILLOOTER_OVERVIEW_COD_PAID)
+            
   self.codPayments = MakeValue(12, self.win)
 
   ZO_CurrencyControl_SetSimpleCurrency(
