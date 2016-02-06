@@ -101,6 +101,7 @@ local TitlesAvA = {
 
 }
 
+
 local TitlesHirelings = {
   -- English
   ["Raw Blacksmith Materials"]  = { true, CRAFTING_TYPE_BLACKSMITHING},
@@ -144,6 +145,11 @@ local TitlesStores = {
   ["Objet vendu"] =                 { true, SUBTYPE_STORE_SOLD },
   
 }
+
+-- Was just for testing...
+-- CORE.TitlesAva = TitlesAvA
+-- CORE.TitlesHirelings = TitlesHirelings
+-- CORE.TitlesStores = TitlesStores
 
 local _
 
