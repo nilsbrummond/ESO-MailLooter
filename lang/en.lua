@@ -3,7 +3,6 @@
 
 ZO_CreateStringId("SI_MAILLOOTER_ADDON_NAME", "MailLooter")
 ZO_CreateStringId("SI_MAILLOOTER_TITLE", "Mail Looter")
-ZO_CreateStringId("SI_MAIL_LOOTER", "Mail Looter")
 
 
 
@@ -238,5 +237,33 @@ ZO_CreateStringId( "SI_MAILLOOTER_SETTINGS_AR_SUBJECT",
 "Subject <<1>>:" )
 ZO_CreateStringId( "SI_MAILLOOTER_SETTINGS_AR_ENABLE",
 "Enable Mail Auto-Returning" )
+
+-- Loot Fragment
+
+ZO_CreateStringId( "SI_MAILLOOTER_LOOT_MT_UNKNOWN",     "Unknown Mail Type" )
+ZO_CreateStringId( "SI_MAILLOOTER_LOOT_MT_AVA",         "AvA Mail" )
+ZO_CreateStringId( "SI_MAILLOOTER_LOOT_MT_HIRELING",    "Hireling Mail" )
+ZO_CreateStringId( "SI_MAILLOOTER_LOOT_MT_STORE",       "Guild Store Mail" )
+ZO_CreateStringId( "SI_MAILLOOTER_LOOT_MT_COD",         "COD Mail" )
+ZO_CreateStringId( "SI_MAILLOOTER_LOOT_MT_RETURNED",    "Returned Mail" )
+ZO_CreateStringId( "SI_MAILLOOTER_LOOT_MT_SIMPLE",      "Player Mail" )
+ZO_CreateStringId( "SI_MAILLOOTER_LOOT_MT_COD_RECEIPT", "COD Receipt Mail" )
+
+ZO_CreateStringId( "SI_MAILLOOTER_LOOT_MN_MONEY", "Money" )
+ZO_CreateStringId( "SI_MAILLOOTER_LOOT_MN_COD_PAYMENT", "COD Payment" )
+ZO_CreateStringId( "SI_MAILLOOTER_LOOT_MN_RETURNED", "Returned Money" )
+ZO_CreateStringId( "SI_MAILLOOTER_LOOT_MN_SIMPLE", "Simple Mail" )
+
+ZO_CreateStringId( "SI_MAILLOOTER_LOOT_EXTRA_FROM", "From: " )
+ZO_CreateStringId( "SI_MAILLOOTER_LOOT_EXTRA_RETURNED_FROM", 
+"|cFF0000Returned|r from: " )
+ZO_CreateStringId( "SI_MAILLOOTER_LOOT_EXTRA_EXPIRED", "|cFF0000Expired|r" )
+ZO_CreateStringId( "SI_MAILLOOTER_LOOT_EXTRA_CANCELED", "|cFF0000Cancelled|r" )
+
+ZO_CreateStringId( "SI_MAILLOOTER_LOOT_FOOTER_LOOTED", "Looted" )
+ZO_CreateStringId( "SI_MAILLOOTER_LOOT_FOOTER_INV_SPACE", "Inventory Space: " )
+
+ZO_CreateStringId( "SI_MAILLOOTER_LOOT_FOOTER_INV_RES4", "(4 Reserved)" )
+
 
 

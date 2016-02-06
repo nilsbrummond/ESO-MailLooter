@@ -1,6 +1,6 @@
 <Bindings>
   <Layer name="SI_KEYBINDINGS_CATEGORY_GENERAL">
-    <Category name="SI_MAIL_LOOTER">
+    <Category name="SI_MAILLOOTER_TITLE">
       <Action name="MAILLOOTER_OPEN">
         <Down>MailLooter.QuickLaunch()</Down>
       </Action>

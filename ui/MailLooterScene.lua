@@ -25,7 +25,7 @@ function ADDON.UI.CreateScene(
 
   local index = #MAIN_MENU_KEYBOARD.sceneGroupInfo.mailSceneGroup.menuBarIconData + 1
   MAIN_MENU_KEYBOARD.sceneGroupInfo.mailSceneGroup.menuBarIconData[index] = {
-    categoryName = SI_MAIL_LOOTER,
+    categoryName = SI_MAILLOOTER_TITLE,
     descriptor = "mailLooter",
     normal = "EsoUI/Art/MainMenu/menuBar_inventory_up.dds",
     pressed = "EsoUI/Art/MainMenu/menuBar_inventory_down.dds",
