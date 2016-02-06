@@ -6,6 +6,7 @@ ZO_CreateStringId("SI_MAILLOOTER_TITLE", "Mail Looter")
 ZO_CreateStringId("SI_MAIL_LOOTER", "Mail Looter")
 
 
+
 -- Keybingings:
 ZO_CreateStringId(
   "SI_BINDING_NAME_MAILLOOTER_OPEN", 
