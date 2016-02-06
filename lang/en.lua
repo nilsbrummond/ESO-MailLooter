@@ -4,6 +4,9 @@
 ZO_CreateStringId("SI_MAILLOOTER_ADDON_NAME", "MailLooter")
 ZO_CreateStringId("SI_MAILLOOTER_TITLE", "Mail Looter")
 
+-- There may be up to 6 strings for the defaults.
+MailLooter.defaultAutoReturnSubjects = 
+  { "return", "bounce", "rts", "return to sender" }
 
 
 -- Keybingings:

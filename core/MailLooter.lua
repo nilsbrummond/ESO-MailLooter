@@ -1434,6 +1434,23 @@ function CORE.Initialize(
 
 end
 
+function CORE.AddUnofficalLang(lang)
+  DEBUG("AddUnofficalLang lang=" .. lang.lang)
+
+  for k,v in pairs(lang.titlesAvA) do
+    TitlesAva[k] = v
+  end
+
+  for k,v in pairs(lang.titlesHirelings) do
+    TitlesHirelings[k] = v
+  end
+
+  for k,v in pairs(lang.titlesStores) do
+    TitlesStores[k] = v
+  end
+
+end
+
 -- Set the set of phrases used to determine auto-return mails.
 function CORE.SetAutoReturnStrings(strings)
   DEBUG("SetAutoReturnStrings")
