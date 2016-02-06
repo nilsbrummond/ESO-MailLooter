@@ -243,6 +243,11 @@ ZO_CreateStringId( "SI_MAILLOOTER_SETTINGS_AR_ENABLE",
 
 -- Loot Fragment
 
+
+ZO_CreateStringId( "SI_MAILLOOTER_LOOT_HEADER_TYPE",     "Type" )
+ZO_CreateStringId( "SI_MAILLOOTER_LOOT_HEADER_NAME",     "Name" )
+ZO_CreateStringId( "SI_MAILLOOTER_LOOT_HEADER_VALUE",    "Value" )
+
 ZO_CreateStringId( "SI_MAILLOOTER_LOOT_MT_UNKNOWN",     "Unknown Mail Type" )
 ZO_CreateStringId( "SI_MAILLOOTER_LOOT_MT_AVA",         "AvA Mail" )
 ZO_CreateStringId( "SI_MAILLOOTER_LOOT_MT_HIRELING",    "Hireling Mail" )
