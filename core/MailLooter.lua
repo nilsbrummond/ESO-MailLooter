@@ -101,6 +101,7 @@ local TitlesAvA = {
 
 }
 
+
 local TitlesHirelings = {
   -- English
   ["Raw Blacksmith Materials"]  = { true, CRAFTING_TYPE_BLACKSMITHING},
@@ -144,6 +145,11 @@ local TitlesStores = {
   ["Objet vendu"] =                 { true, SUBTYPE_STORE_SOLD },
   
 }
+
+-- Was just for testing...
+-- CORE.TitlesAva = TitlesAvA
+-- CORE.TitlesHirelings = TitlesHirelings
+-- CORE.TitlesStores = TitlesStores
 
 local _
 
@@ -1431,6 +1437,23 @@ function CORE.Initialize(
     ADDON.NAME, EVENT_INVENTORY_IS_FULL, CORE.InventoryFullEvt )
   EVENT_MANAGER:RegisterForEvent(
     ADDON.NAME, EVENT_NOT_ENOUGH_MONEY, CORE.NotEnoughMoneyEvt )
+
+end
+
+function CORE.AddUnofficalLang(lang)
+  DEBUG("AddUnofficalLang lang=" .. lang.lang)
+
+  for k,v in pairs(lang.titlesAvA) do
+    TitlesAva[k] = v
+  end
+
+  for k,v in pairs(lang.titlesHirelings) do
+    TitlesHirelings[k] = v
+  end
+
+  for k,v in pairs(lang.titlesStores) do
+    TitlesStores[k] = v
+  end
 
 end
 

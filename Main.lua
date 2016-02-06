@@ -14,7 +14,7 @@ ADDON.settingsDefaults = {
   ["deleteSimple"]        = true,
   ["simpleSubjectWC"]     = 0,
   ["simpleBodyWC"]        = 0,
-  ["autoReturnSubjects"]  = { "return", "bounce", "rts", "return to sender" },
+  ["autoReturnSubjects"]  = {  },
   ["enableBounce"]        = false,
 
   -- debug
@@ -37,6 +37,11 @@ local function Initialize( eventCode, addOnName )
   if addOnName ~= ADDON.NAME then return end
 
   DEBUG = function(msg) ADDON.DebugMsg("MAIN: " .. msg) end
+
+  if ADDON.defaultAutoReturnSubjects then
+    ADDON.settingsDefaults.settingsDefaults = ADDON.defaultAutoReturnSubjects
+    ADDON.defaultAutoReturnSubjects = nil
+  end
 
   ADDON.settings = ZO_SavedVars:NewAccountWide(
     "MailLooter_Settings", 
@@ -103,6 +108,11 @@ local function Initialize( eventCode, addOnName )
     DoCODTest, DoSimplePreTest, DoSimplePostTest,
     ADDON.GetSetting_deleteSimple,
     ADDON.GetSetting_enableBounce)
+
+  if ADDON.unofficalLang then
+    ADDON.Core.AddUnofficalLang(ADDON.unofficalLang)
+  end
+
 
   -- If test build...
   if ADDON.Core.Test.tests ~= nil then
