@@ -1,7 +1,7 @@
 # ESO-MailLooter
 Elder Scrolls Online (ESO) Addon for functions to auto loot items and gold from in-game mail.
 
-The latest version (v0.95) of this addon is available in released form at http://www.esoui.com/downloads/info1149-MailLooter.html and is also available on minion ( http://minion.mmoui.com ).
+The latest version (v1.0.0) of this addon is available in released form at http://www.esoui.com/downloads/info1149-MailLooter.html and is also available on minion ( http://minion.mmoui.com ).
 
 Building
 ========
