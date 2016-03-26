@@ -1,6 +1,6 @@
 ## Title: |cFFFFB0MailLooter|r
 ## Description: MailLooter loots bulk mails (From AvA, Hireling, Guild Stores, etc.) and deletes them.  All with just one button press.
-## Version: 1.0.0
+## Version: 1.0.1
 ## Author: Lodur
 ## APIVersion: 100014
 ## SavedVariables: MailLooter_Settings
