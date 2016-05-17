@@ -37,9 +37,6 @@ controls/MultiSelectBar.xml
 
 MailLooterPre.lua
 
-lang/en.lua
-lang/$(language).lua
-
 core/MailLooter.lua
 
 ; Test files.  
@@ -50,6 +47,9 @@ core/test/TestDataOld.lua
 core/test/TestData1.lua
 core/test/TestData2.lua
 core/test/TestData3.lua
+
+lang/en.lua
+lang/$(language).lua
 
 ui/UserInterface.lua
 ui/Settings.lua
