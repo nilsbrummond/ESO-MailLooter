@@ -1,4 +1,6 @@
 
+local CORE = MailLooter.Core
+
 -- There may be up to 6 strings for the defaults.
 MailLooter.defaultAutoReturnSubjects = 
   { "return", "bounce", "rts", "return to sender", "Áoçápaûeîo" }
@@ -20,10 +22,10 @@ MailLooter.unofficalLang = {
   },
 
   ["titlesStores"] = {    -- Offical Guild Store Mails
-    ["Cpoê ïpoäaæè ïpeäíeòa ècòeê"]   = { true, SUBTYPE_STORE_EXPIRED },
-    ["Ïpeäíeò ïpèoàpeòeî"]            = { true, SUBTYPE_STORE_PURCHASED },
-    ["Ïpoäaæa ïpeäíeòa oòíeîeîa"]     = { true, SUBTYPE_STORE_CANCELLED },
-    ["Ïpeäíeò ïpoäaî"]                = { true, SUBTYPE_STORE_SOLD },
+    ["Cpoê ïpoäaæè ïpeäíeòa ècòeê"]   = { true, CORE.SUBTYPE_STORE_EXPIRED },
+    ["Ïpeäíeò ïpèoàpeòeî"]            = { true, CORE.SUBTYPE_STORE_PURCHASED },
+    ["Ïpoäaæa ïpeäíeòa oòíeîeîa"]     = { true, CORE.SUBTYPE_STORE_CANCELLED },
+    ["Ïpeäíeò ïpoäaî"]                = { true, CORE.SUBTYPE_STORE_SOLD },
   },
 }
 

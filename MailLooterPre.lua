@@ -6,7 +6,7 @@ local ADDON = MailLooter
 ADDON.NAME = "MailLooter"
 
 -- VERSION number format is major.minor
-ADDON.VERSION = "1.0.0"
+ADDON.VERSION = "1.0.1"
 
 -- Master debug state.
 ADDON.debug = false
