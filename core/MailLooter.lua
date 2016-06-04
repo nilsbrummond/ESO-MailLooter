@@ -23,7 +23,7 @@ local API_IsMailReturnable = IsMailReturnable
 local API_IsLocalMailboxFull = IsLocalMailboxFull
 local API_Id64ToString = Id64ToString
 local API_GetNumMailItems = GetNumMailItems
-
+local API_HasCraftBagAccess = HasCraftBagAccess
 
 -- MAIL_TYPE
 local MAILTYPE_UNKNOWN      = 1
@@ -411,16 +411,21 @@ end
 
 local function IsRoomToLoot(mailId, numAtt)
 
-  -- NOTE: Testing seems to show that you can not loot items that will
-  --       stack unless at least one inventory space is open.
-  if API_GetNumBagFreeSlots(BAG_BACKPACK) == 0 then return false end
+  local craftBag = API_HasCraftBagAccess()
+
+  if not craftBag then
+    -- NOTE: Testing seems to show that you can not loot items that will
+    --       stack unless at least one inventory space is open.
+    if API_GetNumBagFreeSlots(BAG_BACKPACK) == 0 then return false end
+  end
 
 
   local space = GetFreeLootSpace()
 
   -- Easy case: there is room
-  DEBUG("   numAtt: " .. numAtt .. " space: " .. space)
-  if (numAtt <= space) then return true end
+  DEBUG("   numAtt: " .. numAtt .. " space: " .. space .. 
+        " craftBag: " .. tostring(craftBag))
+--  if (numAtt <= space) then return true end
 
   -- harder case: see if items will stack
   local roomNeeded = 0
@@ -428,7 +433,17 @@ local function IsRoomToLoot(mailId, numAtt)
   for i=1,numAtt do
     local link = API_GetAttachedItemLink(mailId, i, LINK_STYLE_DEFAULT)
 
-    if IsItemLinkStackable(link) then
+    if (link == nil) or (link == "") then
+      DEBUG("ERROR: link is nil")
+    end
+
+    local isVert = CanItemLinkBeVirtual(link)
+
+    if craftBag and isVert then
+      -- The CraftBag has unlimited space.
+      DEBUG("CraftBag: " .. link)
+
+    elseif IsItemLinkStackable(link) then
       -- Stackable Item
       local _, stack = API_GetAttachedItemInfo(mailId, i)
       local stackCountBackpack = GetItemLinkStacks(link)
@@ -506,20 +521,24 @@ local function GetItemLinkKey(link)
   local itemType = GetItemLinkItemType(link)
 
   if (itemType == ITEMTYPE_ENCHANTING_RUNE_ASPECT) or
+     (itemType == ITEMTYPE_ENCHANTING_RUNE_POTENCY) or
      (itemType == ITEMTYPE_WEAPON_TRAIT) or
      (itemType == ITEMTYPE_ARMOR_TRAIT) or
      (itemType == ITEMTYPE_WOODWORKING_BOOSTER) or
      (itemType == ITEMTYPE_CLOTHIER_BOOSTER) or
      (itemType == ITEMTYPE_BLACKSMITHING_BOOSTER) or
-     (itemType == ITEMTYPE_INGREDIENT) then
+     (itemType == ITEMTYPE_INGREDIENT) or
+     (itemType == ITEMTYPE_CLOTHIER_RAW_MATERIAL) or
+     (itemType == ITEMTYPE_BLACKSMITHING_RAW_MATERIAL) or
+     (itemType == ITEMTYPE_WOODWORKING_RAW_MATERIAL) then
 
     local _, _, _, f4, f5 = ZO_LinkHandler_ParseLink(link)
 
     return 'key:item:' ..  f4 .. ':' ..  f5, true
 
-   else
-     return link, false
-   end
+  else
+    return link, false
+  end
 end
 
 local function IsMailTypeStackable(mailType, subType)
@@ -795,6 +814,15 @@ local function LootMails()
           id, sdn, scn, subject, fromSystem, numAttachments, 
           attachedMoney, codAmount, mailType, subType)
 
+
+        -- Read all mail that needs looting now..
+        DEBUG("items id=" .. API_Id64ToString(id))
+        CORE.state = STATE_READ
+        API_RequestReadMail(id)
+        return
+
+
+--[[
         local doItemLoot = false
         local noRoomToLoot = false
         if (numAttachments > 0) then
@@ -861,6 +889,7 @@ local function LootMails()
         else
           -- NOOP
         end
+--]]
 
       else
 
@@ -935,6 +964,7 @@ local function LootMailsCont()
 
   local body = false
 
+  
   if CORE.currentMail.includeMail then
     body = API_ReadMail(CORE.currentMail.id)
     AddPlayerMailToHistory(CORE.currentMail.id, body)
@@ -1000,6 +1030,23 @@ local function LootMailsCont()
 
 
   if CORE.currentMail.att > 0 then
+    -- Check if there is room to loot...
+    if not IsRoomToLoot(CORE.currentMail.id, CORE.currentMail.att) then
+
+      -- Unstore this mail
+      CORE.loot.mails[zo_getSafeId64Key(CORE.currentMail.id)] = nil
+
+      -- Skip it as room is not changing this run.
+      CORE.skippedMails[zo_getSafeId64Key(CORE.currentMail.id)] = true
+      CORE.currentMail = {}
+
+      -- See if anything else is lootable.
+      CORE.state = STATE_LOOT
+      LootMailsAgain()
+      return
+
+    end
+
     --
     -- Loot Item....
     --
