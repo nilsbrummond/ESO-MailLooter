@@ -47,6 +47,7 @@ core/test/TestDataOld.lua
 core/test/TestData1.lua
 core/test/TestData2.lua
 core/test/TestData3.lua
+core/test/TestData4.lua
 
 lang/en.lua
 lang/$(language).lua
