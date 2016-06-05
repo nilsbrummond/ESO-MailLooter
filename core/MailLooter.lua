@@ -153,7 +153,8 @@ local TitlesStores = {
 
 local _
 
-CORE.deconSpace = false
+CORE.deconSpaceEnable = false
+CORE.deconSpaceSpaces = 4
 CORE.bounceWords = {}
 
 CORE.initialized = false
@@ -401,8 +402,12 @@ end
 local function GetFreeLootSpace()
   local space = API_GetNumBagFreeSlots(BAG_BACKPACK)
 
-  if CORE.deconSpace then
-    if space > 4 then space=space-4 else space=0 end
+  if CORE.deconSpaceEnable then
+    if space > CORE.deconSpaceSpaces then 
+      space = space - CORE.deconSpaceSpaces
+    else 
+      space = 0 
+    end
   end
 
   return space
@@ -1390,7 +1395,8 @@ function CORE.Initialize(
 
   CORE.initialized = true
 
-  CORE.deconSpace = saveDeconSpace
+  CORE.deconSpaceEnable = (saveDeconSpace > 0)
+  CORE.deconSpaceSpaces = saveDeconSpace
 
   if debugFunction then
     DEBUG = function(msg) return debugFunction("CORE: " .. msg) end
@@ -1545,11 +1551,12 @@ end
 
 -- Set to true to reserve 4 inventory spaces that are needed to do deconstucts.
 function CORE.SetSaveDeconSpace(val)
-  CORE.deconSpace = val
+  CORE.deconSpaceEnable = (val > 0)
+  CORE.deconSpaceSpaces = val
 end
 
 function CORE.GetSaveDeconSpace()
-  return CORE.deconSpace
+  return CORE.deconSpaceEnable, CORE.deconSpaceSpaces
 end
 
 -- Register callbacks with the Core.

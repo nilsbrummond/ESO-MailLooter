@@ -135,10 +135,13 @@ function UI.CoreListUpdateCB(loot, complete,
   if item ~= nil then
     UI.lootFragment:AddLooted(item, isNewItemType)
 
+    local reserved, spaces = ADDON.Core.GetSaveDeconSpace()
+
     UI.lootFragment:UpdateInv(
       GetNumBagUsedSlots(BAG_BACKPACK),
       GetBagSize(BAG_BACKPACK),
-      ADDON.Core.GetSaveDeconSpace())
+      reserved,
+      spaces)
   end
 
   if moneyMail ~= nil then
@@ -204,10 +207,13 @@ function UI.CoreScanUpdateCB(summary)
 
   UI.summaryFragment:UpdateSummary(summary)
 
+  local reserved, spaces = ADDON.Core.GetSaveDeconSpace()
+
   UI.lootFragment:UpdateInv(
     GetNumBagUsedSlots(BAG_BACKPACK),
     GetBagSize(BAG_BACKPACK),
-    ADDON.Core.GetSaveDeconSpace())
+    reserved,
+    spaces);
 
   KEYBIND_STRIP:UpdateKeybindButtonGroup(UI.mailLooterButtonGroup)
 

@@ -34,6 +34,15 @@ function ADDON.UI.InitSettings()
       setFunc = ADDON.SetSetting_saveDeconSpace,
     },
     {
+      type = "slider",
+      name = GetString(SI_MAILLOOTER_SETTINGS_RES_CUS),
+      min = 4,
+      max = 30,
+      step = 1,
+      getFunc = ADDON.GetSetting_customDeconSpace,
+      setFunc = ADDON.SetSetting_customDeconSpace,
+    },
+    {
       type = "header",
       name = GetString(SI_MAILLOOTER_SETTINGS_COD_OPTIONS)
     },
