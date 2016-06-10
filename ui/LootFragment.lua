@@ -618,17 +618,19 @@ function UI.LootFragmentClass:ApplySort()
 
 end
 
-function UI.LootFragmentClass:UpdateInv(current, max, reserved)
+function UI.LootFragmentClass:UpdateInv(current, max, reserved, spaces)
 
   local msg = ""
 
   if reserved then
-    local res4 = GetString(SI_MAILLOOTER_LOOT_FOOTER_INV_RES4)
+    local res4 = string.format(
+        GetString(SI_MAILLOOTER_LOOT_FOOTER_INV_RES4),
+        spaces)
 
-    if (current >= (max - 4)) then
-      msg = "|cFF0000" .. current .. " / " .. (max-4) .. "|r   " .. res4
+    if (current >= (max - spaces)) then
+      msg = "|cFF0000" .. current .. " / " .. (max-spaces) .. "|r   " .. res4
     else
-      msg = current .. " / " .. (max-4) .. "   " .. res4
+      msg = current .. " / " .. (max-spaces) .. "   " .. res4
     end
   else
     msg = current .. " / " .. max
