@@ -182,6 +182,8 @@ ZO_CreateStringId( "SI_MAILLOOTER_SETTINGS_RES_IS",
 "Reserve (4) Inventory Spaces" )
 ZO_CreateStringId( "SI_MAILLOOTER_SETTINGS_RES_IS_TT", 
 "Reserves inventory spaces needed to do crafting deconstructions." )
+ZO_CreateStringId( "SI_MAILLOOTER_SETTINGS_RES_CUS",
+"Customize the Number of Reserved Spaces" )
 
 ZO_CreateStringId( "SI_MAILLOOTER_SETTINGS_COD_OPTIONS", 
 "COD Options" )
@@ -271,7 +273,7 @@ ZO_CreateStringId( "SI_MAILLOOTER_LOOT_EXTRA_CANCELED", "|cFF0000Cancelled|r" )
 ZO_CreateStringId( "SI_MAILLOOTER_LOOT_FOOTER_LOOTED", "Looted" )
 ZO_CreateStringId( "SI_MAILLOOTER_LOOT_FOOTER_INV_SPACE", "Inventory Space: " )
 
-ZO_CreateStringId( "SI_MAILLOOTER_LOOT_FOOTER_INV_RES4", "(4 Reserved)" )
+ZO_CreateStringId( "SI_MAILLOOTER_LOOT_FOOTER_INV_RES4", "(%d Reserved)" )
 
 
 

@@ -7,6 +7,7 @@ local MAILLOOTER_SAVED_VARS_VERSION = 1
 
 ADDON.settingsDefaults = {
   ["saveDeconSpace"]      = true,
+  ["customDeconSpace"]    = 4,
   ["lootCODMails"]        = false,
   ["singleCODPriceMax"]   = 1000,
   ["combinedCODSpentMax"] = 5000,
@@ -103,9 +104,14 @@ local function Initialize( eventCode, addOnName )
     return (n <= ADDON.GetSetting_simpleBodyWC())
   end
 
+  local deconSpace = function () if ADDON.GetSetting_saveDeconSpace() then return ADDON.GetSetting_customDeconSpace() else return 0 end end 
+
   ADDON.Core.Initialize(
-    ADDON.settings.saveDeconSpace, ADDON.DebugMsg,
-    DoCODTest, DoSimplePreTest, DoSimplePostTest,
+    deconSpace(),
+    ADDON.DebugMsg,
+    DoCODTest, 
+    DoSimplePreTest, 
+    DoSimplePostTest,
     ADDON.GetSetting_deleteSimple,
     ADDON.GetSetting_enableBounce)
 
@@ -133,7 +139,26 @@ end
 
 function ADDON.SetSetting_saveDeconSpace(val)
   ADDON.settings.saveDeconSpace = val
-  ADDON.Core.SetSaveDeconSpace(val)
+
+  if val then
+    ADDON.Core.SetSaveDeconSpace(ADDON.GetSetting_customDeconSpace())
+  else
+    ADDON.Core.SetSaveDeconSpace(0)
+  end
+
+end
+
+function ADDON.GetSetting_customDeconSpace()
+  local r = ADDON.settings.customDeconSpace
+  if r ~= nil then return r else return 4 end
+end
+
+function ADDON.SetSetting_customDeconSpace(val)
+  ADDON.settings.customDeconSpace = val
+
+  if ADDON.GetSetting_saveDeconSpace() then 
+    ADDON.Core.SetSaveDeconSpace(val)
+  end
 end
 
 function ADDON.SetSetting_debug(val)
