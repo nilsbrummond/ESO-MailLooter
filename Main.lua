@@ -34,9 +34,15 @@ ADDON.debugMsgWin = false
 local DEBUG = function(msg) return false end
 
 local function OnMailRemovedEx(self, mailId)
-  if mailId == self.dirtyMail then
-    DEBUG("MailLooter: MailInbox patch fix run")
-    self.dirtyMail = nil
+  if self.control:IsHidden() then
+    if mailId == self.dirtyMail then
+      DEBUG("MailLooter: MailInbox patch fix run")
+      self.dirtyMail = nil
+    end
+
+    if mailId == self.mailId then
+      self.mailId = nil
+    end
   end
 
   self.reportedMailIds[zo_getSafeId64Key(mailId)] = nil
