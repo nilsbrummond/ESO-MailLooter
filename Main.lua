@@ -33,11 +33,24 @@ ADDON.debugMsgWin = false
 
 local DEBUG = function(msg) return false end
 
+local function OnMailRemovedEx(self, mailId)
+  if mailId == self.dirtyMail then
+    DEBUG("MailLooter: MailInbox patch fix run")
+    self.dirtyMail = nil
+  end
+
+  self.reportedMailIds[zo_getSafeId64Key(mailId)] = nil
+  self:RefreshData()
+end
+
 local function Initialize( eventCode, addOnName )
 
   if addOnName ~= ADDON.NAME then return end
 
   DEBUG = function(msg) ADDON.DebugMsg("MAIN: " .. msg) end
+
+  -- Fix the ESO MailInbox
+  MAIL_INBOX.OnMailRemoved = OnMailRemovedEx
 
   if ADDON.defaultAutoReturnSubjects then
     ADDON.settingsDefaults.settingsDefaults = ADDON.defaultAutoReturnSubjects
