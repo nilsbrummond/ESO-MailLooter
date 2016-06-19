@@ -35,12 +35,12 @@ local DEBUG = function(msg) return false end
 
 local function OnMailRemovedEx(self, mailId)
   if self.control:IsHidden() then
-    if mailId == self.dirtyMail then
+    if AreId64sEqual(mailId, self.dirtyMail) then
       DEBUG("MailLooter: MailInbox patch fix run")
       self.dirtyMail = nil
     end
 
-    if mailId == self.mailId then
+    if AreId64sEqual(mailId, self.mailId) then
       self.mailId = nil
     end
   end
