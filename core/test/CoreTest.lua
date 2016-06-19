@@ -18,6 +18,8 @@ local function NewTest(testdata)
     test.mails = testdata
     test.mailsCount = #testdata
 
+    test.readRequestFailAfter = 0
+
     -- build mail ID -> index table
     -- build list of delete mail
     test.mailId = {}
@@ -208,8 +210,13 @@ local function Test_RequestReadMail(id)
   -- clear it
   TEST.current.mailReadId = nil
 
-  TEST.current.event = { EVENT_MAIL_READABLE, id }
-  zo_callLater(PerformEvent, 50)
+  if not TEST.current.mails[index].requestReadMailFail then
+
+    -- Post the Event
+    TEST.current.event = { EVENT_MAIL_READABLE, id }
+    zo_callLater(PerformEvent, 50)
+
+  end
 end
 
 local function Test_ReadMail(id)
@@ -239,9 +246,12 @@ local function Test_TakeMailAttachedMoney(id)
   local good, index = MailIdToIndex(id)
   if not good then return end
 
-  TEST.current.moneyed[index] = true
-  TEST.current.event = { EVENT_MAIL_TAKE_ATTACHED_MONEY_SUCCESS, id }
-  zo_callLater(PerformEvent, 50)
+  if not TEST.current.mails[index].takeMailMoneyFail then
+
+    TEST.current.moneyed[index] = true
+    TEST.current.event = { EVENT_MAIL_TAKE_ATTACHED_MONEY_SUCCESS, id }
+    zo_callLater(PerformEvent, 50)
+  end
 
 end
 
@@ -252,9 +262,12 @@ local function Test_TakeMailAttachedItems(id)
   local good, index = MailIdToIndex(id)
   if not good then return end
 
-  TEST.current.itemed[index] = true
-  TEST.current.event = { EVENT_MAIL_TAKE_ATTACHED_ITEM_SUCCESS, id }
-  zo_callLater(PerformEvent, 50)
+  if not TEST.current.mails[index].takeMailItemsFail then
+
+    TEST.current.itemed[index] = true
+    TEST.current.event = { EVENT_MAIL_TAKE_ATTACHED_ITEM_SUCCESS, id }
+    zo_callLater(PerformEvent, 50)
+  end
 
 end
 
@@ -265,10 +278,14 @@ local function Test_DeleteMail(id, forceDelete)
   local good, index = MailIdToIndex(id)
   if not good then return end
 
-  TEST.current.mailsCount = TEST.current.mailsCount - 1
-  TEST.current.deleted[index] = true
-  TEST.current.event = { EVENT_MAIL_REMOVED, id }
-  zo_callLater(PerformEvent, 50)
+  if not TEST.current.mails[index].deleteMailFail then
+
+    TEST.current.mailsCount = TEST.current.mailsCount - 1
+    TEST.current.deleted[index] = true
+    TEST.current.event = { EVENT_MAIL_REMOVED, id }
+    zo_callLater(PerformEvent, 50)
+  end
+
 end
 
 local function IsMailReturnableWork(id)
@@ -306,11 +323,14 @@ local function Test_ReturnMail(id)
     return
   end
 
-  TEST.current.mailsCount = TEST.current.mailsCount - 1
-  TEST.current.deleted[index] = true
-  TEST.current.event = { EVENT_MAIL_REMOVED, id }
-  zo_callLater(PerformEvent, 50)
+  if not TEST.current.mails[index].returnMailFail then
 
+    TEST.current.mailsCount = TEST.current.mailsCount - 1
+    TEST.current.deleted[index] = true
+    TEST.current.event = { EVENT_MAIL_REMOVED, id }
+    zo_callLater(PerformEvent, 50)
+
+  end
 end
 
 local function Test_IsReadMailInfoReady(id)

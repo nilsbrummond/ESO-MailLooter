@@ -181,6 +181,12 @@ function UI.CoreStatusUpdateCB(inProgress, success, msg)
   if inProgress then
     UI.summaryFragment:UpdateSummarySimple("Looting...")
     UI.filterFragment:SetLocked(true)
+
+    if msg == "Timeout" then
+      ZO_Alert(UI_ALERT_CATEGAORY_ERROR, SOUNDS.NEGATIVE_CLICK, 
+        GetString(SI_MAILLOOTER_TIMEOUT))
+    end
+
   else
     if msg == "Inventory Full" then
       ZO_AlertEvent(EVENT_INVENTORY_IS_FULL, 1, 0)

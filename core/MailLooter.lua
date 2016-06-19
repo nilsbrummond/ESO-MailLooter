@@ -236,6 +236,32 @@ local function MakeCallLater(func, id, ms)
   return delayFn
 end
 
+-- Make a guard timer with a cancel function.
+local function MakeGuardTimer(func, id, ms)
+
+  local mid = 'MailLooterT' .. id
+  local running = false
+
+  local x = function()
+    EVENT_MANAGER:UnregisterForUpdate(mid)
+    running = false
+    func()
+  end
+
+  local delayFn = function()
+    running = true
+    EVENT_MANAGER:RegisterForUpdate( mid, ms, x )
+  end
+
+  local cancelFn = function()
+    if running then
+      running = false
+      EVENT_MANAGER:UnregisterForUpdate(mid)
+    end
+  end
+
+  return delayFn, cancelFn
+end
 
 local function MailCount(mailType)
   CORE.loot.mailCount[mailType] = CORE.loot.mailCount[mailType] + 1
@@ -733,10 +759,31 @@ local function StoreCurrentMail(
 
 end
 
+-- Pre-declare as there is a dependency cycle.
+local LootMails
+
+local function MailReadTimeout()
+  DEBUG("MailReadTimeout state=" .. CORE.state)
+
+  if CORE.currentMail then
+
+    local id = CORE.currentMail.id
+    CORE.skippedMails[zo_getSafeId64Key(id)] = true
+
+    CORE.callbacks.StatusUpdateCB(true, false, "Timeout")
+
+    LootMails()
+  end
+
+end
+
+local StartMailReadTimer, CancelMailReadTimer = 
+    MakeGuardTimer(MailReadTimeout, 'Read', 5000)
+
 -- This function will loot zero to one mails.  Zero if there is no
 -- room or no mail.  If there is a valid mail to loot then it will
 -- be the loot process.
-local function LootMails()
+LootMails = function ()
   DEBUG( "LootMails" )
 
   CORE.state = STATE_LOOT
@@ -802,6 +849,7 @@ local function LootMails()
           -- Returned mail is 'Deleted' by ZOS.  Wait for Delete event.
           CORE.state = STATE_DELETE
           CORE.currentMail = {id=id}
+          StartMailReadTimer()
           DelayedReturnCmd()
           return
         else
@@ -823,6 +871,7 @@ local function LootMails()
         -- Read all mail that needs looting now..
         DEBUG("items id=" .. API_Id64ToString(id))
         CORE.state = STATE_READ
+        StartMailReadTimer()
         API_RequestReadMail(id)
         return
 
@@ -927,7 +976,13 @@ local function LootMails()
   end
 end
 
-local LootMailsAgain = MakeCallLater(LootMails, "Loot", 50)
+local LootMailsAgain = MakeCallLater(
+                          function () 
+                              CancelMailReadTimer()
+                              LootMails()
+                          end, 
+                          "Loot", 
+                          50)
 
 local function AddPlayerMailToHistory(id, body)
 
@@ -1017,6 +1072,7 @@ local function LootMailsCont()
         DEBUG("simple mail - Do not delete")
         CORE.skippedMails[zo_getSafeId64Key(CORE.currentMail.id)] = true
         CORE.currentMail = {}
+        CancelMailReadTimer()
         LootMails()
         return
       end
@@ -1298,11 +1354,15 @@ function CORE.MailRemovedEvt( eventCode, mailId )
 
         DEBUG("Mail delete on us!!!")
 
+        if (CORE.state == STATE_READ) then
+          CancelMailReadTimer()
+        end
+
         CORE.currentMail = nil
         CORE.state = STATE_IDLE
         CORE.callbacks.StatusUpdateCB(false, false, "Our mail was deleted.")
         SummaryScanMail()
-        
+
       end
     end
   end

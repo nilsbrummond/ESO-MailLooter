@@ -140,6 +140,7 @@ ZO_CreateStringId(
   "SI_MAILLOOTER_FILTER_LABEL_NOTHING", 
   "NONE")
 
+
 -- Overview
 
 ZO_CreateStringId(
@@ -167,6 +168,9 @@ ZO_CreateStringId(
   "SI_MAILLOOTER_NOTHING_TO_LOOT",
   "Mail Looter Found No Loot")
 
+ZO_CreateStringId(
+  "SI_MAILLOOTER_TIMEOUT",
+  "Timeout Waiting For Mail")
 
 -- Settings
 
