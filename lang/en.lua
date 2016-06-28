@@ -46,6 +46,8 @@ ZO_CreateStringId("SI_MAILLOOTER_SUMMARY_STORE", "Store:")
 ZO_CreateStringId("SI_MAILLOOTER_SUMMARY_COD", "CoD:")
 ZO_CreateStringId("SI_MAILLOOTER_SUMMARY_OTHER", "Other:")
 
+ZO_CreateStringId("SI_MAILLOOTER_SUMMERY_DONE", "Done.")
+ZO_CreateStringId("SI_MAILLOOTER_SUMMERY_LOOTING", "Looting...")
 
 -- Filter Bar Tool Tips
 ZO_CreateStringId(
