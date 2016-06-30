@@ -211,6 +211,7 @@ function UI.CoreScanUpdateCB(summary)
     DEBUG( "More Mail:      " .. tostring(summary.more) )
     DEBUG( "Total Items:    " .. summary.countItems )
     DEBUG( "Total Money:    " .. summary.countMoney )
+    DEBUG( "Total Junk:     " .. summary.countJunk )
   end
 
   UI.summaryFragment:UpdateSummary(summary)
