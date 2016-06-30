@@ -49,8 +49,8 @@ ZO_CreateStringId("SI_MAILLOOTER_SUMMARY_HIRELING", "Lieferanten:")
 ZO_CreateStringId("SI_MAILLOOTER_SUMMARY_STORE", "Läden:")
 ZO_CreateStringId("SI_MAILLOOTER_SUMMARY_COD", "Nachnahme:")
 ZO_CreateStringId("SI_MAILLOOTER_SUMMARY_OTHER", "Rest:")
-ZO_CreateStrindId("SI_MAILLOOTER_SUMMERY_DONE", "Entnahme abgeschlossen")
-ZO_CreateStrindId("SI_MAILLOOTER_SUMMERY_LOOTING", "Anhänge werden entnommen...")
+ZO_CreateStringId("SI_MAILLOOTER_SUMMERY_DONE", "Entnahme abgeschlossen")
+ZO_CreateStringId("SI_MAILLOOTER_SUMMERY_LOOTING", "Anhänge werden entnommen...")
 
 
 -- Filter Bar Tool Tips
