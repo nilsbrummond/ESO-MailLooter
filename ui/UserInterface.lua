@@ -152,7 +152,8 @@ function UI.CoreListUpdateCB(loot, complete,
   if complete then
 
     -- Done...
-    UI.summaryFragment:UpdateSummarySimple("Done.")
+    UI.summaryFragment:UpdateSummarySimple(
+      GetString(SI_MAILLOOTER_SUMMERY_DONE))
     ADDON.SetSetting_SaveHistory(loot)
 
     if loot.mailCount.all == 0 then
@@ -179,7 +180,8 @@ function UI.CoreStatusUpdateCB(inProgress, success, msg)
   UI.overviewFragment:SetLooting(inProgress)
 
   if inProgress then
-    UI.summaryFragment:UpdateSummarySimple("Looting...")
+    UI.summaryFragment:UpdateSummarySimple(
+      GetString(SI_MAILLOOTER_SUMMERY_LOOTING))
     UI.filterFragment:SetLocked(true)
 
     if msg == "Timeout" then
