@@ -35,7 +35,8 @@ local MAILTYPE_RETURNED     = 6
 local MAILTYPE_SIMPLE       = 7
 local MAILTYPE_COD_RECEIPT  = 8
 local MAILTYPE_BOUNCE       = 9
-local MAILTYPE_SIMPLE_PRE   = 10 -- Need to read body to classify...
+local MAILTYPE_JUNK         = 10
+local MAILTYPE_SIMPLE_PRE   = 11 -- Need to read body to classify...
 
 
 -- exported
@@ -48,6 +49,7 @@ CORE.MAILTYPE_RETURNED    = MAILTYPE_RETURNED
 CORE.MAILTYPE_SIMPLE      = MAILTYPE_SIMPLE
 CORE.MAILTYPE_COD_RECEIPT = MAILTYPE_COD_RECEIPT
 CORE.MAILTYPE_BOUNCE      = MAILTYPE_BOUNCE
+CORE.MAILTYPE_JUNK        = MAILTYPE_JUNK
 
 
 local SUBTYPE_STORE_EXPIRED   = 1
@@ -79,6 +81,7 @@ local MailTypeStackable = {
   [MAILTYPE_SIMPLE]       = false,
   [MAILTYPE_COD_RECEIPT]  = false,  -- n/a
   [MAILTYPE_BOUNCE]       = false,  -- n/a
+  [MAILTYPE_JUNK]         = false,  -- n/a
   [MAILTYPE_SIMPLE_PRE]   = false,  -- n/a
 }
 
@@ -86,18 +89,21 @@ local MailTypeStackable = {
 local TitlesAvA = { 
   -- English
   ["Rewards for the Worthy!"] = true,
-  -- ["For the Covenant!"] = true,  -- TODO: Need AD and EP versions too
-  -- ["Campaign Loyalty Reward"] = true,
+  ["For the Covenant!"] = true,  -- TODO: Need AD and EP versions too
+  ["The Covenant Thanks You"] = true,
+  ["Campaign Loyalty Reward"] = true,
 
   -- German
   ["Gerechter Lohn!"] = true,
-  -- ["Für das Bündnis!"] = true,
-  -- ["Für Eure Kampagnentreue"] = true,
+  ["Für das Bündnis!"] = true,
+  ["Das Bündnis dankt Euch"] = true,
+  ["Für Eure Kampagnentreue"] = true,
 
   -- French
   ["La récompense des braves !"] = true,
-  -- ["Pour l'Alliance !"] = true,
-  -- ["La récompense de la loyauté"] = true,
+  ["Pour l'Alliance !"] = true,
+  ["L'Alliance vous remercie"] = true,
+  ["La récompense de la loyauté"] = true,
 
 }
 
@@ -144,6 +150,18 @@ local TitlesStores = {
   ["Objet annulé"] =                { true, SUBTYPE_STORE_CANCELLED },
   ["Objet vendu"] =                 { true, SUBTYPE_STORE_SOLD },
   
+}
+
+local TitlesJunk = {
+  -- English
+  ["Champion Reward 160"] = true,
+
+  -- German
+  ["Belohnung – Champion 160"] = true,
+
+  -- French
+  ["Récompense de Champion 160"] = true,
+
 }
 
 -- Was just for testing...
@@ -203,6 +221,7 @@ CORE.filters[MAILTYPE_SIMPLE_PRE] = true
 CORE.filters[MAILTYPE_SIMPLE] = true 
 CORE.filters[MAILTYPE_BOUNCE] = true -- Ignored
 CORE.filters[MAILTYPE_COD_RECEIPT] = true 
+CORE.filters[MAILTYPE_JUNK] = true
 
 CORE.lootAllFilters = CORE.filters
 
@@ -324,6 +343,18 @@ local function CleanBouncePhrase(phrase)
 
 end
 
+-- Check if junk mail
+local function IsJunkMail(subject, atts, money)
+
+  -- Title check
+  if not TitlesJunk[subject] then return false end
+
+  -- Junk mail has no "stuff"
+  if (atts > 0) or (money > 0) then return false end
+
+  return true
+end
+
 -- Check the subject of a mail against the auto-return subjects.
 local function IsBounceReqMail(id, subject)
 
@@ -357,6 +388,8 @@ local function GetMailType(id, subject, fromSystem, codAmount, returned, attachm
       if hdata and hdata[1] then
         return MAILTYPE_STORE, hdata[2]
       end
+    elseif IsJunkMail(subject, attachments, money) then
+      return MAILTYPE_JUNK
     else
       local hdata = TitlesHirelings[subject]
       if hdata and hdata[1] then
@@ -675,6 +708,7 @@ local function SummaryScanMail()
   local countOther = 0
   local countItems = 0
   local countMoney = 0
+  local countJunk = 0
 
   local codTotal = 0
 
@@ -719,6 +753,8 @@ local function SummaryScanMail()
     elseif mailType == MAILTYPE_COD_RECEIPT then
       countCODReceipt = countCODReceipt + 1
       countLootable = countLootable + 1
+    elseif mailType == MAILTYPE_JUNK then
+      countJunk = countJunk + 1
     else
       countOther = countOther + 1
     end
@@ -735,7 +771,8 @@ local function SummaryScanMail()
                    countReturned = countReturned,
                    countBounce = countBounce,
                    countOther = countOther, more = API_IsLocalMailboxFull(),
-                   countItems = countItems, countMoney = countMoney }
+                   countItems = countItems, countMoney = countMoney,
+                   countJunk = countJunk, }
 
   CORE.callbacks.ScanUpdateCB(result)
 
@@ -856,6 +893,18 @@ LootMails = function ()
           -- Skip it.
           CORE.skippedMails[zo_getSafeId64Key(id)] = true
         end
+
+      elseif mailType == MAILTYPE_JUNK then
+
+        -- Delete junk mail...
+        DEBUG("mail: " .. API_Id64ToString(id) .. 
+          " '" .. subject .. "' - Marked Junk")
+
+        CORE.state = STATE_DELETE
+        CORE.currentMail = {id=id}
+        StartMailReadTimer()
+        DelayedDeleteCmd()
+        return
 
       elseif LootThisMail(mailType, codAmount, subType) then
 
