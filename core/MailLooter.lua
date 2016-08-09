@@ -916,83 +916,23 @@ LootMails = function ()
           id, sdn, scn, subject, fromSystem, numAttachments, 
           attachedMoney, codAmount, mailType, subType)
 
-
-        -- Read all mail that needs looting now..
-        DEBUG("items id=" .. API_Id64ToString(id))
-        CORE.state = STATE_READ
-        StartMailReadTimer()
-        API_RequestReadMail(id)
-        return
-
-
---[[
-        local doItemLoot = false
-        local noRoomToLoot = false
-        if (numAttachments > 0) then
-          if IsRoomToLoot(id, numAttachments) then
-            doItemLoot = true
-          else
-            failedNoSpace = true
-            noRoomToLoot = true
-          end
-        end
-
-        if noRoomToLoot then
-          -- NOOP
-          -- Skip mails with no room to loot.
-          -- Don't loot the money.  It is all or nothing.
-          --
-          -- NOTE:
-          -- Don't add to the skip list or failedNoSpace
-          --    may not be set on the last call of LootMails().
-
-        elseif mailType == MAILTYPE_SIMPLE_PRE then
-          -- Must read the mail to know if we loot it...
-   
-          DEBUG("simple-pre id=" .. API_Id64ToString(id))
-          CORE.state = STATE_READ
-          API_RequestReadMail(id)
-          return
-
-        elseif doItemLoot then
-
-          -- NOTE: Seems reading the mail help with getting items more reliably.
-          -- Setup currentItems moved from here to after read event.
-
-          DEBUG("items id=" .. API_Id64ToString(id))
-          CORE.state = STATE_READ
-          API_RequestReadMail(id)
-          return
-
-        elseif not fromSystem then
-
-          -- Read all player mail to store it for tooltip
-
-          DEBUG("player-mail id=" .. API_Id64ToString(id))
-          CORE.state = STATE_READ
-          API_RequestReadMail(id)
-          return
-
-        elseif attachedMoney > 0 then
-          DEBUG("money id=" .. API_Id64ToString(id))
-          -- CORE.loot.mailCount = CORE.loot.mailCount + 1
-          MailCount(mailType)
-          CORE.state = STATE_MONEY
-          API_TakeMailAttachedMoney(id)
-          return
-        elseif numAttachments == 0 then 
-          -- DELETE
-          -- player may have manually looted and not deleted it.
-          DEBUG("delete id=" .. API_Id64ToString(id))
-          -- CORE.loot.mailCount = CORE.loot.mailCount + 1
-          MailCount(mailType)
+        if (numAttachments == 0) and (attachedMoney == 0) and 
+           (codAmount == 0) and fromSystem then
+         
+          -- cleanup mails that where manually looted...
           CORE.state = STATE_DELETE
+          StartMailReadTimer()
           DelayedDeleteCmd()
           return
+
         else
-          -- NOOP
+          -- Read all mail that needs looting now..
+          DEBUG("items id=" .. API_Id64ToString(id))
+          CORE.state = STATE_READ
+          StartMailReadTimer()
+          API_RequestReadMail(id)
+          return
         end
---]]
 
       else
 
